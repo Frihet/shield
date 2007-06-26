@@ -1,0 +1,144 @@
+
+IMPLEMENTATION DETAILS
+
+Shield uses a very simple memory management mechanism. All memory that
+is allocated for parsing a specific query as automatically released
+once the query has finished parsing. This means that memory managment
+is made very simple. It would be possible to reimplement new/free to
+take this into account, which would increase performance a small bit,
+but the parser performance does not seem to be the bottleneck so this
+is probably not very useful.
+
+KNOWN ISSUES AND DIFFERENCES BETWEEN SHIELD AND MYSQL:
+
+In MySQL, adding a number to the output of the date function results
+in mysql stripping the month and day part of the date and performing
+arithmetic on the year. In shield, performing the same operation
+results in the whole date value being converted to a number, the same
+way as when performing arithmetic on e.g. the output of the curdate
+function.
+
+Shield only supports the parts of the MySQL syntax directly needed to
+run Joomla under Oracle. Since Joomla is a relatively large and
+complex system, this actually means that a pretty large part of the
+MySQL syntax is covered, though. 
+
+Shield crops long table/index/field names since Oracle has
+significantly shorter maximum name length than MySQL. Make sure that
+the first 13 characters of each table, index and field name is unique.
+
+The order of fields in a select list can be changed when using the
+limit clause or the group by clause in combination with wildcards or
+unaggregated field values.
+
+Here is an incomplete list of common features that are implemented:
+
+* 'select ...' queries, inclding limit clauses, 'group by ...' clauses, 'having ...' clauses, etc.
+* 'create table ...' queries, including primary keys, indices, dates, default values, nullable fields.
+* 'show tables ...' queries on the current database
+* 'delete from ...' queries
+* 'drop table ...' queries, incling the 'if exists' caluse
+* 'insert ...' queries
+* 'update ...' queries
+
+Here is an incomplete list of semi-common features that are missing from shield:
+
+* 'replace ...' queries
+* 'insert ... on duplicate key ...' queries
+* 'alter ...' queries
+
+Some other shield limitations:
+
+* Various information, such as storage engine, index type, etc. is ignored by shield
+* Named primary keys and unnamed indexes are unsupported
+
+
+TYPE MAPPING:
+
+Short text fields (char and varchar) are mapped to chars and
+varchar2s. Longer fields are mapped to clob.
+
+All fix point number types are mapped to the number type.
+
+All floating point number types are mapped to the double type.
+
+All date types are mapped to strings varchar2s of suitable lenths.
+
+
+IMPLEMENTATION DETAILS:
+
+Shield is implemented without ever communicating directly with
+Oracle. Shield accepts a MySQL query and transforms it to a Oracle
+query without knowing anything about table structure, etc. This means
+that shield sometimes uses rather cumbersome, indirect solutions to
+solve some compatibility differences, but the advantage is that the
+shield program can be stateless which removes a huge host of potential
+bugs with statefulness, concurency, deadlocks, as well as some pretty
+hefty potential performance bottlenecks. The downside is that some
+queries (mostly selects containing both wildards and either a limit
+clause or a group by clause) will be much slower.
+
+In Oracle, the empty string is the same thing as the null value. This
+is not the case in MySQL. To work around this, shield stores the empty
+string as a single space character. A trailing space should be deleted
+by the client. This will almost always work correctly since MySQL in
+turn removes any trailing space from all character fields. There are
+however situations where this may cause issues, such as when
+concatenating together fields. Suggestions for a better solution are
+more than welcome.
+
+Shield implements the limit clause using a subselect, e.g. 'select *
+from (select ...) where rownum < ...'. In oracle, subselects can not
+be mixed with field wildcards, e.g 'select *'. When these features are
+used together, shield uses some ugly pl/sql hacks to construct a
+query in oracle and run it from there. Check the 'make_select_query'
+function in shield_package.sql for more information.
+
+In MySQL, index names live in a per-table namespace, so it is possible
+to have two indices in two different tables with the same name. In
+Oracle, that is not the case. To work around this, the table name and
+an underscore is prepended to all index names. This leads to another
+problem in Oracle - the 30 character name limit of all tables,
+indices, fields, etc. When an index named would have broken the 30
+character limit, the name is shortened. Care is taken to use a prefix
+of both the table and original index name in the derived name, so as
+to minimize the collision risk, but this is far from fool proof.
+
+In MySQL, reserved words can be used as field names through the use of
+quoting. This is not the case in oracle. To work around this, all
+field names that are a reserved word have an underscore appended to
+their name. To avoid name clases, fields which already end with an
+underscore also have an extra underscore appended. A reverse mapping
+needs to be performed by the client.
+
+MySQL dates can be implicitly converted to strings and the other way
+around. This is not possible with Oracle dates, you always need to use
+the to_date and to_char functions. Because of this, it is more or less
+impossible to use Oracle dates as the underlying storage format for
+MySQL dates without knowing the type of every field, which would in
+turn require two-way communication between Oracle and Shield. This
+means that dates in shield are stored as simple character strings.
+
+MySQL text and char type columns can be readily compared and otherwise
+mixed together. This is not the case with Oracle chars and clobs. To
+work around this problem, all expressions that are used in comparison
+operations that have an unknown resulting type are cast using a set of
+overloaded functions called 'natural'. For numbers and chars, this
+function is a noop, but for clobs, this function converts the result
+to a varchar. This should not cause truncation in the case of joomla,
+since varchars can take up to 32 KB in memory in oracle, which is
+longer than any Joomla columns that need to be compared to another
+column.
+
+
+THE SHIELD PACKAGE:
+
+The shield program relies on having rather specific configurations, a
+special package and various functions installed on the oracle
+server. The source code for all this package is given when shield is
+called with the --package switch. Ideally, all functions and such
+would be contained in the package (which is very cleverly named
+'shield'), but it seems to be impossible to make e.g. aggregation
+functions into members of a package, so this is not the case.
+
+
