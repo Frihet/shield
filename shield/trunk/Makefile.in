@@ -12,7 +12,7 @@ transform_interval.o transform_natural.o	 transform_print_package.o		\
 transform_chain.o introspection_table.o					\
 introspection_column.o introspection_column_type.o			\
 not_found_exception.o database.o 					\
-unsupported_exception.o syntax_exception.o				\
+unsupported_exception.o syntax_exception.o	util.o			\
 
 SHIELD_LEX_TEST_OBJS := transform_lex_test.o 
 INTROSPECTION_TEST_OBJS := introspection_test.o	\
@@ -44,8 +44,8 @@ transform_yacc.cc: transform_yacc.y
 transform_yacc.hh: transform_yacc.cc
 
 transform_print_package.cc: shield_make_package_string shield_package.sql
-	echo "#include \"shield.hh\"" >$@
-	echo "void shield::print_package ()" >>$@
+	echo "#include \"transform.hh\"" >$@
+	echo "void shield::transform::print_package ()" >>$@
 	echo "{" >>$@
 	echo -n "	cout << " >>$@
 	./shield_make_package_string < shield_package.sql >>$@

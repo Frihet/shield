@@ -1,8 +1,11 @@
 
 #include "introspection.hh"
 
-namespace introspection
+namespace shield
 {
+
+  namespace introspection
+  {
   
   bool column_type::
   is_char () const
@@ -22,4 +25,6 @@ namespace introspection
     return __type == CLOB;
   }
   
+}
+
 }

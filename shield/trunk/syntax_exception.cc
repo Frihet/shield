@@ -2,6 +2,9 @@
 #include <string>
 #include "exception.hh"
 
+namespace shield
+{
+
 namespace exception
 {
 
@@ -17,3 +20,4 @@ ostream &operator << (ostream &stream, const syntax_exception &e)
 
 }
 
+}

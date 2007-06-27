@@ -1,6 +1,9 @@
 
 #include "introspection.hh"
 
+namespace shield
+{
+
 namespace introspection
 {
   
@@ -16,4 +19,6 @@ namespace introspection
     return __type;
   }
   
+}
+
 }

@@ -8,6 +8,9 @@
 
 using namespace std;
 
+namespace shield
+{
+
 namespace introspection
 {
 
@@ -25,7 +28,7 @@ namespace introspection
 
   class column_type
   {
- 
+  public:
     column_type (string t);
 
     bool is_char () const;
@@ -111,6 +114,8 @@ namespace introspection
   */
   table &get_table (string table_name);
   
+}
+
 }
 
 #endif
