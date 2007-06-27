@@ -5,18 +5,17 @@ using namespace std;
 #include <locale.h>
 #include <getopt.h>
 
-#include "shield_exception.hh"
-#include "shield.hh"
+#include "exception.hh"
+#include "transform.hh"
+
 namespace shield
 {
-#include "shield_yacc.hh"
 
-
-/* Called by yyparse on error.  */
-void yyerror (char const *s)
+namespace transform
 {
-  cerr << "shield: " << s << "\n";
+#include "transform_yacc.hh"
 }
+
 
 /*
 
@@ -43,6 +42,8 @@ static void print_help (ostream &s)
 
 static void parse_args (int argc, char **argv)
 {
+  string username = "", password = "", host = "";
+
   /*    
 	Parse options
   */
@@ -52,11 +53,23 @@ static void parse_args (int argc, char **argv)
             long_options[] =
 	  {
 	    {   
-	      "help", no_argument, 0, 'h'
+	      "help", no_argument, 0, 'H'
 	    }
 	    ,
 	    {   
-	      "package", no_argument, 0, 'p'
+	      "package", no_argument, 0, 'P'
+	    }
+	    ,
+	    {   
+	      "username", required_argument, 0, 'u'
+	    }
+	    ,
+	    {   
+	      "password", required_argument, 0, 'p'
+	    }
+	    ,
+	    {   
+	      "host", required_argument, 0, 'h'
 	    }
 	    ,
 	    {
@@ -69,7 +82,7 @@ static void parse_args (int argc, char **argv)
 
         int opt = getopt_long( argc,
                                argv,
-                               "p",
+                               "uphPH",
                                long_options,
                                &opt_index );
 
@@ -81,12 +94,12 @@ static void parse_args (int argc, char **argv)
 	  case 0:
 	    break;
 	    
-	  case 'h':
+	  case 'H':
 	    print_help( cout );
 	    exit(0);
 	    
-	  case 'p':
-	    print_package ();
+	  case 'P':
+	    transform::print_package ();
 	    break;
 
 	  case '?':
@@ -117,16 +130,16 @@ main (int argc, char **argv)
 
       try
 	{
-	  err += shield::yyparse ();
+	  err += shield::transform::yyparse ();
 	}
-      catch( shield::unsupported_exception e )
+      catch( shield::exception::unsupported_exception e )
 	{
 	  err ++;
 	  cerr << e;
 	  
 	  break;
 	}
-      catch( shield::syntax_exception e )
+      catch( shield::exception::syntax_exception e )
 	{
 	  err ++;
 	  cerr << e;

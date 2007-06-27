@@ -4,19 +4,20 @@ INSTALL := @INSTALL@
 
 CXXFLAGS := @CXXFLAGS@
 CPPFLAGS := @CPPFLAGS@
-SHIELD_OBJS := shield_common.o shield_yacc.o shield_lex.o shield.o	\
-shield_unsupported_exception.o shield_syntax_exception.o		\
-shield_printable.o shield_select.o shield_identity.o shield_text.o	\
-shield_create_table.o shield_insert.o shield_auto_increment.o		\
-shield_create_index.o shield_drop_table.o shield_date_function.o	\
-shield_interval.o shield_natural.o shield_print_package.o		\
-shield_chain.o introspection_table.o				\
-introspection_column.o introspection_column_type.o	\
-shield_not_found_exception.o database.o
-SHIELD_LEX_TEST_OBJS := shield_lex_test.o 
+SHIELD_OBJS := transform_common.o transform_yacc.o transform_lex.o shield.o	\
+transform_printable.o transform_select.o transform_identity.o transform_text.o	\
+transform_create_table.o transform_insert.o transform_auto_increment.o		\
+transform_create_index.o transform_drop_table.o transform_date_function.o	\
+transform_interval.o transform_natural.o	 transform_print_package.o		\
+transform_chain.o introspection_table.o					\
+introspection_column.o introspection_column_type.o			\
+not_found_exception.o database.o 					\
+unsupported_exception.o syntax_exception.o				\
+
+SHIELD_LEX_TEST_OBJS := transform_lex_test.o 
 INTROSPECTION_TEST_OBJS := introspection_test.o	\
 introspection_table.o introspection.o
-LDFLAGS := -ll
+LDFLAGS := @LDFLAGS@ -ll -locci -lclntsh -lpthread
 
 PROGRAMS := shield shield_lex_test shield_make_package_string
 
@@ -34,24 +35,36 @@ shield_lex_test: $(SHIELD_LEX_TEST_OBJS)
 introspection_test: $(INTROSPECTION_TEST_OBJS)
 	$(CXX) $(INTROSPECTION_TEST_OBJS) -o $@ $(LDFLAGS)
 
-shield_lex.cc: shield_lex.y
-	flex -i -oshield_lex.cc shield_lex.y 
+transform_lex.cc: transform_lex.y
+	flex -i -otransform_lex.cc transform_lex.y 
 
-shield_yacc.cc: shield_yacc.y
-	bison -d shield_yacc.y -o shield_yacc.cc --report=state
+transform_yacc.cc: transform_yacc.y
+	bison -d transform_yacc.y -o transform_yacc.cc --report=state
 
-shield_yacc.hh: shield_yacc.cc
+transform_yacc.hh: transform_yacc.cc
 
-shield_print_package.cc: shield_make_package_string shield_package.sql
-	echo "#include \"shield.hh\"" >shield_print_package.cc
-	echo "void shield::print_package ()" >>shield_print_package.cc
-	echo "{" >>shield_print_package.cc
-	echo -n "	cout << " >>shield_print_package.cc
-	./shield_make_package_string < shield_package.sql >>shield_print_package.cc
-	echo ";" >>shield_print_package.cc
-	echo "}" >>shield_print_package.cc
+transform_print_package.cc: shield_make_package_string shield_package.sql
+	echo "#include \"shield.hh\"" >$@
+	echo "void shield::print_package ()" >>$@
+	echo "{" >>$@
+	echo -n "	cout << " >>$@
+	./shield_make_package_string < shield_package.sql >>$@
+	echo ";" >>$@
+	echo "}" >>$@
 
-shield.o: shield_yacc.hh
+shield.o: transform_yacc.hh
+
+#
+# These dependencies make sure that autoconf and configure are run
+# when the source code for the build configuration has changed.
+#
+
+configure: configure.ac
+	./config.status --recheck
+
+Makefile: Makefile.in configure
+	./config.status
+
 
 #
 # Update dependencies
@@ -66,9 +79,9 @@ depend:
 
 clean:
 	rm -f *.o 
-	rm -f shield_yacc.cc shield_yacc.hh 
-	rm -f shield_lex.cc shield_lex.hh
+	rm -f transform_yacc.cc transform_yacc.hh 
+	rm -f transform_lex.cc transform_lex.hh
 	rm -f $(PROGRAMS)
-	rm -f shield_print_package.cc
+	rm -f transform_print_package.cc
 
 include Makefile.depend

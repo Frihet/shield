@@ -1,6 +1,9 @@
-#include "shield.hh"
+#include "transform.hh"
 
 namespace shield
+{
+
+namespace transform
 {
 
 void identity::
@@ -45,6 +48,8 @@ print (ostream &stream) const
 
 	stream << *__field;	
       }
+
+}
 
 }
 

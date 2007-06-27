@@ -1,6 +1,7 @@
 
 #include "introspection.hh"
-#include "shield.hh"
+#include "transform.hh"
+#include "exception.hh"
 
 using namespace shield;
 
@@ -42,7 +43,7 @@ namespace introspection
 	  }
       }
 
-    throw not_found_exception (name);
+    throw exception::not_found_exception (name);
   }
 
   introspection::table::column_const_iterator table::

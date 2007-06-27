@@ -1,6 +1,9 @@
-#include "shield.hh"
+#include "transform.hh"
 
 namespace shield
+{
+
+namespace transform
 {
 
 void 
@@ -34,5 +37,7 @@ natural::print (ostream &stream) const
     }
 }
 
+
+}
 
 }

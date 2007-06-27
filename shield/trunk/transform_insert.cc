@@ -1,10 +1,12 @@
 
 #include <assert.h>
 
-#include "shield.hh"
-#include "shield_exception.hh"
+#include "transform.hh"
 
 namespace shield
+{
+
+namespace transform
 {
 
 insert::
@@ -95,6 +97,8 @@ print (ostream &stream) const
       stream << "values (" << *(*i) << ")";
       stream << ";\n\n";
     }
+}
+
 }
 
 }

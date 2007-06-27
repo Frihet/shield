@@ -1,8 +1,10 @@
 #include <set>
-#include "shield.hh"
-#include "shield_exception.hh"
+#include "transform.hh"
 
 namespace shield
+{
+
+namespace transform
 {
 
 select::
@@ -43,7 +45,7 @@ print (ostream &stream) const
 
   
   if (!__item_list)
-    throw syntax_exception ("No item list for select");
+    throw exception::syntax_exception ("No item list for select");
 
   /*
     Find out if there are any wildcards among the select items.  When
@@ -180,7 +182,7 @@ print (ostream &stream) const
 
       if (__group_clause)
 	{
-	  throw syntax_exception ("Limit clauses, wildcards and group clauses in the same query is not supported");
+	  throw exception::syntax_exception ("Limit clauses, wildcards and group clauses in the same query is not supported");
 	}
 
       for (i=__item_list->begin (); i<__item_list->end (); i++)
@@ -198,7 +200,7 @@ print (ostream &stream) const
 
 	      if (wi->get_namespace ())
 		{
-		  throw syntax_exception ("Table namespaces not supported in combination with wildcards and limit clauses. Yes, this may seem like a pretty arbitrary limitation. Sorry.");
+		  throw exception::syntax_exception ("Table namespaces not supported in combination with wildcards and limit clauses. Yes, this may seem like a pretty arbitrary limitation. Sorry.");
 		}
 
 	      if (wi->get_table ())
@@ -300,7 +302,7 @@ print (ostream &stream) const
 
 	      if (wi->get_namespace ())
 		{
-		  throw syntax_exception ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. Sorry.");
+		  throw exception::syntax_exception ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. Sorry.");
 		}
 	      
 	      if (wi->get_table ())
@@ -353,6 +355,8 @@ print (ostream &stream) const
     {
       stream << pre.str () << *__item_list << "\n" << post.str () << endl << endl;      
     }
+
+}
 
 }
 

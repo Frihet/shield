@@ -1,8 +1,10 @@
-#include "shield.hh"
+#include "transform.hh"
 
 namespace shield
 {
 
+namespace transform
+{
 
 drop_table::drop_table( printable *name, bool if_exists)
   : __name (name), __if_exists (if_exists)
@@ -23,5 +25,6 @@ drop_table::print (ostream &stream) const
 
 }
 
+}
 
 }

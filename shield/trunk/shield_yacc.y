@@ -33,16 +33,18 @@ implement, luckily Joomla does not seem to use them.
 #include <vector>
 #include <string>
 #include <assert.h>
+
 #include "shield.hh"
-#include "shield_exception.hh"
 
 extern char *yytext;
 
 namespace shield
 {
 
-#include "shield_yacc.hh"
+namespace transform
+{
 
+#include "shield_yacc.hh"
 
 %}
 
@@ -923,7 +925,7 @@ statement:
 
 deallocate:
         deallocate_or_drop PREPARE_SYM ident_any
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 deallocate_or_drop:
@@ -934,19 +936,19 @@ deallocate_or_drop:
 
 prepare:
         PREPARE_SYM ident_any FROM prepare_src
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 prepare_src:
         TEXT_STRING_sys
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | '@' ident_or_text
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 execute:
         EXECUTE_SYM ident_any
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         execute_using
         {}
         ;
@@ -962,7 +964,7 @@ execute_var_list:
         ;
 
 execute_var_ident: '@' ident_or_text
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 /* help */
@@ -970,14 +972,14 @@ execute_var_ident: '@' ident_or_text
 help:
 	HELP_SYM
        	ident_or_text
-       	{ throw unsupported_exception (__FILE__, __LINE__); }
+       	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /* change master */
 
 change:
         CHANGE MASTER_SYM TO_SYM
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         master_defs
 	{}
   	;
@@ -988,44 +990,44 @@ master_defs:
 
 master_def:
         MASTER_HOST_SYM EQ TEXT_STRING_sys
-       	{ throw unsupported_exception (__FILE__, __LINE__); }
+       	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         |
         MASTER_USER_SYM EQ TEXT_STRING_sys
-     	{ throw unsupported_exception (__FILE__, __LINE__); }
+     	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
        |
        MASTER_PASSWORD_SYM EQ TEXT_STRING_sys
-     	{ throw unsupported_exception (__FILE__, __LINE__); }       
+     	{ throw exception::unsupported_exception (__FILE__, __LINE__); }       
        |
        MASTER_PORT_SYM EQ ulong_num
-     	{ throw unsupported_exception (__FILE__, __LINE__); }
+     	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
        |
        MASTER_CONNECT_RETRY_SYM EQ ulong_num
-     	{ throw unsupported_exception (__FILE__, __LINE__); }
+     	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
        | MASTER_SSL_SYM EQ ulong_num
-     	{ throw unsupported_exception (__FILE__, __LINE__); }
+     	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
        | MASTER_SSL_CA_SYM EQ TEXT_STRING_sys
-     	{ throw unsupported_exception (__FILE__, __LINE__); }
+     	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
        | MASTER_SSL_CAPATH_SYM EQ TEXT_STRING_sys
-     	{ throw unsupported_exception (__FILE__, __LINE__); }
+     	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
        | MASTER_SSL_CERT_SYM EQ TEXT_STRING_sys
-     	{ throw unsupported_exception (__FILE__, __LINE__); }
+     	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
        | MASTER_SSL_CIPHER_SYM EQ TEXT_STRING_sys
-     	{ throw unsupported_exception (__FILE__, __LINE__); }
+     	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
        | MASTER_SSL_KEY_SYM EQ TEXT_STRING_sys
-     	{ throw unsupported_exception (__FILE__, __LINE__); }
+     	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
        |
          master_file_def
        ;
 
 master_file_def:
        MASTER_LOG_FILE_SYM EQ TEXT_STRING_sys
-       { throw unsupported_exception (__FILE__, __LINE__); }
+       { throw exception::unsupported_exception (__FILE__, __LINE__); }
        | MASTER_LOG_POS_SYM EQ ulonglong_num
-         { throw unsupported_exception (__FILE__, __LINE__); }
+         { throw exception::unsupported_exception (__FILE__, __LINE__); }
        | RELAY_LOG_FILE_SYM EQ TEXT_STRING_sys
-         { throw unsupported_exception (__FILE__, __LINE__); }
+         { throw exception::unsupported_exception (__FILE__, __LINE__); }
        | RELAY_LOG_POS_SYM EQ ulong_num
-         { throw unsupported_exception (__FILE__, __LINE__); }
+         { throw exception::unsupported_exception (__FILE__, __LINE__); }
        ;
 
 /* create a table */
@@ -1041,7 +1043,7 @@ create:
 	  }
 	| CREATE opt_unique_or_fulltext INDEX_SYM ident_any key_alg ON table_ident
 	   '(' key_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CREATE DATABASE opt_if_not_exists ident_any
 	  opt_create_database_options
 	  { 
@@ -1049,38 +1051,38 @@ create:
 	  }
 	| CREATE
 	  view_or_trigger_or_sp
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CREATE USER clear_privileges grant_list
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 clear_privileges:
         /* Nothing */
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 sp_name:
 	  ident '.' ident_any
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 create_function_tail:
 	  RETURNS_SYM udf_type UDF_SONAME_SYM TEXT_STRING_sys
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| '('
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
           sp_fdparam_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  RETURNS_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  type
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_c_chistics
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_proc_stmt
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_a_chistics:
@@ -1096,38 +1098,38 @@ sp_c_chistics:
 /* Characteristics for both create and alter */
 sp_chistic:
 	  COMMENT_SYM TEXT_STRING_sys
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LANGUAGE_SYM SQL_SYM
 	  { /* Just parse it, we only have one language for now. */ }
 	| NO_SYM SQL_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CONTAINS_SYM SQL_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| READS_SYM SQL_SYM DATA_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MODIFIES_SYM SQL_SYM DATA_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| sp_suid
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /* Create characteristics */
 sp_c_chistic:
 	  sp_chistic            { }
-	| DETERMINISTIC_SYM     { throw unsupported_exception (__FILE__, __LINE__); }
-	| not DETERMINISTIC_SYM { throw unsupported_exception (__FILE__, __LINE__); }
+	| DETERMINISTIC_SYM     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| not DETERMINISTIC_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_suid:
 	  SQL_SYM SECURITY_SYM DEFINER_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SQL_SYM SECURITY_SYM INVOKER_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 call:
 	  CALL_SYM sp_name
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
           opt_sp_cparam_list {}
 	;
 
@@ -1144,9 +1146,9 @@ opt_sp_cparams:
 
 sp_cparams:
 	  sp_cparams ',' expr
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| expr
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /* Stored FUNCTION parameter declaration list */
@@ -1162,12 +1164,12 @@ sp_fdparams:
 
 sp_init_param:
 	  /* Empty */
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_fdparam:
 	  ident sp_init_param type
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /* Stored PROCEDURE parameter declaration list */
@@ -1183,14 +1185,14 @@ sp_pdparams:
 
 sp_pdparam:
 	  sp_opt_inout sp_init_param ident type
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_opt_inout:
-	  /* Empty */ { throw unsupported_exception (__FILE__, __LINE__); }
-	| IN_SYM      { throw unsupported_exception (__FILE__, __LINE__); }
-	| OUT_SYM     { throw unsupported_exception (__FILE__, __LINE__); }
-	| INOUT_SYM   { throw unsupported_exception (__FILE__, __LINE__); }
+	  /* Empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| IN_SYM      { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| OUT_SYM     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| INOUT_SYM   { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_proc_stmts:
@@ -1205,50 +1207,50 @@ sp_proc_stmts1:
 
 sp_decls:
 	  /* Empty */
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| sp_decls sp_decl ';'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_decl:
           DECLARE_SYM sp_decl_idents
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           type
           sp_opt_default
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DECLARE_SYM ident_any CONDITION_SYM FOR_SYM sp_cond
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DECLARE_SYM sp_handler_type HANDLER_SYM FOR_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_hcond_list sp_proc_stmt
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DECLARE_SYM ident_any CURSOR_SYM FOR_SYM sp_cursor_stmt
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_cursor_stmt:
 	  statement
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_handler_type:
-	  EXIT_SYM      { throw unsupported_exception (__FILE__, __LINE__); }
-	| CONTINUE_SYM  { throw unsupported_exception (__FILE__, __LINE__); }
+	  EXIT_SYM      { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CONTINUE_SYM  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 /*	| UNDO_SYM      { QQ No yet } */
 	;
 
 sp_hcond_list:
 	  sp_hcond
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| sp_hcond_list ',' sp_hcond
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_cond:
 	  ulong_num
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SQLSTATE_SYM opt_value TEXT_STRING_literal
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_value:
@@ -1258,58 +1260,58 @@ opt_value:
 
 sp_hcond:
 	  sp_cond
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ident			/* CONDITION name */
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SQLWARNING_SYM	/* SQLSTATEs 01??? */
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| not FOUND_SYM		/* SQLSTATEs 02??? */
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SQLEXCEPTION_SYM	/* All other SQLSTATEs */
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_decl_idents:
 	  ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| sp_decl_idents ',' ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_opt_default:
-	  /* Empty */ { throw unsupported_exception (__FILE__, __LINE__); }
-        | DEFAULT expr { throw unsupported_exception (__FILE__, __LINE__); }
+	  /* Empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | DEFAULT expr { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_proc_stmt:
 	  statement
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
           | RETURN_SYM 
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           expr
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | IF
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           sp_if END IF
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | case_stmt_specification
 	| sp_labeled_control
 	  {}
-	| { throw unsupported_exception (__FILE__, __LINE__); }
+	| { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_unlabeled_control
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LEAVE_SYM label_ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ITERATE_SYM label_ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| OPEN_SYM ident_any
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FETCH_SYM sp_opt_fetch_noise ident INTO
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_fetch_list
 	  { }
 	| CLOSE_SYM ident_any
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_opt_fetch_noise:
@@ -1320,20 +1322,20 @@ sp_opt_fetch_noise:
 
 sp_fetch_list:
 	  ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	|
 	  sp_fetch_list ',' ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_if:
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           expr THEN_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_proc_stmts1
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_elseifs
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_elseifs:
@@ -1349,24 +1351,24 @@ case_stmt_specification:
 
 simple_case_stmt:
           CASE_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           expr
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           simple_when_clause_list
           else_clause_opt
           END
           CASE_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 searched_case_stmt:
           CASE_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           searched_when_clause_list
           else_clause_opt
           END
           CASE_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 simple_when_clause_list:
@@ -1381,78 +1383,78 @@ searched_when_clause_list:
 
 simple_when_clause:
           WHEN_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           expr
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           THEN_SYM
           sp_proc_stmts1
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 searched_when_clause:
           WHEN_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           expr
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           THEN_SYM
           sp_proc_stmts1
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 else_clause_opt:
           /* empty */
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | ELSE sp_proc_stmts1
         ;
 
 sp_labeled_control:
 	  label_ident ':'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_unlabeled_control sp_opt_label
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_opt_label:
-        /* Empty  */    { throw unsupported_exception (__FILE__, __LINE__); }
-        | label_ident   { throw unsupported_exception (__FILE__, __LINE__); }
+        /* Empty  */    { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | label_ident   { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 sp_unlabeled_control:
 	  BEGIN_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_decls
 	  sp_proc_stmts
 	  END
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LOOP_SYM
 	  sp_proc_stmts1 END LOOP_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | WHILE_SYM 
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           expr DO_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_proc_stmts1 END WHILE_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | REPEAT_SYM sp_proc_stmts1 UNTIL_SYM 
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           expr END REPEAT_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 trg_action_time:
             BEFORE_SYM 
-            { throw unsupported_exception (__FILE__, __LINE__); }
+            { throw exception::unsupported_exception (__FILE__, __LINE__); }
           | AFTER_SYM 
-            { throw unsupported_exception (__FILE__, __LINE__); }
+            { throw exception::unsupported_exception (__FILE__, __LINE__); }
           ;
 
 trg_event:
             INSERT 
-            { throw unsupported_exception (__FILE__, __LINE__); }
+            { throw exception::unsupported_exception (__FILE__, __LINE__); }
           | UPDATE_SYM
-            { throw unsupported_exception (__FILE__, __LINE__); }
+            { throw exception::unsupported_exception (__FILE__, __LINE__); }
           | DELETE_SYM
-            { throw unsupported_exception (__FILE__, __LINE__); }
+            { throw exception::unsupported_exception (__FILE__, __LINE__); }
           ;
 
 create2:
@@ -1462,7 +1464,7 @@ create2:
 	  }
         | opt_create_table_options create3 
 	{
-	  throw unsupported_exception (__FILE__, __LINE__); 
+	  throw exception::unsupported_exception (__FILE__, __LINE__); 
 	}
         | LIKE table_ident
           {
@@ -1507,25 +1509,25 @@ create2a:
 	  }
 	|  create_select ')' union_opt
 	{
-	  throw unsupported_exception (__FILE__, __LINE__); 
+	  throw exception::unsupported_exception (__FILE__, __LINE__); 
 	}
         ;
 
 create3:
 	/* empty */ { $$ = 0; }
 	| opt_duplicate opt_as     create_select
-          { throw unsupported_exception (__FILE__, __LINE__); } union_clause {}
+          { throw exception::unsupported_exception (__FILE__, __LINE__); } union_clause {}
 	| opt_duplicate opt_as '(' create_select ')'
-          { throw unsupported_exception (__FILE__, __LINE__); } union_opt {}
+          { throw exception::unsupported_exception (__FILE__, __LINE__); } union_opt {}
         ;
 
 create_select:
           SELECT_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           select_options select_item_list
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  opt_select_from
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 opt_as:
@@ -1558,11 +1560,11 @@ table_options:
 	;
 
 table_option:
-	TEMPORARY	{ throw unsupported_exception (__FILE__, __LINE__); };
+	TEMPORARY	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_if_not_exists:
 	/* empty */	 { $$ = 0; }
-	| IF not EXISTS	 { throw unsupported_exception (__FILE__, __LINE__); };
+	| IF not EXISTS	 { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_create_table_options:
 	/* empty */
@@ -1591,84 +1593,84 @@ create_table_options:
 create_table_option:
 	ENGINE_SYM opt_equal storage_engines    { $$ = 0; }
 	| TYPE_SYM opt_equal storage_engines    { $$ = 0; }
-	| MAX_ROWS opt_equal ulonglong_num	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| MIN_ROWS opt_equal ulonglong_num	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| AVG_ROW_LENGTH opt_equal ulong_num	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| PASSWORD opt_equal TEXT_STRING_sys	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| COMMENT_SYM opt_equal TEXT_STRING_sys	{ throw unsupported_exception (__FILE__, __LINE__); }
+	| MAX_ROWS opt_equal ulonglong_num	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MIN_ROWS opt_equal ulonglong_num	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| AVG_ROW_LENGTH opt_equal ulong_num	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| PASSWORD opt_equal TEXT_STRING_sys	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| COMMENT_SYM opt_equal TEXT_STRING_sys	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| AUTO_INC opt_equal ulonglong_num	
 	{ 
 	  if( $3 == 1 )
 	    $$ = 0;
 	  else
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	}
         | PACK_KEYS_SYM opt_equal ulong_num
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | PACK_KEYS_SYM opt_equal DEFAULT
-          { throw unsupported_exception (__FILE__, __LINE__); }
-	| CHECKSUM_SYM opt_equal ulong_num	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| DELAY_KEY_WRITE_SYM opt_equal ulong_num { throw unsupported_exception (__FILE__, __LINE__); }
-	| ROW_FORMAT_SYM opt_equal row_types	{ throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CHECKSUM_SYM opt_equal ulong_num	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DELAY_KEY_WRITE_SYM opt_equal ulong_num { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ROW_FORMAT_SYM opt_equal row_types	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| RAID_TYPE opt_equal raid_types
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| RAID_CHUNKS opt_equal ulong_num
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| RAID_CHUNKSIZE opt_equal ulong_num
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| UNION_SYM opt_equal '(' table_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| default_charset
 	| default_collation
-	| INSERT_METHOD opt_equal merge_insert_types   { throw unsupported_exception (__FILE__, __LINE__); }
-	| DATA_SYM DIRECTORY_SYM opt_equal TEXT_STRING_sys { throw unsupported_exception (__FILE__, __LINE__); }
-	| INDEX_SYM DIRECTORY_SYM opt_equal TEXT_STRING_sys { throw unsupported_exception (__FILE__, __LINE__); }
-	| CONNECTION_SYM opt_equal TEXT_STRING_sys { throw unsupported_exception (__FILE__, __LINE__); }
+	| INSERT_METHOD opt_equal merge_insert_types   { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DATA_SYM DIRECTORY_SYM opt_equal TEXT_STRING_sys { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| INDEX_SYM DIRECTORY_SYM opt_equal TEXT_STRING_sys { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CONNECTION_SYM opt_equal TEXT_STRING_sys { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 default_charset:
         opt_default charset opt_equal charset_name_or_default
-        { throw unsupported_exception (__FILE__, __LINE__); };
+        { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 default_collation:
         opt_default COLLATE_SYM opt_equal collation_name_or_default
-        { throw unsupported_exception (__FILE__, __LINE__); };
+        { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 storage_engines:
 	ident_or_text
 	;
 
 row_types:
-	DEFAULT		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| FIXED_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| DYNAMIC_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| COMPRESSED_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| REDUNDANT_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| COMPACT_SYM	{ throw unsupported_exception (__FILE__, __LINE__); };
+	DEFAULT		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| FIXED_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DYNAMIC_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| COMPRESSED_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| REDUNDANT_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| COMPACT_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 raid_types:
-	RAID_STRIPED_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| RAID_0_SYM	 { throw unsupported_exception (__FILE__, __LINE__); }
-	| ulong_num	 { throw unsupported_exception (__FILE__, __LINE__); };
+	RAID_STRIPED_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| RAID_0_SYM	 { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ulong_num	 { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 merge_insert_types:
-       NO_SYM            { throw unsupported_exception (__FILE__, __LINE__); }
-       | FIRST_SYM       { throw unsupported_exception (__FILE__, __LINE__); }
-       | LAST_SYM        { throw unsupported_exception (__FILE__, __LINE__); };
+       NO_SYM            { throw exception::unsupported_exception (__FILE__, __LINE__); }
+       | FIRST_SYM       { throw exception::unsupported_exception (__FILE__, __LINE__); }
+       | LAST_SYM        { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_select_from:
 	opt_limit_clause {}
 	| select_from select_lock_type;
 
 udf_func_type:
-	/* empty */	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| AGGREGATE_SYM { throw unsupported_exception (__FILE__, __LINE__); };
+	/* empty */	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| AGGREGATE_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 udf_type:
-	STRING_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| REAL { throw unsupported_exception (__FILE__, __LINE__); }
-        | DECIMAL_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| INT_SYM { throw unsupported_exception (__FILE__, __LINE__); };
+	STRING_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| REAL { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | DECIMAL_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| INT_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 field_list:
 	  field_list_item
@@ -1693,13 +1695,13 @@ column_def:
 	{
 	  if ($2)
 	    {
-	      throw unsupported_exception (__FILE__, __LINE__); 
+	      throw exception::unsupported_exception (__FILE__, __LINE__); 
 	    }
 
 	  $$ = $1;
 	}
 	| field_spec references
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 key_def:
@@ -1720,11 +1722,11 @@ key_def:
 	    $$ = new attribute (0, key);
 	  }
 	| opt_constraint FOREIGN KEY_SYM opt_ident '(' key_list ')' references
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| constraint opt_check_constraint
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| opt_constraint check_constraint
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_check_constraint:
@@ -1742,11 +1744,11 @@ check_constraint:
 opt_constraint:
 	/* empty */
 	{ $$ = 0; }	
-	| constraint		{ throw unsupported_exception (__FILE__, __LINE__); }
+	| constraint		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 constraint:
-	CONSTRAINT opt_ident	{ throw unsupported_exception (__FILE__, __LINE__); }
+	CONSTRAINT opt_ident	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 field_spec:
@@ -1769,11 +1771,11 @@ type:
 	  {
 	    $$ = new type (new text ("double"), new paran (new text ($3), new text ($5)), $7);
 	  }
-	| FLOAT_SYM float_options field_options { throw unsupported_exception (__FILE__, __LINE__); }
-	| BIT_SYM			{ throw unsupported_exception (__FILE__, __LINE__); }
-	| BIT_SYM '(' NUM ')'		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| BOOL_SYM			{ throw unsupported_exception (__FILE__, __LINE__); }
-	| BOOLEAN_SYM			{ throw unsupported_exception (__FILE__, __LINE__); }
+	| FLOAT_SYM float_options field_options { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| BIT_SYM			{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| BIT_SYM '(' NUM ')'		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| BOOL_SYM			{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| BOOLEAN_SYM			{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| char '(' num ')' opt_binary
 	  {
 	    $$ = new type (new text ("char"), new paran (new text ($3)), $5);
@@ -1782,10 +1784,10 @@ type:
 	  { 
 	    $$ = new type ($1, $2);
 	  }
-	| nchar '(' num ')' opt_bin_mod	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| nchar opt_bin_mod		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| BINARY '(' num ')'		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| BINARY			{ throw unsupported_exception (__FILE__, __LINE__); }
+	| nchar '(' num ')' opt_bin_mod	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| nchar opt_bin_mod		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| BINARY '(' num ')'		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| BINARY			{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| varchar '(' num ')' opt_binary 
 	  {
 	    if( $3 < 4000 )
@@ -1806,8 +1808,8 @@ type:
 		$$ -> set_indexable (false);
 	      }
 	  }
-	| VARBINARY '(' NUM ')' 	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| YEAR_SYM opt_len field_options { throw unsupported_exception (__FILE__, __LINE__); }
+	| VARBINARY '(' NUM ')' 	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| YEAR_SYM opt_len field_options { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DATE_SYM			
 	{
 	  $$ = new type (new text ("varchar2"), new paran ( new text ("10")));
@@ -1818,20 +1820,20 @@ type:
 	}
 	| TIMESTAMP opt_len
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| DATETIME			
 	{
 	  $$ = new type (new text ("varchar2"), new paran ( new text ("19")));
 	}
-	| TINYBLOB			{ throw unsupported_exception (__FILE__, __LINE__); }
-	| BLOB_SYM opt_len		{ throw unsupported_exception (__FILE__, __LINE__); }
+	| TINYBLOB			{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| BLOB_SYM opt_len		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| spatial_type
-          { throw unsupported_exception (__FILE__, __LINE__); }
-	| MEDIUMBLOB			{ throw unsupported_exception (__FILE__, __LINE__); }
-	| LONGBLOB			{ throw unsupported_exception (__FILE__, __LINE__); }
-	| LONG_SYM VARBINARY		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| LONG_SYM varchar opt_binary	{ throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MEDIUMBLOB			{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LONGBLOB			{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LONG_SYM VARBINARY		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LONG_SYM varchar opt_binary	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TINYTEXT opt_binary	
 	  {
 	    $$ = new type ( new text ("clob"), $2 );
@@ -1853,29 +1855,29 @@ type:
 	    $$ -> set_indexable (false);
 	  }
 	| DECIMAL_SYM float_options field_options
-                                        { throw unsupported_exception (__FILE__, __LINE__); }
+                                        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| NUMERIC_SYM float_options field_options
-                                        { throw unsupported_exception (__FILE__, __LINE__); }
+                                        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FIXED_SYM float_options field_options
-                                        { throw unsupported_exception (__FILE__, __LINE__); }
-	| ENUM { throw unsupported_exception (__FILE__, __LINE__); } '(' string_list ')' opt_binary
-	  { throw unsupported_exception (__FILE__, __LINE__); }
-	| SET { throw unsupported_exception (__FILE__, __LINE__); } '(' string_list ')' opt_binary
-	  { throw unsupported_exception (__FILE__, __LINE__); }
-	| LONG_SYM opt_binary		{ throw unsupported_exception (__FILE__, __LINE__); }
+                                        { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ENUM { throw exception::unsupported_exception (__FILE__, __LINE__); } '(' string_list ')' opt_binary
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SET { throw exception::unsupported_exception (__FILE__, __LINE__); } '(' string_list ')' opt_binary
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LONG_SYM opt_binary		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SERIAL_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 spatial_type:
-	GEOMETRY_SYM	      { throw unsupported_exception (__FILE__, __LINE__); }
-	| GEOMETRYCOLLECTION  { throw unsupported_exception (__FILE__, __LINE__); }
-	| POINT_SYM           { throw unsupported_exception (__FILE__, __LINE__); }
-	| MULTIPOINT          { throw unsupported_exception (__FILE__, __LINE__); }
-	| LINESTRING          { throw unsupported_exception (__FILE__, __LINE__); }
-	| MULTILINESTRING     { throw unsupported_exception (__FILE__, __LINE__); }
-	| POLYGON             { throw unsupported_exception (__FILE__, __LINE__); }
-	| MULTIPOLYGON        { throw unsupported_exception (__FILE__, __LINE__); }
+	GEOMETRY_SYM	      { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| GEOMETRYCOLLECTION  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| POINT_SYM           { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MULTIPOINT          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LINESTRING          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MULTILINESTRING     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| POLYGON             { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MULTIPOLYGON        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 char:
@@ -1908,22 +1910,22 @@ int_type:
 	| BIGINT	
 
 real_type:
-	REAL		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| DOUBLE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| DOUBLE_SYM PRECISION { throw unsupported_exception (__FILE__, __LINE__); };
+	REAL		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DOUBLE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DOUBLE_SYM PRECISION { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 
 float_options:
-        /* empty */		{ throw unsupported_exception (__FILE__, __LINE__); }
-        | '(' NUM ')'		{ throw unsupported_exception (__FILE__, __LINE__); }
+        /* empty */		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | '(' NUM ')'		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| precision		{};
 
 precision:
 	'(' NUM ',' NUM ')'
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 /*
-  We ignore signed and unsigned filed options, and throw an exception
+  We ignore signed and unsigned filed options, and throw exception::an exception
   on zerofill
 */
 field_options:
@@ -1938,7 +1940,7 @@ field_opt_list:
 field_option:
 	SIGNED_SYM	
 	| UNSIGNED	
-	| ZEROFILL	{ throw unsupported_exception (__FILE__, __LINE__); };
+	| ZEROFILL	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_len:
 	/* empty */	
@@ -1980,33 +1982,33 @@ attribute:
 	    $$ -> set_push_front (true);
 	  }
 	| ON UPDATE_SYM NOW_SYM optional_braces 
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| AUTO_INC	  
 	{
 	  $$ = new attribute (0, new auto_increment ()); 
 	}
 	| SERIAL_SYM DEFAULT VALUE_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| opt_primary KEY_SYM 
 	  {
 	    if ($1) 
 	      $$ = new attribute (new chain ($1, new text ("key")));
 	    else
-	      throw unsupported_exception (__FILE__, __LINE__); 
+	      throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| UNIQUE_SYM	  
        	  {
 	    $$ = new attribute (new text ("unique")); 
 	  }
 	| UNIQUE_SYM KEY_SYM 
-	  { throw unsupported_exception (__FILE__, __LINE__); }
-	| COMMENT_SYM TEXT_STRING_sys { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| COMMENT_SYM TEXT_STRING_sys { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| COLLATE_SYM collation_name
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 now_or_signed_literal:
-        NOW_SYM optional_braces { throw unsupported_exception (__FILE__, __LINE__); }
+        NOW_SYM optional_braces { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | signed_literal 
         ;
 
@@ -2017,37 +2019,37 @@ charset:
 
 charset_name:
 	ident_or_text
-	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| BINARY { throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| BINARY { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 charset_name_or_default:
-	charset_name { throw unsupported_exception (__FILE__, __LINE__); }
-	| DEFAULT    { throw unsupported_exception (__FILE__, __LINE__); } ;
+	charset_name { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DEFAULT    { throw exception::unsupported_exception (__FILE__, __LINE__); } ;
 
 
 old_or_new_charset_name:
 	ident_or_text
-	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| BINARY { throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| BINARY { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 old_or_new_charset_name_or_default:
-	old_or_new_charset_name { throw unsupported_exception (__FILE__, __LINE__); }
-	| DEFAULT    { throw unsupported_exception (__FILE__, __LINE__); } ;
+	old_or_new_charset_name { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DEFAULT    { throw exception::unsupported_exception (__FILE__, __LINE__); } ;
 
 collation_name:
 	ident_or_text
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_collate:
-	/* empty */	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| COLLATE_SYM collation_name_or_default { throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| COLLATE_SYM collation_name_or_default { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 collation_name_or_default:
-	collation_name { throw unsupported_exception (__FILE__, __LINE__); }
-	| DEFAULT    { throw unsupported_exception (__FILE__, __LINE__); } ;
+	collation_name { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DEFAULT    { throw exception::unsupported_exception (__FILE__, __LINE__); } ;
 
 opt_default:
 	/* empty */	{}
@@ -2060,36 +2062,36 @@ opt_binary:
 	  }
 	| ASCII_SYM opt_bin_mod		
 	{
-	  throw unsupported_exception (__FILE__, __LINE__); 
+	  throw exception::unsupported_exception (__FILE__, __LINE__); 
 	}
 	| BYTE_SYM			
 	{
-	  throw unsupported_exception (__FILE__, __LINE__); 
+	  throw exception::unsupported_exception (__FILE__, __LINE__); 
 	}
 	| UNICODE_SYM opt_bin_mod
 	{ 
-	  throw unsupported_exception (__FILE__, __LINE__); 
+	  throw exception::unsupported_exception (__FILE__, __LINE__); 
 	}
 	| charset charset_name opt_bin_mod	
 	{
-	  throw unsupported_exception (__FILE__, __LINE__); 
+	  throw exception::unsupported_exception (__FILE__, __LINE__); 
 	}
         | BINARY opt_bin_charset 
 	{
-	  throw unsupported_exception (__FILE__, __LINE__); 
+	  throw exception::unsupported_exception (__FILE__, __LINE__); 
 	}
 	;
 
 opt_bin_mod:
 	/* empty */ { $$ = 0; }
-	| BINARY { throw unsupported_exception (__FILE__, __LINE__); };
+	| BINARY { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_bin_charset:
-        /* empty */ { throw unsupported_exception (__FILE__, __LINE__); }
-	| ASCII_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
+        /* empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ASCII_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| UNICODE_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| charset charset_name	{ throw unsupported_exception (__FILE__, __LINE__); } ;
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| charset charset_name	{ throw exception::unsupported_exception (__FILE__, __LINE__); } ;
 
 opt_primary:
 	/* empty */
@@ -2104,17 +2106,17 @@ opt_primary:
 
 references:
 	REFERENCES table_ident
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	opt_ref_list
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_ref_list:
 	/* empty */ opt_on_delete {}
 	| '(' ref_list ')' opt_on_delete {};
 
 ref_list:
-	ref_list ',' ident	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| ident			{ throw unsupported_exception (__FILE__, __LINE__); };
+	ref_list ',' ident	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ident			{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 
 opt_on_delete:
@@ -2126,24 +2128,24 @@ opt_on_delete_list:
 	| opt_on_delete_item {};
 
 opt_on_delete_item:
-	ON DELETE_SYM delete_option   { throw unsupported_exception (__FILE__, __LINE__); }
-	| ON UPDATE_SYM delete_option { throw unsupported_exception (__FILE__, __LINE__); }
-	| MATCH FULL	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| MATCH PARTIAL { throw unsupported_exception (__FILE__, __LINE__); }
-	| MATCH SIMPLE_SYM { throw unsupported_exception (__FILE__, __LINE__); };
+	ON DELETE_SYM delete_option   { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ON UPDATE_SYM delete_option { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MATCH FULL	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MATCH PARTIAL { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MATCH SIMPLE_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 delete_option:
-	RESTRICT	 { throw unsupported_exception (__FILE__, __LINE__); }
-	| CASCADE	 { throw unsupported_exception (__FILE__, __LINE__); }
-	| SET NULL_SYM   { throw unsupported_exception (__FILE__, __LINE__); }
-	| NO_SYM ACTION  { throw unsupported_exception (__FILE__, __LINE__); }
-	| SET DEFAULT    { throw unsupported_exception (__FILE__, __LINE__); };
+	RESTRICT	 { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CASCADE	 { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SET NULL_SYM   { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| NO_SYM ACTION  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SET DEFAULT    { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 key_type:
 	key_or_index			    { $$ = KEY; }
-	| FULLTEXT_SYM opt_key_or_index	    { throw unsupported_exception (__FILE__, __LINE__); }
+	| FULLTEXT_SYM opt_key_or_index	    { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SPATIAL_SYM opt_key_or_index
-	  { throw unsupported_exception (__FILE__, __LINE__); };
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 constraint_key_type:
 	PRIMARY_SYM KEY_SYM  { $$ = PRIMARY_KEY; }
@@ -2164,11 +2166,11 @@ keys_or_index:
 	| INDEXES {};
 
 opt_unique_or_fulltext:
-	/* empty */	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| UNIQUE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| FULLTEXT_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| UNIQUE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| FULLTEXT_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SPATIAL_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 key_alg:
@@ -2177,10 +2179,10 @@ key_alg:
 	| TYPE_SYM opt_btree_or_rtree  { $$ = 0; }
 
 opt_btree_or_rtree:
-	BTREE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
+	BTREE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| RTREE_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
-	| HASH_SYM	{ throw unsupported_exception (__FILE__, __LINE__); };
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| HASH_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 key_list:
 	key_list ',' key_part order_dir 
@@ -2190,7 +2192,7 @@ key_list:
 	  
 	  if ($4 && $4->str () == "desc")
 	    {
-	      throw syntax_exception ("Descending order indices are not supported");
+	      throw exception::syntax_exception ("Descending order indices are not supported");
 	    }
 	}
 	| key_part order_dir		
@@ -2200,7 +2202,7 @@ key_list:
 
 	  if ($2 && $2->str () == "desc")
 	    {
-	      throw syntax_exception ("Descending order indices are not supported");
+	      throw exception::syntax_exception ("Descending order indices are not supported");
 	    }
 
 	}
@@ -2215,12 +2217,12 @@ opt_ident:
 	| field_ident	{ $$ = $1; }
 
 opt_component:
-        /* empty */      { throw unsupported_exception (__FILE__, __LINE__); }
-        | '.' ident_any      { throw unsupported_exception (__FILE__, __LINE__); };
+        /* empty */      { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | '.' ident_any      { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 string_list:
-	text_string			{ throw unsupported_exception (__FILE__, __LINE__); }
-	| string_list ',' text_string	{ throw unsupported_exception (__FILE__, __LINE__); };
+	text_string			{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| string_list ',' text_string	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 /*
 ** Alter table
@@ -2228,82 +2230,82 @@ string_list:
 
 alter:
 	ALTER opt_ignore TABLE_SYM table_ident
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	alter_list
 	{}
 	| ALTER DATABASE ident_or_empty
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           opt_create_database_options
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ALTER PROCEDURE sp_name
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_a_chistics
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ALTER FUNCTION_SYM sp_name
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  sp_a_chistics
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | ALTER view_algorithm_opt definer view_suid
           VIEW_SYM table_ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  view_list_opt AS view_select view_check_option
 	  {}
 	;
 
 ident_or_empty:
-	/* empty */  { throw unsupported_exception (__FILE__, __LINE__); }
-	| ident      { throw unsupported_exception (__FILE__, __LINE__); };
+	/* empty */  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ident      { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 alter_list:
-	| DISCARD TABLESPACE { throw unsupported_exception (__FILE__, __LINE__); }
-	| IMPORT TABLESPACE { throw unsupported_exception (__FILE__, __LINE__); }
+	| DISCARD TABLESPACE { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| IMPORT TABLESPACE { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | alter_list_item
 	| alter_list ',' alter_list_item;
 
 add_column:
 	ADD opt_column
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 alter_list_item:
 	add_column column_def opt_place { }
 	| ADD key_def
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| add_column '(' field_list ')'
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CHANGE opt_column field_ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
           field_spec opt_place
         | MODIFY_SYM opt_column field_ident
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           type opt_attribute
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           opt_place
 	| DROP opt_column field_ident opt_restrict
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DROP FOREIGN KEY_SYM opt_ident
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DROP PRIMARY_SYM KEY_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DROP key_or_index field_ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DISABLE_SYM KEYS
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ENABLE_SYM KEYS
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ALTER opt_column field_ident SET DEFAULT signed_literal
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ALTER opt_column field_ident DROP DEFAULT
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| RENAME opt_to table_ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CONVERT_SYM TO_SYM charset charset_name_or_default opt_collate
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | create_table_options_space_separated
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FORCE_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| alter_order_clause
-	  { throw unsupported_exception (__FILE__, __LINE__); };
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_column:
 	/* empty */	{}
@@ -2311,19 +2313,19 @@ opt_column:
 
 opt_ignore:
 	/* empty */	{ $$ = 0; }
-	| IGNORE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
+	| IGNORE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_restrict:
 	/* empty */	{ $$=0; }
-	| RESTRICT	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| CASCADE	{ throw unsupported_exception (__FILE__, __LINE__); }
+	| RESTRICT	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CASCADE	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_place:
 	/* empty */	{}
-	| AFTER_SYM ident_any { throw unsupported_exception (__FILE__, __LINE__); }
-	| FIRST_SYM	  { throw unsupported_exception (__FILE__, __LINE__); };
+	| AFTER_SYM ident_any { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| FIRST_SYM	  { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_to:
 	/* empty */	{}
@@ -2337,33 +2339,33 @@ opt_to:
 
 slave:
 	  START_SYM SLAVE slave_thread_opts
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           slave_until
           {}
         | STOP_SYM SLAVE slave_thread_opts
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SLAVE START_SYM slave_thread_opts
-         { throw unsupported_exception (__FILE__, __LINE__); }
+         { throw exception::unsupported_exception (__FILE__, __LINE__); }
           slave_until
           {}
 	| SLAVE STOP_SYM slave_thread_opts
-         { throw unsupported_exception (__FILE__, __LINE__); }
+         { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 
 start:
 	START_SYM TRANSACTION_SYM start_transaction_opts
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 start_transaction_opts:
-        /*empty*/ { throw unsupported_exception (__FILE__, __LINE__); }
+        /*empty*/ { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | WITH CONSISTENT_SYM SNAPSHOT_SYM
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 slave_thread_opts:
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	slave_thread_opt_list
         {}
 	;
@@ -2375,14 +2377,14 @@ slave_thread_opt_list:
 
 slave_thread_opt:
 	/*empty*/	{}
-	| SQL_THREAD	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| RELAY_THREAD 	{ throw unsupported_exception (__FILE__, __LINE__); }
+	| SQL_THREAD	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| RELAY_THREAD 	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 slave_until:
 	/*empty*/	{}
 	| UNTIL_SYM slave_until_opts
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 slave_until_opts:
@@ -2392,38 +2394,38 @@ slave_until_opts:
 
 restore:
 	RESTORE_SYM table_or_tables
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	table_list FROM TEXT_STRING_sys
-        { throw unsupported_exception (__FILE__, __LINE__); };
+        { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 backup:
 	BACKUP_SYM table_or_tables
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	table_list TO_SYM TEXT_STRING_sys
-        { throw unsupported_exception (__FILE__, __LINE__); };
+        { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 checksum:
         CHECKSUM_SYM table_or_tables
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	table_list opt_checksum_type
         {}
 	;
 
 opt_checksum_type:
-        /* nothing */  { throw unsupported_exception (__FILE__, __LINE__); }
-	| QUICK        { throw unsupported_exception (__FILE__, __LINE__); }
-	| EXTENDED_SYM { throw unsupported_exception (__FILE__, __LINE__); }
+        /* nothing */  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| QUICK        { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| EXTENDED_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 repair:
 	REPAIR opt_no_write_to_binlog table_or_tables
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	table_list opt_mi_repair_type
 	{}
 	;
 
 opt_mi_repair_type:
-	/* empty */ { throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| mi_repair_types {};
 
 mi_repair_types:
@@ -2431,26 +2433,26 @@ mi_repair_types:
 	| mi_repair_type mi_repair_types {};
 
 mi_repair_type:
-	QUICK          { throw unsupported_exception (__FILE__, __LINE__); }
-	| EXTENDED_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-        | USE_FRM      { throw unsupported_exception (__FILE__, __LINE__); };
+	QUICK          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| EXTENDED_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | USE_FRM      { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 analyze:
 	ANALYZE_SYM opt_no_write_to_binlog table_or_tables
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	table_list opt_mi_check_type
 	{}
 	;
 
 check:
 	CHECK_SYM table_or_tables
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	table_list opt_mi_check_type
 	{}
 	;
 
 opt_mi_check_type:
-	/* empty */ { throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| mi_check_types {};
 
 mi_check_types:
@@ -2458,40 +2460,40 @@ mi_check_types:
 	| mi_check_type mi_check_types {};
 
 mi_check_type:
-	QUICK      { throw unsupported_exception (__FILE__, __LINE__); }
-	| FAST_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| MEDIUM_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| EXTENDED_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| CHANGED  { throw unsupported_exception (__FILE__, __LINE__); }
-        | FOR_SYM UPGRADE_SYM { throw unsupported_exception (__FILE__, __LINE__); };
+	QUICK      { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| FAST_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MEDIUM_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| EXTENDED_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CHANGED  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | FOR_SYM UPGRADE_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 optimize:
 	OPTIMIZE opt_no_write_to_binlog table_or_tables
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	table_list opt_mi_check_type
 	{}
 	;
 
 opt_no_write_to_binlog:
-	/* empty */        { throw unsupported_exception (__FILE__, __LINE__); }
-	| NO_WRITE_TO_BINLOG  { throw unsupported_exception (__FILE__, __LINE__); }
-	| LOCAL_SYM  { throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */        { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| NO_WRITE_TO_BINLOG  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LOCAL_SYM  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 rename:
 	RENAME table_or_tables
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	table_to_table_list
 	{}
 	| RENAME USER clear_privileges rename_list
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 rename_list:
         user TO_SYM user
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | rename_list ',' user TO_SYM user
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 table_to_table_list:
@@ -2500,11 +2502,11 @@ table_to_table_list:
 
 table_to_table:
 	table_ident TO_SYM table_ident
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 keycache:
         CACHE_SYM INDEX_SYM keycache_list IN_SYM key_cache_name
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 keycache_list:
@@ -2513,17 +2515,17 @@ keycache_list:
 
 assign_to_keycache:
         table_ident cache_keys_spec
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 key_cache_name:
-	ident	   { throw unsupported_exception (__FILE__, __LINE__); }
-	| DEFAULT  { throw unsupported_exception (__FILE__, __LINE__); }
+	ident	   { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DEFAULT  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 preload:
 	LOAD INDEX_SYM INTO CACHE_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	preload_list
 	{}
 	;
@@ -2534,25 +2536,25 @@ preload_list:
 
 preload_keys:
 	table_ident cache_keys_spec opt_ignore_leaves
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 cache_keys_spec:
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         cache_key_list_or_empty
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 cache_key_list_or_empty:
-	/* empty */	{ throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| opt_key_or_index '(' key_usage_list2 ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_ignore_leaves:
 	/* empty */
-	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| IGNORE_SYM LEAVES { throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| IGNORE_SYM LEAVES { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /*
@@ -2572,13 +2574,13 @@ select_init:
 	|
 	'(' select_paren ')' union_opt
         {
-	  throw unsupported_exception (__FILE__, __LINE__);
+	  throw exception::unsupported_exception (__FILE__, __LINE__);
 	}
         ;
 
 select_paren:
 	SELECT_SYM select_part2
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| '(' select_paren ')';
 
 select_init2:
@@ -2595,7 +2597,7 @@ select_part2:
 	  $$ -> set_item_list( $2 ); 
 	  
 	  if( $4 )
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 
 	}
         ;
@@ -2666,24 +2668,24 @@ select_option_list:
 	;
 
 select_option:
-	STRAIGHT_JOIN { throw unsupported_exception (__FILE__, __LINE__); }
+	STRAIGHT_JOIN { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| HIGH_PRIORITY
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DISTINCT         
 	{
 	  $$ = new text ("distinct");
 	}
-	| SQL_SMALL_RESULT { throw unsupported_exception (__FILE__, __LINE__); }
-	| SQL_BIG_RESULT { throw unsupported_exception (__FILE__, __LINE__); }
+	| SQL_SMALL_RESULT { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SQL_BIG_RESULT { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SQL_BUFFER_RESULT
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SQL_CALC_FOUND_ROWS
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SQL_NO_CACHE_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SQL_CACHE_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
-	| ALL		    { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ALL		    { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 select_lock_type:
@@ -2692,9 +2694,9 @@ select_lock_type:
 	  $$ = 0;
 	}
 	| FOR_SYM UPDATE_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LOCK_SYM IN_SYM SHARE_SYM MODE_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 select_item_list:
@@ -2805,12 +2807,12 @@ bool_factor:
 	| bool_test ;
 
 bool_test:
-	bool_pri IS TRUE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| bool_pri IS not TRUE_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| bool_pri IS FALSE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| bool_pri IS not FALSE_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| bool_pri IS UNKNOWN_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| bool_pri IS not UNKNOWN_SYM { throw unsupported_exception (__FILE__, __LINE__); }
+	bool_pri IS TRUE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| bool_pri IS not TRUE_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| bool_pri IS FALSE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| bool_pri IS not FALSE_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| bool_pri IS UNKNOWN_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| bool_pri IS not UNKNOWN_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| bool_pri ;
 
 bool_pri:
@@ -2841,14 +2843,14 @@ bool_pri:
 	      $$ = new chain ( new natural ($1), $2, new natural ($3));
 	  }
 	| bool_pri comp_op all_or_any '(' subselect ')' %prec EQ
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| predicate ;
 
 predicate:
         bit_expr IN_SYM '(' subselect ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| bit_expr not IN_SYM '(' subselect ')'
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | bit_expr IN_SYM '(' ')'
           { 
 	    $$ = new text( "0 < 0");
@@ -2865,9 +2867,9 @@ predicate:
 	    $$ = new chain ($1, new text ("in"), p);
 	  }
         | bit_expr not IN_SYM '(' expr ')'
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| bit_expr not IN_SYM '(' expr ',' expr_list ')'
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| bit_expr BETWEEN_SYM bit_expr AND_SYM predicate
 	  { 
 	    $$ = new chain ($1, new text ("between"),
@@ -2875,45 +2877,45 @@ predicate:
 				   $5);
 	  }
 	| bit_expr not BETWEEN_SYM bit_expr AND_SYM predicate
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| bit_expr SOUNDS_SYM LIKE bit_expr
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| bit_expr LIKE simple_expr opt_escape
           {
 	    if ($4)
-	      throw unsupported_exception (__FILE__, __LINE__); 
+	      throw exception::unsupported_exception (__FILE__, __LINE__); 
 
 	    $$ = new chain ($1, new text ("like"), $3);
 	  }
 	| bit_expr not LIKE simple_expr opt_escape
           {
 	    if ($5)
-	      throw unsupported_exception (__FILE__, __LINE__); 
+	      throw exception::unsupported_exception (__FILE__, __LINE__); 
 
 	    $$ = new chain ($1, new text ("not like"), $4);
 	  }
 	| bit_expr REGEXP bit_expr	
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| bit_expr not REGEXP bit_expr
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| bit_expr ;
 
 bit_expr:
 	bit_expr '|' bit_term	
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| bit_term ;
 
 bit_term:
-	bit_term '&' bit_factor	{ throw unsupported_exception (__FILE__, __LINE__); }
+	bit_term '&' bit_factor	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| bit_factor ;
 
 bit_factor:
 	bit_factor SHIFT_LEFT value_expr
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| bit_factor SHIFT_RIGHT value_expr 
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| value_expr ;
 
 value_expr:
@@ -2941,8 +2943,8 @@ value_expr:
 term_operator: '*' { $$ = new text( "*" ); }
         | '/' { $$ = new text( "/" ); }
         | '%' { $$ = new text( "%" ); }
-        | DIV_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-        | MOD_SYM { throw unsupported_exception (__FILE__, __LINE__); }
+        | DIV_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | MOD_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 term:
@@ -2972,8 +2974,8 @@ comp_op:  EQ            { $$ = new text ("="); }
 	| NE		{ $$ = new text ("<>"); }
 	;
 
-all_or_any: ALL     { throw unsupported_exception (__FILE__, __LINE__); }
-	|   ANY_SYM { throw unsupported_exception (__FILE__, __LINE__); }
+all_or_any: ALL     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	|   ANY_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 interval_expr:
@@ -2988,13 +2990,13 @@ interval_expr:
 simple_expr:
 	  simple_ident
  	| simple_expr COLLATE_SYM ident_or_text %prec NEG
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | literal
 	| param_marker
 	| variable
 	| sum_expr
 	| simple_expr OR_OR_SYM simple_expr
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| '+' simple_expr %prec NEG	
           { 
 	    $$ = new chain (new text ("+"), $2);
@@ -3003,8 +3005,8 @@ simple_expr:
           { 
 	    $$ = new chain (new text ("-"), $2);
 	  }
-	| '~' simple_expr %prec NEG	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| not2 simple_expr %prec NEG	{ throw unsupported_exception (__FILE__, __LINE__); }
+	| '~' simple_expr %prec NEG	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| not2 simple_expr %prec NEG	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| '(' subselect ')'   
           { 
 	    $$ = new paran ($2);
@@ -3014,233 +3016,233 @@ simple_expr:
 	    $$ = new paran ($2);
 	  }
 	| '(' expr ',' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ROW_SYM '(' expr ',' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| EXISTS '(' subselect ')' 
-          { throw unsupported_exception (__FILE__, __LINE__); }
-	| '{' ident expr '}'	{ throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| '{' ident expr '}'	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         | MATCH ident_list_arg AGAINST '(' bit_expr fulltext_options ')'
-          { throw unsupported_exception (__FILE__, __LINE__); }
-	| ASCII_SYM '(' expr ')' { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ASCII_SYM '(' expr ')' { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| BINARY simple_expr %prec NEG
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CAST_SYM '(' expr AS cast_type ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CASE_SYM opt_expr when_list opt_else END
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CONVERT_SYM '(' expr ',' cast_type ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CONVERT_SYM '(' expr USING charset_name ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DEFAULT '(' simple_ident ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| VALUES '(' simple_ident_nospvar ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FUNC_ARG0 '(' ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FUNC_ARG1 '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FUNC_ARG2 '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FUNC_ARG3 '(' expr ',' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ADDDATE_SYM '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ADDDATE_SYM '(' expr ',' INTERVAL_SYM expr interval ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| REPEAT_SYM '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ATAN	'(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ATAN	'(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CHAR_SYM '(' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CHAR_SYM '(' expr_list USING charset_name ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CHARSET '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| COALESCE '(' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| COLLATION_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CONCAT '(' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CONCAT_WS '(' expr ',' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CONVERT_TZ_SYM '(' expr ',' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CURDATE optional_braces
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CURTIME optional_braces
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CURTIME '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CURRENT_USER optional_braces
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 //	| DATE_ADD_INTERVAL '(' expr ',' interval_expr interval ')'
-//	  { throw unsupported_exception (__FILE__, __LINE__); }
+//	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 //	| DATE_SUB_INTERVAL '(' expr ',' interval_expr interval ')'
-//	  { throw unsupported_exception (__FILE__, __LINE__); }
+//	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DATABASE '(' ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DATE_SYM '(' expr ')'
 	  { $$ = new date_function (new chain (new text ("shield.date"), new paran ($3))); }
 	| DAY_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ELT_FUNC '(' expr ',' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MAKE_SET_SYM '(' expr ',' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ENCRYPT '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
-	| ENCRYPT '(' expr ',' expr ')'   { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ENCRYPT '(' expr ',' expr ')'   { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DECODE_SYM '(' expr ',' TEXT_STRING_literal ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ENCODE_SYM '(' expr ',' TEXT_STRING_literal ')'
-	 { throw unsupported_exception (__FILE__, __LINE__); }
+	 { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DES_DECRYPT_SYM '(' expr ')'
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DES_DECRYPT_SYM '(' expr ',' expr ')'
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DES_ENCRYPT_SYM '(' expr ')'
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DES_ENCRYPT_SYM '(' expr ',' expr ')'
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| EXPORT_SET '(' expr ',' expr ',' expr ')'
-		{ throw unsupported_exception (__FILE__, __LINE__); }
+		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| EXPORT_SET '(' expr ',' expr ',' expr ',' expr ')'
-		{ throw unsupported_exception (__FILE__, __LINE__); }
+		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| EXPORT_SET '(' expr ',' expr ',' expr ',' expr ',' expr ')'
-		{ throw unsupported_exception (__FILE__, __LINE__); }
+		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FORMAT_SYM '(' expr ',' NUM ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FROM_UNIXTIME '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FROM_UNIXTIME '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FIELD_FUNC '(' expr ',' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| geometry_function
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| GET_FORMAT '(' date_time_type  ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| HOUR_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| IF '(' expr ',' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| INSERT '(' expr ',' expr ',' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 //	| interval_expr '+' expr
 //	  /* we cannot put interval before - */
-//	  { throw unsupported_exception (__FILE__, __LINE__); }
+//	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 //	| interval_expr 
 	| LAST_INSERT_ID '(' ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LAST_INSERT_ID '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LEFT '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LOCATE '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LOCATE '(' expr ',' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| GREATEST_SYM '(' expr ',' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LEAST_SYM '(' expr ',' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LOG_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LOG_SYM '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MASTER_POS_WAIT '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MASTER_POS_WAIT '(' expr ',' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MICROSECOND_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MINUTE_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MOD_SYM '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MONTH_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| NOW_SYM optional_braces
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| NOW_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| PASSWORD '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| OLD_PASSWORD '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| POSITION_SYM '(' bit_expr IN_SYM expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| QUARTER_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| RAND '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| RAND '(' ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| REPLACE '(' expr ',' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| RIGHT '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ROUND '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
-	| ROUND '(' expr ',' expr ')' { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ROUND '(' expr ',' expr ')' { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ROW_COUNT_SYM '(' ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SUBDATE_SYM '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SUBDATE_SYM '(' expr ',' INTERVAL_SYM expr interval ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SECOND_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SUBSTRING '(' expr ',' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SUBSTRING '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SUBSTRING '(' expr FROM expr FOR_SYM expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SUBSTRING '(' expr FROM expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SUBSTRING_INDEX '(' expr ',' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SYSDATE optional_braces
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SYSDATE '(' expr ')'
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 //	| TIME_SYM '(' expr ')'
-//	  { throw unsupported_exception (__FILE__, __LINE__); }
+//	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 //	| TIMESTAMP '(' expr ')'
-//	  { throw unsupported_exception (__FILE__, __LINE__); }
+//	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 //	| TIMESTAMP '(' expr ',' expr ')'
-//	  { throw unsupported_exception (__FILE__, __LINE__); }
+//	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TIMESTAMP_ADD '(' interval_time_st ',' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TIMESTAMP_DIFF '(' interval_time_st ',' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TRIM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TRIM '(' LEADING expr FROM expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TRIM '(' TRAILING expr FROM expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TRIM '(' BOTH expr FROM expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TRIM '(' LEADING FROM expr ')'
-	 { throw unsupported_exception (__FILE__, __LINE__); }
+	 { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TRIM '(' TRAILING FROM expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TRIM '(' BOTH FROM expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TRIM '(' expr FROM expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| TRUNCATE_SYM '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ident '.' ident_any '(' opt_expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| IDENT_sys '(' udf_expr_list ')'
           { 
 	    string func_name = to_lower( $1->str ());
@@ -3405,7 +3407,7 @@ simple_expr:
 	  
 			  }
 			else
-			  throw syntax_exception (string("Unknown function '") + func_name + "'");
+			  throw exception::syntax_exception (string("Unknown function '") + func_name + "'");
 		      }
 		  }
 
@@ -3417,93 +3419,93 @@ simple_expr:
 	      }
 	  }
 	| UNIQUE_USERS '(' text_literal ',' NUM ',' NUM ',' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| UNIX_TIMESTAMP '(' ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| UNIX_TIMESTAMP '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| USER '(' ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| UTC_DATE_SYM optional_braces
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| UTC_TIME_SYM optional_braces
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| UTC_TIMESTAMP_SYM optional_braces
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| WEEK_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| WEEK_SYM '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| YEAR_SYM '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| YEARWEEK '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| YEARWEEK '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| BENCHMARK_SYM '(' ulong_num ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| EXTRACT_SYM '(' interval FROM expr ')'
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 geometry_function:
 	  CONTAINS_SYM '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| GEOMFROMTEXT '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| GEOMFROMTEXT '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| GEOMFROMWKB '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| GEOMFROMWKB '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| GEOMETRYCOLLECTION '(' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LINESTRING '(' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
  	| MULTILINESTRING '(' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
  	| MLINEFROMTEXT '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MLINEFROMTEXT '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MPOINTFROMTEXT '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MPOINTFROMTEXT '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MPOLYFROMTEXT '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MPOLYFROMTEXT '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MULTIPOINT '(' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
  	| MULTIPOLYGON '(' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| POINT_SYM '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
  	| POINTFROMTEXT '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| POINTFROMTEXT '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| POLYFROMTEXT '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| POLYFROMTEXT '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| POLYGON '(' expr_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
  	| GEOMCOLLFROMTEXT '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| GEOMCOLLFROMTEXT '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
  	| LINEFROMTEXT '(' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| LINEFROMTEXT '(' expr ',' expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 fulltext_options:
-        /* nothing */                   { throw unsupported_exception (__FILE__, __LINE__); }
-        | WITH QUERY_SYM EXPANSION_SYM  { throw unsupported_exception (__FILE__, __LINE__); }
-        | IN_SYM BOOLEAN_SYM MODE_SYM   { throw unsupported_exception (__FILE__, __LINE__); }
+        /* nothing */                   { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | WITH QUERY_SYM EXPANSION_SYM  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | IN_SYM BOOLEAN_SYM MODE_SYM   { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 udf_expr_list:
@@ -3556,114 +3558,114 @@ udf_expr:
 
 sum_expr:
 	AVG_SYM '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| AVG_SYM '(' DISTINCT in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| BIT_AND  '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| BIT_OR  '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| BIT_XOR  '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| COUNT_SYM '(' opt_all '*' ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| COUNT_SYM '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| COUNT_SYM '(' DISTINCT
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	   expr_list
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| GROUP_UNIQUE_USERS '(' text_literal ',' NUM ',' NUM ',' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MIN_SYM '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 /*
    According to ANSI SQL, DISTINCT is allowed and has
    no sence inside MIN and MAX grouping functions; so MIN|MAX(DISTINCT ...)
    is processed like an ordinary MIN | MAX()
  */
 	| MIN_SYM '(' DISTINCT in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MAX_SYM '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MAX_SYM '(' DISTINCT in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| STD_SYM '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| VARIANCE_SYM '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| STDDEV_SAMP_SYM '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| VAR_SAMP_SYM '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SUM_SYM '(' in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SUM_SYM '(' DISTINCT in_sum_expr ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| GROUP_CONCAT_SYM '(' opt_distinct
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  expr_list opt_gorder_clause
 	  opt_gconcat_separator
 	 ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); };
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 variable:
           '@'
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           variable_aux
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           ;
 
 variable_aux:
           ident_or_text SET_VAR expr
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | ident_or_text
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | '@' opt_var_ident_type ident_or_text opt_component
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 opt_distinct:
-    /* empty */ { throw unsupported_exception (__FILE__, __LINE__); }
-    |DISTINCT   { throw unsupported_exception (__FILE__, __LINE__); };
+    /* empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
+    |DISTINCT   { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_gconcat_separator:
-    /* empty */        { throw unsupported_exception (__FILE__, __LINE__); }
-    |SEPARATOR_SYM text_string  { throw unsupported_exception (__FILE__, __LINE__); };
+    /* empty */        { throw exception::unsupported_exception (__FILE__, __LINE__); }
+    |SEPARATOR_SYM text_string  { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 
 opt_gorder_clause:
 	  /* empty */
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| order_clause
-          { throw unsupported_exception (__FILE__, __LINE__); };
+          { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 
 in_sum_expr:
 	opt_all
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	expr
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 cast_type:
-        BINARY opt_len		{ throw unsupported_exception (__FILE__, __LINE__); }
-        | CHAR_SYM opt_len opt_binary	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| NCHAR_SYM opt_len	{ throw unsupported_exception (__FILE__, __LINE__); }
-        | SIGNED_SYM		{ throw unsupported_exception (__FILE__, __LINE__); }
-        | SIGNED_SYM INT_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-        | UNSIGNED		{ throw unsupported_exception (__FILE__, __LINE__); }
-        | UNSIGNED INT_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-        | DATE_SYM		{ throw unsupported_exception (__FILE__, __LINE__); }
-        | TIME_SYM		{ throw unsupported_exception (__FILE__, __LINE__); }
-        | DATETIME		{ throw unsupported_exception (__FILE__, __LINE__); }
-        | DECIMAL_SYM float_options { throw unsupported_exception (__FILE__, __LINE__); }
+        BINARY opt_len		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | CHAR_SYM opt_len opt_binary	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| NCHAR_SYM opt_len	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | SIGNED_SYM		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | SIGNED_SYM INT_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | UNSIGNED		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | UNSIGNED INT_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | DATE_SYM		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | TIME_SYM		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | DATETIME		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | DECIMAL_SYM float_options { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_expr_list:
-	/* empty */ { throw unsupported_exception (__FILE__, __LINE__); }
-	| expr_list { throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| expr_list { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 expr_list:
@@ -3682,31 +3684,31 @@ expr_list2:
 	}
 
 ident_list_arg:
-          ident_list          { throw unsupported_exception (__FILE__, __LINE__); }
-        | '(' ident_list ')'  { throw unsupported_exception (__FILE__, __LINE__); };
+          ident_list          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | '(' ident_list ')'  { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 ident_list:
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ident_list2
-        { throw unsupported_exception (__FILE__, __LINE__); };
+        { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 ident_list2:
-        simple_ident { throw unsupported_exception (__FILE__, __LINE__); }
-        | ident_list2 ',' simple_ident { throw unsupported_exception (__FILE__, __LINE__); };
+        simple_ident { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | ident_list2 ',' simple_ident { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_expr:
-	/* empty */      { throw unsupported_exception (__FILE__, __LINE__); }
-	| expr           { throw unsupported_exception (__FILE__, __LINE__); };
+	/* empty */      { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| expr           { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_else:
-	/* empty */    { throw unsupported_exception (__FILE__, __LINE__); }
-	| ELSE expr    { throw unsupported_exception (__FILE__, __LINE__); };
+	/* empty */    { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ELSE expr    { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 when_list:
           WHEN_SYM expr THEN_SYM expr
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | when_list WHEN_SYM expr THEN_SYM expr
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 /* Warning - may return NULL in case of incomplete SELECT */
@@ -3747,9 +3749,9 @@ join_table:
           left-associative joins.
         */
         table_ref %prec TABLE_REF_PRIORITY normal_join table_ref
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| table_ref STRAIGHT_JOIN table_factor
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| table_ref normal_join table_ref
           ON
           expr
@@ -3758,16 +3760,16 @@ join_table:
 	  }
         | table_ref STRAIGHT_JOIN table_factor
           ON
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           expr
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| table_ref normal_join table_ref
 	  USING
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  '(' using_list ')'
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| table_ref NATURAL JOIN_SYM table_factor
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 
 /* LEFT JOIN variants */
 	| table_ref LEFT opt_outer JOIN_SYM table_ref
@@ -3783,29 +3785,29 @@ join_table:
 			     $7);
 	  }
 	| table_ref LEFT opt_outer JOIN_SYM table_factor
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  USING '(' using_list ')'
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| table_ref NATURAL LEFT opt_outer JOIN_SYM table_factor
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 
 /* RIGHT JOIN variants */
 	| table_ref RIGHT opt_outer JOIN_SYM table_ref
           ON
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           expr
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| table_ref RIGHT opt_outer JOIN_SYM table_factor
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  USING '(' using_list ')'
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| table_ref NATURAL RIGHT opt_outer JOIN_SYM table_factor
-	  { throw unsupported_exception (__FILE__, __LINE__); };
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 normal_join:
 	JOIN_SYM		{ $$ = new text ("join");}
 	| INNER_SYM JOIN_SYM	{ $$ = new chain (new text ("inner"), new text ("join"));}
-	| CROSS JOIN_SYM	{throw unsupported_exception (__FILE__, __LINE__);}
+	| CROSS JOIN_SYM	{throw exception::unsupported_exception (__FILE__, __LINE__);}
 	;
 
 /* Warning - may return NULL in case of incomplete SELECT */
@@ -3816,37 +3818,37 @@ table_factor:
 	}
 	| '{' ident table_ref LEFT OUTER JOIN_SYM table_ref
           ON
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
           expr '}'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| select_derived_init get_select_lex select_derived2
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| '(' get_select_lex select_derived union_opt ')' opt_table_alias
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 /* handle contents of parentheses in join expression */
 select_derived:
 	  get_select_lex
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
           derived_table_list
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
  	;
 
 select_derived2:
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         select_options select_item_list
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	opt_select_from
         ;
 
 get_select_lex:
-	/* Empty */ { throw unsupported_exception (__FILE__, __LINE__); }
+	/* Empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 select_derived_init:
           SELECT_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 opt_outer:
@@ -3863,16 +3865,16 @@ opt_outer:
 opt_key_definition:
 	/* empty */	{ $$ = 0; }
 	| USE_SYM    key_usage_list
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FORCE_SYM key_usage_list
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| IGNORE_SYM key_usage_list
-	  { throw unsupported_exception (__FILE__, __LINE__); };
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 key_usage_list:
-	key_or_index { throw unsupported_exception (__FILE__, __LINE__); }
+	key_or_index { throw exception::unsupported_exception (__FILE__, __LINE__); }
         '(' key_list_or_empty ')'
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 key_list_or_empty:
@@ -3882,44 +3884,44 @@ key_list_or_empty:
 
 key_usage_list2:
 	key_usage_list2 ',' ident
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ident
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| PRIMARY_SYM
-        { throw unsupported_exception (__FILE__, __LINE__); };
+        { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 using_list:
 	ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| using_list ',' ident
-	  { throw unsupported_exception (__FILE__, __LINE__); };
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 interval:
 	interval_time_st	
-	| DAY_HOUR_SYM		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| DAY_MICROSECOND_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| DAY_MINUTE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| DAY_SECOND_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| HOUR_MICROSECOND_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| HOUR_MINUTE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| HOUR_SECOND_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| MICROSECOND_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| MINUTE_MICROSECOND_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| MINUTE_SECOND_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| SECOND_MICROSECOND_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| YEAR_MONTH_SYM	{ throw unsupported_exception (__FILE__, __LINE__); };
+	| DAY_HOUR_SYM		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DAY_MICROSECOND_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DAY_MINUTE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DAY_SECOND_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| HOUR_MICROSECOND_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| HOUR_MINUTE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| HOUR_SECOND_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MICROSECOND_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MINUTE_MICROSECOND_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| MINUTE_SECOND_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SECOND_MICROSECOND_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| YEAR_MONTH_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 interval_time_st:
 	DAY_SYM			
 	{ 
 	  $$ = new interval (INTERVAL_DAY);
 	}
-	| WEEK_SYM		{ throw unsupported_exception (__FILE__, __LINE__); }
+	| WEEK_SYM		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| HOUR_SYM		
 	{ 
 	  $$ = new interval (INTERVAL_HOUR);
 	}
-	| FRAC_SECOND_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
+	| FRAC_SECOND_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| MINUTE_SYM	
 	{ 
 	  $$ = new interval (INTERVAL_MINUTE);
@@ -3928,7 +3930,7 @@ interval_time_st:
 	{ 
 	  $$ = new interval (INTERVAL_MONTH);
 	}
-	| QUARTER_SYM		{ throw unsupported_exception (__FILE__, __LINE__); }
+	| QUARTER_SYM		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SECOND_SYM
 	{ 
 	  $$ = new interval (INTERVAL_SECOND);
@@ -3940,10 +3942,10 @@ interval_time_st:
         ;
 
 date_time_type:
-          DATE_SYM              { throw unsupported_exception (__FILE__, __LINE__); }
-        | TIME_SYM              { throw unsupported_exception (__FILE__, __LINE__); }
-        | DATETIME              { throw unsupported_exception (__FILE__, __LINE__); }
-        | TIMESTAMP             { throw unsupported_exception (__FILE__, __LINE__); }
+          DATE_SYM              { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | TIME_SYM              { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | DATETIME              { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | TIMESTAMP             { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 table_alias:
@@ -3979,7 +3981,7 @@ having_clause:
 
 opt_escape:
 	ESCAPE_SYM simple_expr 
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| /* empty */
           { $$ = 0; }
         ;
@@ -4011,9 +4013,9 @@ group_list:
 olap_opt:
 	/* empty */ { $$ = 0; }
 	| WITH CUBE_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| WITH ROLLUP_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /*
@@ -4031,7 +4033,7 @@ alter_order_list:
 
 alter_order_item:
           simple_ident_nospvar order_dir
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 /*
@@ -4070,7 +4072,7 @@ order_dir:
 
 opt_limit_clause_init:
 	/* empty */
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| limit_clause 
 	;
 
@@ -4099,7 +4101,7 @@ limit_options:
 	;
 
 limit_option:
-        param_marker  { throw unsupported_exception (__FILE__, __LINE__); }
+        param_marker  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | ULONGLONG_NUM 
 	{
 	  $$ = strtoull(yytext, 0, 10); 
@@ -4126,15 +4128,15 @@ delete_limit_clause:
 	/* empty */
 	{$$=0;}
 	| LIMIT limit_option
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 ulong_num:
-          NUM           { throw unsupported_exception (__FILE__, __LINE__); }
-	| HEX_NUM       { throw unsupported_exception (__FILE__, __LINE__); }
-	| LONG_NUM      { throw unsupported_exception (__FILE__, __LINE__); }
-	| ULONGLONG_NUM { throw unsupported_exception (__FILE__, __LINE__); }
-        | DECIMAL_NUM   { throw unsupported_exception (__FILE__, __LINE__); }
-	| FLOAT_NUM	{ throw unsupported_exception (__FILE__, __LINE__); }
+          NUM           { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| HEX_NUM       { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LONG_NUM      { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ULONGLONG_NUM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | DECIMAL_NUM   { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| FLOAT_NUM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 ulonglong_num:
@@ -4150,15 +4152,15 @@ ulonglong_num:
 	{
 	  $$ = strtoull(yytext, 0, 10); 
 	}
-        | DECIMAL_NUM  { throw unsupported_exception (__FILE__, __LINE__); }
-	| FLOAT_NUM { throw unsupported_exception (__FILE__, __LINE__); }
+        | DECIMAL_NUM  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| FLOAT_NUM { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 procedure_clause:
 	/* empty */ { $$ = 0; }
 	| PROCEDURE ident			/* Procedure name */
 	  '(' procedure_list ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  ;
 
 procedure_list:
@@ -4171,12 +4173,12 @@ procedure_list2:
 
 procedure_item:
 	  expr
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
           ;
 
 
 select_var_list_init:
-	   { throw unsupported_exception (__FILE__, __LINE__); }
+	   { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	   select_var_list
 	   {}
            ;
@@ -4188,25 +4190,25 @@ select_var_list:
 
 select_var_ident:  
 	   '@' ident_or_text
-           { throw unsupported_exception (__FILE__, __LINE__); }
+           { throw exception::unsupported_exception (__FILE__, __LINE__); }
            | ident_or_text
-           { throw unsupported_exception (__FILE__, __LINE__); }
+           { throw exception::unsupported_exception (__FILE__, __LINE__); }
            ;
 
 into:
         INTO
         into_destination
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 into_destination:
         OUTFILE TEXT_STRING_filesystem
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	opt_field_term opt_line_term
 	| DUMPFILE TEXT_STRING_filesystem
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         | select_var_list_init
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 /*
@@ -4214,9 +4216,9 @@ into_destination:
 */
 
 do:	DO_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	expr_list
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /*
@@ -4235,19 +4237,19 @@ drop:
 	  $$ = res;
 	}
 	| DROP INDEX_SYM ident ON table_ident {}
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DROP DATABASE if_exists ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DROP FUNCTION_SYM if_exists sp_name
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DROP PROCEDURE if_exists sp_name
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DROP USER clear_privileges user_list
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DROP VIEW_SYM if_exists table_list opt_restrict
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | DROP TRIGGER_SYM if_exists sp_name
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 table_list:
@@ -4294,9 +4296,9 @@ insert:
 
 replace:
 	REPLACE
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	replace_lock_option insert2
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	insert_field_spec
 	{}
 	;
@@ -4304,14 +4306,14 @@ replace:
 insert_lock_option:
 	/* empty */
           { $$ = 0; }
-	| LOW_PRIORITY	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| DELAYED_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| HIGH_PRIORITY { throw unsupported_exception (__FILE__, __LINE__); }
+	| LOW_PRIORITY	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DELAYED_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| HIGH_PRIORITY { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 replace_lock_option:
-	opt_low_priority { throw unsupported_exception (__FILE__, __LINE__); }
-	| DELAYED_SYM	 { throw unsupported_exception (__FILE__, __LINE__); };
+	opt_low_priority { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DELAYED_SYM	 { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 insert2:
 	INTO insert_table { $$ = $2; }
@@ -4360,8 +4362,8 @@ insert_values:
 	{ 
 	  $$ = $2;
 	}
-	|     create_select     { throw unsupported_exception (__FILE__, __LINE__); } union_clause {}
-	| '(' create_select ')' { throw unsupported_exception (__FILE__, __LINE__); } union_opt {}
+	|     create_select     { throw exception::unsupported_exception (__FILE__, __LINE__); } union_clause {}
+	| '(' create_select ')' { throw exception::unsupported_exception (__FILE__, __LINE__); } union_opt {}
         ;
 
 values_list:
@@ -4392,7 +4394,7 @@ ident_eq_value:
 	 { $$ = new chain ($1, $3); }
 
 equal:	EQ		{ $$ = new text ("="); }
-	| SET_VAR	{ throw unsupported_exception (__FILE__, __LINE__); }
+	| SET_VAR	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_equal:
@@ -4427,7 +4429,7 @@ values:
 
 expr_or_default:
 	expr	  
-	| DEFAULT { throw unsupported_exception (__FILE__, __LINE__); }
+	| DEFAULT { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_insert_update:
@@ -4437,7 +4439,7 @@ opt_insert_update:
 	}
         | ON DUPLICATE_SYM	
           KEY_SYM UPDATE_SYM insert_update_list
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 /* Update rows in a table */
@@ -4481,11 +4483,11 @@ insert_update_list:
 
 insert_update_elem:
 	simple_ident_nospvar equal expr_or_default
-	  { throw unsupported_exception (__FILE__, __LINE__); };
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_low_priority:
 	/* empty */	{ $$=0; }
-	| LOW_PRIORITY	{ throw unsupported_exception (__FILE__, __LINE__); };
+	| LOW_PRIORITY	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 /* Delete rows from a table */
 
@@ -4509,13 +4511,13 @@ single_multi:
 	  $$ = new chain(from, $2, where, $3, $4, $5);
 	}
 	| table_wild_list
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
           FROM join_table_list where_clause
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| FROM table_wild_list
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	  USING join_table_list where_clause
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 table_wild_list:
@@ -4524,9 +4526,9 @@ table_wild_list:
 
 table_wild_one:
 	ident opt_wild opt_table_alias
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ident '.' ident_any opt_wild opt_table_alias
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_wild:
@@ -4539,13 +4541,13 @@ opt_delete_options:
 	| opt_delete_option opt_delete_options {};
 
 opt_delete_option:
-	QUICK		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| LOW_PRIORITY	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| IGNORE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); };
+	QUICK		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LOW_PRIORITY	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| IGNORE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 truncate:
 	TRUNCATE_SYM opt_table_sym table_name
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_table_sym:
@@ -4562,30 +4564,30 @@ profile_defs:
 
 profile_def:
   CPU_SYM
-    { throw unsupported_exception (__FILE__, __LINE__); }
+    { throw exception::unsupported_exception (__FILE__, __LINE__); }
   | MEMORY_SYM
-    { throw unsupported_exception (__FILE__, __LINE__); }
+    { throw exception::unsupported_exception (__FILE__, __LINE__); }
   | BLOCK_SYM IO_SYM
-    { throw unsupported_exception (__FILE__, __LINE__); }
+    { throw exception::unsupported_exception (__FILE__, __LINE__); }
   | CONTEXT_SYM SWITCHES_SYM
-    { throw unsupported_exception (__FILE__, __LINE__); }
+    { throw exception::unsupported_exception (__FILE__, __LINE__); }
   | PAGE_SYM FAULTS_SYM
-    { throw unsupported_exception (__FILE__, __LINE__); }
+    { throw exception::unsupported_exception (__FILE__, __LINE__); }
   | IPC_SYM
-    { throw unsupported_exception (__FILE__, __LINE__); }
+    { throw exception::unsupported_exception (__FILE__, __LINE__); }
   | SWAPS_SYM
-    { throw unsupported_exception (__FILE__, __LINE__); }
+    { throw exception::unsupported_exception (__FILE__, __LINE__); }
   | SOURCE_SYM
-    { throw unsupported_exception (__FILE__, __LINE__); }
+    { throw exception::unsupported_exception (__FILE__, __LINE__); }
   | ALL
-    { throw unsupported_exception (__FILE__, __LINE__); }
+    { throw exception::unsupported_exception (__FILE__, __LINE__); }
   ;
 
 opt_profile_args:
   /* empty */
-    { throw unsupported_exception (__FILE__, __LINE__); }
+    { throw exception::unsupported_exception (__FILE__, __LINE__); }
   | FOR_SYM QUERY_SYM NUM
-    { throw unsupported_exception (__FILE__, __LINE__); }
+    { throw exception::unsupported_exception (__FILE__, __LINE__); }
   ;
 
 /* Show things */
@@ -4597,18 +4599,18 @@ show:	SHOW
 
 show_param:
         DATABASES wild_and_where
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | opt_full TABLES opt_db wild_and_where
           {
 	     
 	    if ($1)
 	      {
-		throw unsupported_exception (__FILE__, __LINE__); 
+		throw exception::unsupported_exception (__FILE__, __LINE__); 
 	      }
 	    
 	    if ($4)
 	      {
-		throw unsupported_exception (__FILE__, __LINE__); 
+		throw exception::unsupported_exception (__FILE__, __LINE__); 
 	      }
 	    
 	    if ($3)
@@ -4623,185 +4625,185 @@ show_param:
 	  }
         | opt_full TRIGGERS_SYM opt_db wild_and_where
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | TABLE_SYM STATUS_SYM opt_db wild_and_where
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | OPEN_SYM TABLES opt_db wild_and_where
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| ENGINE_SYM storage_engines show_engine_param
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| opt_full COLUMNS from_or_in table_ident opt_db wild_and_where
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | NEW_SYM MASTER_SYM FOR_SYM SLAVE WITH MASTER_LOG_FILE_SYM EQ
 	  TEXT_STRING_sys AND_SYM MASTER_LOG_POS_SYM EQ ulonglong_num
 	  AND_SYM MASTER_SERVER_ID_SYM EQ
 	  ulong_num
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | master_or_binary LOGS_SYM
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | SLAVE HOSTS_SYM
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | BINLOG_SYM EVENTS_SYM binlog_in binlog_from opt_limit_clause_init
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  } 
         | keys_or_index from_or_in table_ident opt_db where_clause
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| COLUMN_SYM TYPES_SYM
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| TABLE_SYM TYPES_SYM
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| opt_storage ENGINES_SYM
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| PRIVILEGES
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | COUNT_SYM '(' '*' ')' WARNINGS
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | COUNT_SYM '(' '*' ')' ERRORS
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | WARNINGS opt_limit_clause_init
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | ERRORS opt_limit_clause_init
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | PROFILES_SYM
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | PROFILE_SYM opt_profile_defs opt_profile_args opt_limit_clause_init
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | opt_var_type STATUS_SYM wild_and_where
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }	
         | INNOBASE_SYM STATUS_SYM
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | MUTEX_SYM STATUS_SYM
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| opt_full PROCESSLIST_SYM
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | opt_var_type  VARIABLES wild_and_where
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | charset wild_and_where
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | COLLATION_SYM wild_and_where
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| BERKELEY_DB_SYM LOGS_SYM
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| LOGS_SYM
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| GRANTS
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| GRANTS FOR_SYM user
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| CREATE DATABASE opt_if_not_exists ident
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | CREATE TABLE_SYM table_ident
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | CREATE VIEW_SYM table_ident
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | MASTER_SYM STATUS_SYM
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | SLAVE STATUS_SYM
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| CREATE PROCEDURE sp_name
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| CREATE FUNCTION_SYM sp_name
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| PROCEDURE STATUS_SYM wild_and_where
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| FUNCTION_SYM STATUS_SYM wild_and_where
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | PROCEDURE CODE_SYM sp_name
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         | FUNCTION_SYM CODE_SYM sp_name
           {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
         ;
 
 show_engine_param:
 	STATUS_SYM
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| LOGS_SYM
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	;
 
@@ -4826,29 +4828,29 @@ from_or_in:
 	| IN_SYM;
 
 binlog_in:
-	/* empty */ { throw unsupported_exception (__FILE__, __LINE__); }
-        | IN_SYM TEXT_STRING_sys { throw unsupported_exception (__FILE__, __LINE__); };
+	/* empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | IN_SYM TEXT_STRING_sys { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 binlog_from:
-	/* empty */ { throw unsupported_exception (__FILE__, __LINE__); }
-        | FROM ulonglong_num { throw unsupported_exception (__FILE__, __LINE__); };
+	/* empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | FROM ulonglong_num { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 wild_and_where:
 	/* empty */ {$$ = 0;}
       | LIKE TEXT_STRING_sys
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
       | WHERE expr
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
       ;
 
 
 /* A Oracle compatible synonym for show */
 describe:
 	describe_command table_ident
-	opt_describe_column { throw unsupported_exception (__FILE__, __LINE__); }
+	opt_describe_column { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| describe_command opt_extended_describe
 	  select
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 describe_command:
@@ -4857,18 +4859,18 @@ describe_command:
 
 opt_extended_describe:
 	/* empty */ {}
-	| EXTENDED_SYM { throw unsupported_exception (__FILE__, __LINE__); }
+	| EXTENDED_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_describe_column:
 	/* empty */	{}
 	| text_string	
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	| ident
 	  {
-	    throw unsupported_exception (__FILE__, __LINE__); 
+	    throw exception::unsupported_exception (__FILE__, __LINE__); 
 	  }
 	;
 
@@ -4878,7 +4880,7 @@ opt_describe_column:
 flush:
 	FLUSH_SYM opt_no_write_to_binlog
 	flush_options
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 flush_options:
@@ -4886,17 +4888,17 @@ flush_options:
 	| flush_option;
 
 flush_option:
-	table_or_tables	{ throw unsupported_exception (__FILE__, __LINE__); } opt_table_list {}
-	| TABLES WITH READ_SYM LOCK_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| QUERY_SYM CACHE_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| HOSTS_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| PRIVILEGES	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| LOGS_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| STATUS_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-        | SLAVE         { throw unsupported_exception (__FILE__, __LINE__); }
-        | MASTER_SYM    { throw unsupported_exception (__FILE__, __LINE__); }
-	| DES_KEY_FILE	{ throw unsupported_exception (__FILE__, __LINE__); }
- 	| RESOURCES     { throw unsupported_exception (__FILE__, __LINE__); };
+	table_or_tables	{ throw exception::unsupported_exception (__FILE__, __LINE__); } opt_table_list {}
+	| TABLES WITH READ_SYM LOCK_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| QUERY_SYM CACHE_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| HOSTS_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| PRIVILEGES	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LOGS_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| STATUS_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | SLAVE         { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | MASTER_SYM    { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DES_KEY_FILE	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+ 	| RESOURCES     { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_table_list:
 	/* empty */  {;}
@@ -4904,7 +4906,7 @@ opt_table_list:
 
 reset:
 	RESET_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); } reset_options
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); } reset_options
 	{}
 	;
 
@@ -4913,13 +4915,13 @@ reset_options:
 	| reset_option;
 
 reset_option:
-        SLAVE                 { throw unsupported_exception (__FILE__, __LINE__); }
-        | MASTER_SYM          { throw unsupported_exception (__FILE__, __LINE__); }
-	| QUERY_SYM CACHE_SYM { throw unsupported_exception (__FILE__, __LINE__); };
+        SLAVE                 { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | MASTER_SYM          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| QUERY_SYM CACHE_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 purge:
 	PURGE
-	{ throw unsupported_exception (__FILE__, __LINE__); } purge_options
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); } purge_options
 	{}
 	;
 
@@ -4929,67 +4931,67 @@ purge_options:
 
 purge_option:
         TO_SYM TEXT_STRING_sys
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| BEFORE_SYM expr
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /* kill threads */
 
 kill:
-	KILL_SYM { throw unsupported_exception (__FILE__, __LINE__); } kill_option expr
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	KILL_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); } kill_option expr
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 kill_option:
-	/* empty */	 { throw unsupported_exception (__FILE__, __LINE__); }
-	| CONNECTION_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| QUERY_SYM      { throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */	 { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CONNECTION_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| QUERY_SYM      { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 /* change database */
 
 use:	USE_SYM ident
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 /* import, export of files */
 
 load:   LOAD DATA_SYM
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         load_data
         {}
         |
         LOAD TABLE_SYM table_ident FROM MASTER_SYM
-        { throw unsupported_exception (__FILE__, __LINE__); };
+        { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 load_data:
 	load_data_lock opt_local INFILE TEXT_STRING_filesystem
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         opt_duplicate INTO
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         TABLE_SYM table_ident
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         opt_field_term opt_line_term opt_ignore_lines opt_field_or_var_spec
         opt_load_data_set_spec
         {}
         |
 	FROM MASTER_SYM
-        { throw unsupported_exception (__FILE__, __LINE__); };
+        { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_local:
-	/* empty */	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| LOCAL_SYM	{ throw unsupported_exception (__FILE__, __LINE__); };
+	/* empty */	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LOCAL_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 load_data_lock:
-	/* empty */	{ throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CONCURRENT
-          { throw unsupported_exception (__FILE__, __LINE__); }
-	| LOW_PRIORITY	{ throw unsupported_exception (__FILE__, __LINE__); };
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LOW_PRIORITY	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 
 opt_duplicate:
-	/* empty */	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| REPLACE	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| IGNORE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); };
+	/* empty */	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| REPLACE	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| IGNORE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_field_term:
 	/* empty */
@@ -5001,13 +5003,13 @@ field_term_list:
 
 field_term:
 	TERMINATED BY text_string 
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| OPTIONALLY ENCLOSED BY text_string
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | ENCLOSED BY text_string
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | ESCAPED BY text_string
-          { throw unsupported_exception (__FILE__, __LINE__); };
+          { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_line_term:
 	/* empty */
@@ -5019,14 +5021,14 @@ line_term_list:
 
 line_term:
         TERMINATED BY text_string
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | STARTING BY text_string
-          { throw unsupported_exception (__FILE__, __LINE__); };
+          { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_ignore_lines:
 	/* empty */
         | IGNORE_SYM NUM LINES
-          { throw unsupported_exception (__FILE__, __LINE__); };
+          { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 opt_field_or_var_spec:
 	/* empty */	          {}
@@ -5035,15 +5037,15 @@ opt_field_or_var_spec:
 
 fields_or_vars:
         fields_or_vars ',' field_or_var
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | field_or_var
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 field_or_var:
-        simple_ident_nospvar { throw unsupported_exception (__FILE__, __LINE__); }
+        simple_ident_nospvar { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | '@' ident_or_text
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 opt_load_data_set_spec:
@@ -5056,9 +5058,9 @@ opt_load_data_set_spec:
 text_literal:
 	TEXT_STRING_literal
 	| NCHAR_STRING
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| UNDERSCORE_CHARSET TEXT_STRING
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| text_literal TEXT_STRING_literal
 	  {
 	    $$ = new chain ( $1, new text (" ||\n"), $2);
@@ -5068,14 +5070,14 @@ text_literal:
 text_string:
 	TEXT_STRING_literal
 	| HEX_NUM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | BIN_NUM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 param_marker:
         PARAM_MARKER
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 signed_literal:
@@ -5100,14 +5102,14 @@ literal:
 	| FALSE_SYM	{ $$ = new text( "'f'" ); }
 	| TRUE_SYM	{ $$ = new text( "'f'" ); }
 	| HEX_NUM	{ $$ = new text( yytext ); }
-	| BIN_NUM	{ throw unsupported_exception (__FILE__, __LINE__); }
+	| BIN_NUM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| UNDERSCORE_CHARSET HEX_NUM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| UNDERSCORE_CHARSET BIN_NUM
-          { throw unsupported_exception (__FILE__, __LINE__); }
-	| DATE_SYM text_literal { throw unsupported_exception (__FILE__, __LINE__); }
-	| TIME_SYM text_literal { throw unsupported_exception (__FILE__, __LINE__); }
-	| TIMESTAMP text_literal { throw unsupported_exception (__FILE__, __LINE__); };
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DATE_SYM text_literal { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| TIME_SYM text_literal { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| TIMESTAMP text_literal { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 NUM_literal:
 	NUM 
@@ -5198,7 +5200,7 @@ table_ident:
         ;
 
 table_ident_nodb:
-	ident			{ throw unsupported_exception (__FILE__, __LINE__); }
+	ident			{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 IDENT_sys:
@@ -5239,23 +5241,23 @@ ident_any:
 	;
 
 label_ident:
-	IDENT_sys	    { throw unsupported_exception (__FILE__, __LINE__); }
+	IDENT_sys	    { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| keyword_sp
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 ident_or_text:
         ident { $$ = $1; }                   
 	| TEXT_STRING_sys	
-	| LEX_HOSTNAME		{ throw unsupported_exception (__FILE__, __LINE__); };
+	| LEX_HOSTNAME		{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 user:
 	ident_or_text
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ident_or_text '@' ident_or_text
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CURRENT_USER optional_braces
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 /* Keyword that we allow for identifiers (except SP labels) */
 keyword:
@@ -5547,7 +5549,7 @@ keyword_sp:
 
 set:
 	SET opt_option
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	option_value_list
 	{}
 	;
@@ -5561,35 +5563,35 @@ option_value_list:
 	| option_value_list ',' option_type_value;
 
 option_type_value:
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	ext_option_value
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 ;
 
 option_type:
         option_type2    {}
-	| GLOBAL_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| LOCAL_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| SESSION_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
+	| GLOBAL_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LOCAL_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SESSION_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 option_type2:
-	/* empty */	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| ONE_SHOT_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ONE_SHOT_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_var_type:
-	/* empty */	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| GLOBAL_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| LOCAL_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| SESSION_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| GLOBAL_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LOCAL_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SESSION_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_var_ident_type:
-	/* empty */		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| GLOBAL_SYM '.'	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| LOCAL_SYM '.'		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| SESSION_SYM '.'	{ throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| GLOBAL_SYM '.'	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LOCAL_SYM '.'		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SESSION_SYM '.'	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 ext_option_value:
@@ -5598,57 +5600,57 @@ ext_option_value:
 
 sys_option_value:
         option_type internal_variable_name equal set_expr_or_default
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | option_type TRANSACTION_SYM ISOLATION LEVEL_SYM isolation_types
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 option_value:
 	'@' ident_or_text equal expr
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| '@' '@' opt_var_ident_type internal_variable_name equal set_expr_or_default
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| charset old_or_new_charset_name_or_default
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         | NAMES_SYM equal expr
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| NAMES_SYM charset_name_or_default opt_collate
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| PASSWORD equal text_or_password
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| PASSWORD FOR_SYM user equal text_or_password
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 internal_variable_name:
 	ident
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DEFAULT '.' ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 isolation_types:
-	READ_SYM UNCOMMITTED_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| READ_SYM COMMITTED_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| REPEATABLE_SYM READ_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| SERIALIZABLE_SYM		{ throw unsupported_exception (__FILE__, __LINE__); }
+	READ_SYM UNCOMMITTED_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| READ_SYM COMMITTED_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| REPEATABLE_SYM READ_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SERIALIZABLE_SYM		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 text_or_password:
-	TEXT_STRING { throw unsupported_exception (__FILE__, __LINE__); }
+	TEXT_STRING { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| PASSWORD '(' TEXT_STRING ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| OLD_PASSWORD '(' TEXT_STRING ')'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
           ;
 
 
 set_expr_or_default:
-	expr      { throw unsupported_exception (__FILE__, __LINE__); }
-	| DEFAULT { throw unsupported_exception (__FILE__, __LINE__); }
-	| ON	  { throw unsupported_exception (__FILE__, __LINE__); }
-	| ALL	  { throw unsupported_exception (__FILE__, __LINE__); }
-	| BINARY  { throw unsupported_exception (__FILE__, __LINE__); }
+	expr      { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DEFAULT { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ON	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ALL	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| BINARY  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 
@@ -5656,7 +5658,7 @@ set_expr_or_default:
 
 lock:
 	LOCK_SYM table_or_tables
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	table_lock_list
 	{}
 	;
@@ -5671,19 +5673,19 @@ table_lock_list:
 
 table_lock:
 	table_ident opt_table_alias lock_option
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 lock_option:
-	READ_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| WRITE_SYM     { throw unsupported_exception (__FILE__, __LINE__); }
-	| LOW_PRIORITY WRITE_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| READ_SYM LOCAL_SYM { throw unsupported_exception (__FILE__, __LINE__); }
+	READ_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| WRITE_SYM     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LOW_PRIORITY WRITE_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| READ_SYM LOCAL_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 unlock:
 	UNLOCK_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	table_or_tables
 	{}
         ;
@@ -5695,39 +5697,39 @@ unlock:
 
 handler:
 	HANDLER_SYM table_ident OPEN_SYM opt_table_alias
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| HANDLER_SYM table_ident_nodb CLOSE_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| HANDLER_SYM table_ident_nodb READ_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         handler_read_or_scan where_clause opt_limit_clause {}
         ;
 
 handler_read_or_scan:
-	handler_scan_function         { throw unsupported_exception (__FILE__, __LINE__); }
-        | ident handler_rkey_function { throw unsupported_exception (__FILE__, __LINE__); }
+	handler_scan_function         { throw exception::unsupported_exception (__FILE__, __LINE__); }
+        | ident handler_rkey_function { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 handler_scan_function:
-	FIRST_SYM  { throw unsupported_exception (__FILE__, __LINE__); }
-	| NEXT_SYM { throw unsupported_exception (__FILE__, __LINE__); }
+	FIRST_SYM  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| NEXT_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 handler_rkey_function:
-	FIRST_SYM  { throw unsupported_exception (__FILE__, __LINE__); }
-	| NEXT_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| PREV_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| LAST_SYM { throw unsupported_exception (__FILE__, __LINE__); }
+	FIRST_SYM  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| NEXT_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| PREV_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LAST_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| handler_rkey_mode
-	{ throw unsupported_exception (__FILE__, __LINE__); } '(' values ')' {}
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); } '(' values ')' {}
         ;
 
 handler_rkey_mode:
-	  EQ     { throw unsupported_exception (__FILE__, __LINE__); }
-	| GE     { throw unsupported_exception (__FILE__, __LINE__); }
-	| LE     { throw unsupported_exception (__FILE__, __LINE__); }
-	| GT_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| LT     { throw unsupported_exception (__FILE__, __LINE__); }
+	  EQ     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| GE     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LE     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| GT_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LT     { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 /* GRANT / REVOKE */
@@ -5739,16 +5741,16 @@ revoke:
 
 revoke_command:
 	grant_privileges ON opt_table grant_ident FROM grant_list
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         |
         grant_privileges ON FUNCTION_SYM grant_ident FROM grant_list
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	|
         grant_privileges ON PROCEDURE grant_ident FROM grant_list
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	|
 	ALL opt_privileges ',' GRANT OPTION FROM grant_list
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 grant:
@@ -5759,15 +5761,15 @@ grant:
 grant_command:
 	grant_privileges ON opt_table grant_ident TO_SYM grant_list
 	require_clause grant_options
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         |
 	grant_privileges ON FUNCTION_SYM grant_ident TO_SYM grant_list
 	require_clause grant_options
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         |
 	grant_privileges ON PROCEDURE grant_ident TO_SYM grant_list
 	require_clause grant_options
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 opt_table:
@@ -5777,7 +5779,7 @@ opt_table:
 grant_privileges:
 	object_privilege_list {}
 	| ALL opt_privileges
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 opt_privileges:
@@ -5790,33 +5792,33 @@ object_privilege_list:
 	| object_privilege_list ',' object_privilege;
 
 object_privilege:
-	SELECT_SYM	{ throw unsupported_exception (__FILE__, __LINE__); } opt_column_list {}
-	| INSERT	{ throw unsupported_exception (__FILE__, __LINE__); } opt_column_list {}
-	| UPDATE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); } opt_column_list {}
-	| REFERENCES	{ throw unsupported_exception (__FILE__, __LINE__); } opt_column_list {}
-	| DELETE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
+	SELECT_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); } opt_column_list {}
+	| INSERT	{ throw exception::unsupported_exception (__FILE__, __LINE__); } opt_column_list {}
+	| UPDATE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); } opt_column_list {}
+	| REFERENCES	{ throw exception::unsupported_exception (__FILE__, __LINE__); } opt_column_list {}
+	| DELETE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| USAGE		{}
-	| INDEX_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| ALTER		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| CREATE	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| DROP		{ throw unsupported_exception (__FILE__, __LINE__); }
-	| EXECUTE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| RELOAD	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| SHUTDOWN	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| PROCESS	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| FILE_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| GRANT OPTION  { throw unsupported_exception (__FILE__, __LINE__); }
-	| SHOW DATABASES { throw unsupported_exception (__FILE__, __LINE__); }
-	| SUPER_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| CREATE TEMPORARY TABLES { throw unsupported_exception (__FILE__, __LINE__); }
-	| LOCK_SYM TABLES   { throw unsupported_exception (__FILE__, __LINE__); }
-	| REPLICATION SLAVE  { throw unsupported_exception (__FILE__, __LINE__); }
-	| REPLICATION CLIENT_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| CREATE VIEW_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| SHOW VIEW_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| CREATE ROUTINE_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| ALTER ROUTINE_SYM { throw unsupported_exception (__FILE__, __LINE__); }
-	| CREATE USER { throw unsupported_exception (__FILE__, __LINE__); }
+	| INDEX_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ALTER		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CREATE	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DROP		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| EXECUTE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| RELOAD	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SHUTDOWN	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| PROCESS	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| FILE_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| GRANT OPTION  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SHOW DATABASES { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SUPER_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CREATE TEMPORARY TABLES { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| LOCK_SYM TABLES   { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| REPLICATION SLAVE  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| REPLICATION CLIENT_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CREATE VIEW_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| SHOW VIEW_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CREATE ROUTINE_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ALTER ROUTINE_SYM { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| CREATE USER { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 
@@ -5832,52 +5834,52 @@ require_list:
 
 require_list_element:
 	SUBJECT_SYM TEXT_STRING
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ISSUER_SYM TEXT_STRING
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| CIPHER_SYM TEXT_STRING
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 grant_ident:
 	'*'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ident '.' '*'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| '*' '.' '*'
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| table_ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
           ;
 
 
 user_list:
-	user  { throw unsupported_exception (__FILE__, __LINE__); }
+	user  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| user_list ',' user
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 
 grant_list:
-	grant_user  { throw unsupported_exception (__FILE__, __LINE__); }
+	grant_user  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| grant_list ',' grant_user
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 
 grant_user:
 	user IDENTIFIED_SYM BY TEXT_STRING
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| user IDENTIFIED_SYM BY PASSWORD TEXT_STRING
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| user
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 
 opt_column_list:
 	/* empty */
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| '(' column_list ')';
 
 column_list:
@@ -5886,19 +5888,19 @@ column_list:
 
 column_list_id:
 	ident
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 
 require_clause: /* empty */
         | REQUIRE_SYM require_list
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | REQUIRE_SYM SSL_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | REQUIRE_SYM X509_SYM
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| REQUIRE_SYM NONE_SYM
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
           ;
 
 grant_options:
@@ -5911,20 +5913,20 @@ grant_option_list:
         ;
 
 grant_option:
-	GRANT OPTION { throw unsupported_exception (__FILE__, __LINE__); }
+	GRANT OPTION { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | MAX_QUERIES_PER_HOUR ulong_num
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | MAX_UPDATES_PER_HOUR ulong_num
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | MAX_CONNECTIONS_PER_HOUR ulong_num
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | MAX_USER_CONNECTIONS_SYM ulong_num
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 begin:
 	BEGIN_SYM  
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         opt_work {}
 	;
 
@@ -5934,15 +5936,15 @@ opt_work:
         ;
 
 opt_chain:
-	/* empty */ { throw unsupported_exception (__FILE__, __LINE__); }
-	| AND_SYM NO_SYM CHAIN_SYM	{ throw unsupported_exception (__FILE__, __LINE__); }
-	| AND_SYM CHAIN_SYM		{ throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| AND_SYM NO_SYM CHAIN_SYM	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| AND_SYM CHAIN_SYM		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 opt_release:
-	/* empty */ { throw unsupported_exception (__FILE__, __LINE__); }
-	| RELEASE_SYM 			{ throw unsupported_exception (__FILE__, __LINE__); }
-	| NO_SYM RELEASE_SYM 		{ throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| RELEASE_SYM 			{ throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| NO_SYM RELEASE_SYM 		{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 	
 opt_savepoint:
@@ -5952,25 +5954,25 @@ opt_savepoint:
 
 commit:
 	COMMIT_SYM opt_work opt_chain opt_release
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 rollback:
 	ROLLBACK_SYM opt_work opt_chain opt_release
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ROLLBACK_SYM opt_work
 	  TO_SYM opt_savepoint ident
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 savepoint:
 	SAVEPOINT_SYM ident
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 release:
 	RELEASE_SYM SAVEPOINT_SYM ident
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
   
 /*
@@ -5985,21 +5987,21 @@ union_clause:
 
 union_list:
 	UNION_SYM union_option
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	select_init
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 union_opt:
-	/* Empty */ { throw unsupported_exception (__FILE__, __LINE__); }
-	| union_list { throw unsupported_exception (__FILE__, __LINE__); }
-	| union_order_or_limit { throw unsupported_exception (__FILE__, __LINE__); }
+	/* Empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| union_list { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| union_order_or_limit { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 union_order_or_limit:
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	order_or_limit
-          { throw unsupported_exception (__FILE__, __LINE__); }
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 order_or_limit:
@@ -6008,27 +6010,27 @@ order_or_limit:
 	;
 
 union_option:
-	/* empty */ { throw unsupported_exception (__FILE__, __LINE__); }
-	| DISTINCT  { throw unsupported_exception (__FILE__, __LINE__); }
-	| ALL       { throw unsupported_exception (__FILE__, __LINE__); }
+	/* empty */ { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| DISTINCT  { throw exception::unsupported_exception (__FILE__, __LINE__); }
+	| ALL       { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 subselect:
         SELECT_SYM subselect_start subselect_init subselect_end
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         | '(' subselect_start subselect ')'
-          { throw unsupported_exception (__FILE__, __LINE__); }
-          union_clause subselect_end { throw unsupported_exception (__FILE__, __LINE__); };
+          { throw exception::unsupported_exception (__FILE__, __LINE__); }
+          union_clause subselect_end { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 subselect_init:
   select_init2
-  { throw unsupported_exception (__FILE__, __LINE__); };
+  { throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 subselect_start:
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 subselect_end:
-	{ throw unsupported_exception (__FILE__, __LINE__); };
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); };
 
 /**************************************************************************
 
@@ -6060,9 +6062,9 @@ view_or_trigger_or_sp_tail:
 
 definer:
 	/* empty */
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| DEFINER_SYM EQ user
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /**************************************************************************
@@ -6082,37 +6084,37 @@ view_replace_or_algorithm:
 
 view_replace:
 	OR_SYM REPLACE
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 view_algorithm:
 	ALGORITHM_SYM EQ UNDEFINED_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ALGORITHM_SYM EQ MERGE_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| ALGORITHM_SYM EQ TEMPTABLE_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 view_algorithm_opt:
 	/* empty */
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| view_algorithm
 	{}
 	;
 
 view_suid:
 	/* empty */
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SQL_SYM SECURITY_SYM DEFINER_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| SQL_SYM SECURITY_SYM INVOKER_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 view_tail:
 	view_suid VIEW_SYM table_ident
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	view_list_opt AS view_select view_check_option
 	{}
 	;
@@ -6125,33 +6127,33 @@ view_list_opt:
 
 view_list:
 	ident 
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| view_list ',' ident
-	  { throw unsupported_exception (__FILE__, __LINE__); }
+	  { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 view_select:
-        { throw unsupported_exception (__FILE__, __LINE__); }        
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }        
         view_select_aux
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
         ;
 
 view_select_aux:
 	SELECT_SYM select_init2
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| '(' select_paren ')' union_opt
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 view_check_option:
 	/* empty */
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| WITH CHECK_SYM OPTION
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| WITH CASCADED CHECK_SYM OPTION
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	| WITH LOCAL_SYM CHECK_SYM OPTION
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /**************************************************************************
@@ -6163,9 +6165,9 @@ view_check_option:
 trigger_tail:
 	TRIGGER_SYM sp_name trg_action_time trg_event
 	ON table_ident FOR_SYM EACH_SYM ROW_SYM
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	sp_proc_stmt
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /**************************************************************************
@@ -6176,38 +6178,38 @@ trigger_tail:
 
 sp_tail:
 	udf_func_type FUNCTION_SYM sp_name
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	create_function_tail
 	{}
 	| PROCEDURE sp_name
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
         '('
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	sp_pdparam_list
 	')'
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	sp_c_chistics
-	{ throw unsupported_exception (__FILE__, __LINE__); }
+	{ throw exception::unsupported_exception (__FILE__, __LINE__); }
 	sp_proc_stmt
-        { throw unsupported_exception (__FILE__, __LINE__); }
+        { throw exception::unsupported_exception (__FILE__, __LINE__); }
 	;
 
 /*************************************************************************/
 
-xa: XA_SYM begin_or_start xid opt_join_or_resume     { throw unsupported_exception (__FILE__, __LINE__); }
-    | XA_SYM END xid opt_suspend     { throw unsupported_exception (__FILE__, __LINE__); }
-    | XA_SYM PREPARE_SYM xid     { throw unsupported_exception (__FILE__, __LINE__); }
-    | XA_SYM COMMIT_SYM xid opt_one_phase     { throw unsupported_exception (__FILE__, __LINE__); }
-    | XA_SYM ROLLBACK_SYM xid     { throw unsupported_exception (__FILE__, __LINE__); }
-    | XA_SYM RECOVER_SYM      { throw unsupported_exception (__FILE__, __LINE__); }
+xa: XA_SYM begin_or_start xid opt_join_or_resume     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+    | XA_SYM END xid opt_suspend     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+    | XA_SYM PREPARE_SYM xid     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+    | XA_SYM COMMIT_SYM xid opt_one_phase     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+    | XA_SYM ROLLBACK_SYM xid     { throw exception::unsupported_exception (__FILE__, __LINE__); }
+    | XA_SYM RECOVER_SYM      { throw exception::unsupported_exception (__FILE__, __LINE__); }
     ;
 
 xid: text_string
-     { throw unsupported_exception (__FILE__, __LINE__); }
+     { throw exception::unsupported_exception (__FILE__, __LINE__); }
      | text_string ',' text_string
-     { throw unsupported_exception (__FILE__, __LINE__); }
+     { throw exception::unsupported_exception (__FILE__, __LINE__); }
      | text_string ',' text_string ',' ulong_num
-     { throw unsupported_exception (__FILE__, __LINE__); }
+     { throw exception::unsupported_exception (__FILE__, __LINE__); }
      ;
 
 begin_or_start:   BEGIN_SYM {}
@@ -6215,25 +6217,25 @@ begin_or_start:   BEGIN_SYM {}
     ;
 
 opt_join_or_resume:
-    /* nothing */           { throw unsupported_exception (__FILE__, __LINE__); }
-    | JOIN_SYM              { throw unsupported_exception (__FILE__, __LINE__); }
-    | RESUME_SYM            { throw unsupported_exception (__FILE__, __LINE__); }
+    /* nothing */           { throw exception::unsupported_exception (__FILE__, __LINE__); }
+    | JOIN_SYM              { throw exception::unsupported_exception (__FILE__, __LINE__); }
+    | RESUME_SYM            { throw exception::unsupported_exception (__FILE__, __LINE__); }
     ;
 
 opt_one_phase:
-    /* nothing */           { throw unsupported_exception (__FILE__, __LINE__); }
-    | ONE_SYM PHASE_SYM     { throw unsupported_exception (__FILE__, __LINE__); }
+    /* nothing */           { throw exception::unsupported_exception (__FILE__, __LINE__); }
+    | ONE_SYM PHASE_SYM     { throw exception::unsupported_exception (__FILE__, __LINE__); }
     ;
 
 opt_suspend:
-    /* nothing */           { throw unsupported_exception (__FILE__, __LINE__); }
-    | SUSPEND_SYM           { throw unsupported_exception (__FILE__, __LINE__); }
+    /* nothing */           { throw exception::unsupported_exception (__FILE__, __LINE__); }
+    | SUSPEND_SYM           { throw exception::unsupported_exception (__FILE__, __LINE__); }
       opt_migrate
     ;
 
 opt_migrate:
     /* nothing */           {}
-    | FOR_SYM MIGRATE_SYM   { throw unsupported_exception (__FILE__, __LINE__); }
+    | FOR_SYM MIGRATE_SYM   { throw exception::unsupported_exception (__FILE__, __LINE__); }
     ;
 
 
@@ -6241,3 +6243,4 @@ opt_migrate:
 
 }
 
+}

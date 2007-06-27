@@ -1,6 +1,9 @@
-#include "shield.hh"
+#include "transform.hh"
 
 namespace shield
+{
+
+namespace transform
 {
 
 string type_string (interval_type t)
@@ -26,7 +29,7 @@ string type_string (interval_type t)
       return "minute";
 
     default:
-      throw syntax_exception ("Interval of unknown type " + t);
+      throw exception::syntax_exception ("Interval of unknown type " + t);
     }
 }
 
@@ -36,5 +39,6 @@ interval::print (ostream &stream) const
   stream << " interval" << *__expr << " " << type_string (__type);
 }
 
+}
 
 }

@@ -1,8 +1,8 @@
 
 #include <string>
-#include "shield_exception.hh"
+#include "exception.hh"
 
-namespace shield
+namespace exception
 {
 
 syntax_exception::syntax_exception( const string &err )

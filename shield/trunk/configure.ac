@@ -42,6 +42,14 @@ else
 fi
 
 
+#
+# Set up various programs needed for install
+#
+
+AC_PROG_CXX
+AC_PROG_CXXCPP
+AC_PROG_INSTALL
+
 
 #
 # Detect directories which may contain additional headers, libraries
@@ -49,7 +57,7 @@ fi
 # to mess with CXXFLAGS and all the other environment variables.
 #
 
-for i in /usr/lib/oracle/xe/app/oracle/product/*/server/rdbms /usr/lib/oracle/xe/app/oracle/product/*/client/rdbms; do
+for i in /usr/lib/oracle/xe/app/oracle/product/*/server/rdbms /usr/lib/oracle/xe/app/oracle/product/*/client/rdbms /usr/lib/oracle/xe/app/oracle/product/*/server /usr/lib/oracle/xe/app/oracle/product/*/client; do
 
     AC_MSG_CHECKING([for $i/include include directory])
     if test -d $i/include; then
@@ -78,14 +86,6 @@ for i in /usr/lib/oracle/xe/app/oracle/product/*/server/rdbms /usr/lib/oracle/xe
     fi
 
 done
-
-#
-# Set up various programs needed for install
-#
-
-AC_PROG_CXX
-AC_PROG_CXXCPP
-AC_PROG_INSTALL
 
 # Tell the world what we know
 AC_CONFIG_FILES([Makefile])

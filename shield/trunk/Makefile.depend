@@ -1,24 +1,13 @@
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-shield_common.o: shield.hh shield_exception.hh
-shield_yacc.o: shield.hh shield_exception.hh shield_yacc.hh
-shield_lex.o: shield.hh shield_exception.hh shield_yacc.hh
-shield.o: shield_exception.hh shield.hh shield_yacc.hh
-shield_unsupported_exception.o: shield_exception.hh
-shield_syntax_exception.o: shield_exception.hh
-shield_printable.o: shield.hh shield_exception.hh
-shield_select.o: shield.hh shield_exception.hh
-shield_identity.o: shield.hh shield_exception.hh
-shield_text.o: shield.hh shield_exception.hh
-shield_create_table.o: shield.hh shield_exception.hh
-shield_insert.o: shield.hh shield_exception.hh
-shield_auto_increment.o: shield.hh shield_exception.hh
-shield_create_index.o: shield.hh shield_exception.hh
-shield_drop_table.o: shield.hh shield_exception.hh
-shield_date_function.o: shield.hh shield_exception.hh
-shield_interval.o: shield.hh shield_exception.hh
-shield_natural.o: shield.hh shield_exception.hh
-shield_print_package.o: shield.hh shield_exception.hh
-shield_chain.o: shield.hh shield_exception.hh
-shield_introspection_table.o: shield_introspection.hh shield.hh
-shield_introspection_table.o: shield_exception.hh
+transform_common.o: transform.hh exception.hh
+transform_yacc.o: shield_yacc.hh
+transform_lex.o: transform.hh exception.hh transform_yacc.hh
+shield.o: exception.hh shield_yacc.hh
+introspection_table.o: introspection.hh exception.hh
+introspection_column.o: introspection.hh
+introspection_column_type.o: introspection.hh
+not_found_exception.o: exception.hh
+database.o: database.hh exception.hh
+unsupported_exception.o: exception.hh
+syntax_exception.o: exception.hh

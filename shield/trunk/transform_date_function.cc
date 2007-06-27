@@ -1,6 +1,9 @@
-#include "shield.hh"
+#include "transform.hh"
 
 namespace shield
+{
+
+namespace transform
 {
 
 void 
@@ -17,6 +20,8 @@ date_function::print (ostream &stream) const
 
   if (get_context () == NUMERIC)
     stream << ")";  
+
+}
 
 }
 

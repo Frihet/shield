@@ -1,11 +1,11 @@
 #include <assert.h>
-#include "shield.hh"
-#include "shield_exception.hh"
+#include "transform.hh"
 
 namespace shield
 {
 
-
+namespace transform
+{
 
 chain *
 create_index::get_filtered_key_list() const
@@ -128,7 +128,7 @@ create_index::print (ostream &stream) const
 
       if (__name)
 	{
-	  throw syntax_exception ("Named primary keys are not supported!");
+	  throw exception::syntax_exception ("Named primary keys are not supported!");
 	}
 
       stream << "alter table" << *table_name << " add primary key (" << *key_list << ")";
@@ -139,7 +139,7 @@ create_index::print (ostream &stream) const
 
       if (!__name)
 	{
-	  throw syntax_exception ("Unnamed non-primary keys are not supported!");
+	  throw exception::syntax_exception ("Unnamed non-primary keys are not supported!");
 	}
       
       string t_name = table_name->str ();
@@ -164,6 +164,8 @@ create_index::print (ostream &stream) const
     }
   
   stream << ";" << endl << endl;
+
+}
 
 }
 

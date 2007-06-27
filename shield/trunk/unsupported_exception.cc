@@ -1,8 +1,8 @@
 
 #include <string>
-#include "shield_exception.hh"
+#include "exception.hh"
 
-namespace shield
+namespace exception
 {
 
 unsupported_exception::unsupported_exception( const string &file, int line )

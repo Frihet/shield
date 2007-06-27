@@ -1,8 +1,8 @@
 
 #include <string>
-#include "shield_exception.hh"
+#include "exception.hh"
 
-namespace shield
+namespace exception
 {
 
 not_found_exception::not_found_exception( const string &not_found )

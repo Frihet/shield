@@ -1,10 +1,15 @@
 
 %{
-#include "shield.hh"
+#include "transform.hh"
 
 namespace shield
 {
-#include "shield_yacc.hh"
+  namespace transform
+  {
+
+#include "transform_yacc.hh"
+
+  }
 }
 
 %}

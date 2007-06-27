@@ -1,7 +1,9 @@
-#include "shield.hh"
-#include "shield_exception.hh"
+#include "transform.hh"
 
 namespace shield
+{
+
+namespace transform
 {
 
 /**
@@ -46,3 +48,6 @@ print (ostream &stream) const
 }
 
 }
+
+}
+

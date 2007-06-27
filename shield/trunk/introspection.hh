@@ -1,3 +1,5 @@
+#ifndef INTROSPECTION_HH
+#define INTROSPECTION_HH
 
 #include <string>
 #include <iostream>
@@ -110,3 +112,5 @@ namespace introspection
   table &get_table (string table_name);
   
 }
+
+#endif

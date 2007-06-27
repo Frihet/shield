@@ -1,9 +1,11 @@
 
 #include <assert.h>
-#include "shield.hh"
-#include "shield_exception.hh"
+#include "transform.hh"
 
 namespace shield
+{
+
+namespace transform
 {
 
 create_table::create_table()
@@ -174,6 +176,8 @@ print (ostream &stream) const
 	}
       stream << endl << endl;
     }
+}
+
 }
 
 }

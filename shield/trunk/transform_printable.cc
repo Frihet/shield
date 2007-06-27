@@ -1,7 +1,10 @@
 
-#include "shield.hh"
+#include "transform.hh"
 
 namespace shield
+{
+
+namespace transform
 {
 
 static vector<printable *>all_printable;
@@ -31,7 +34,7 @@ print (ostream &stream) const
 {
   //int *aaa = 0;
   // *aaa = 3;
-  throw syntax_exception ("Tried to print object of type printable");
+  throw exception::syntax_exception ("Tried to print object of type printable");
 }
 
 ostream &operator << (ostream &stream, const printable &e)
@@ -44,6 +47,8 @@ const printable *printable::
 transform (catalyst &catalyst) const
 {
   return catalyst (this);
+}
+
 }
 
 }

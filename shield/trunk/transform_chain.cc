@@ -1,9 +1,11 @@
 
-#include "shield.hh"
+#include "transform.hh"
 
 namespace shield
 {
 
+namespace transform
+{
 
 chain::
 chain (printable *a, 
@@ -118,6 +120,8 @@ push (printable *p)
 	  __chain.push_back (p);
 	}
     }
+}
+
 }
 
 }
