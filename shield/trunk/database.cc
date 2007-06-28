@@ -1,6 +1,5 @@
 #include <stdlib.h>
-
-#include <occi.h>
+#include <assert.h>
 
 #include "database.hh"
 #include "exception.hh"
@@ -19,6 +18,8 @@ namespace database
 
   Environment *env;
   Connection *conn;
+
+  result_set last_rs = result_set (0, "");
 
   static void destroy ();
 
@@ -44,16 +45,31 @@ namespace database
 	throw syntax_exception ("Tried to use database without supplying login information");
       }
 
-    env = Environment::createEnvironment();
-    conn = env->createConnection(username, password, host);
+    env = Environment::createEnvironment ();
+    conn = env->createConnection (username, password, host);
+
+    assert (conn);
 
   }
 
   static void destroy ()
   {
-    //    conn->terminateStatement(stmt);
-    env->terminateConnection(conn);
+    //    conn->terminateStatement (stmt);
+    env->terminateConnection (conn);
+    //    env->terminateEnvironment ();
   }
+
+  result_set &query (string q)
+  {
+    connect ();
+
+    Statement *stmt = conn->createStatement ();
+    assert (stmt);
+
+    last_rs = result_set (stmt, q);
+    return last_rs;
+  }
+
 
 }
 

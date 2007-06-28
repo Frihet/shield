@@ -2,6 +2,9 @@
 #include "introspection.hh"
 #include "transform.hh"
 #include "exception.hh"
+#include "database.hh"
+
+using namespace shield::database;
 
 namespace shield
 {
@@ -12,7 +15,7 @@ namespace shield
     table::
     table (string name)
       : __name(name), __is_col_init (false)
-    {    
+    {
     }
   
     void table::
@@ -20,11 +23,18 @@ namespace shield
     {
       if (__is_col_init)
 	return;
-
+      
       __is_col_init = true;
-
-      string query = "select column_name, type from user_col_data where table_name = " + oracle_escape (to_upper (__name));
-
+      
+      string q = "select column_name, data_type from user_tab_cols where table_name = %";
+      
+      result_set &rs = query (q) << to_upper (__name);
+      
+      while (rs.next ())
+	{
+	  __col.push_back (column (rs.get_string ("column_name"), rs.get_string ("data_type")));
+	}
+      rs.close ();
     }
   
     const column &table::

@@ -4,19 +4,27 @@ INSTALL := @INSTALL@
 
 CXXFLAGS := @CXXFLAGS@
 CPPFLAGS := @CPPFLAGS@
-SHIELD_OBJS := transform_common.o transform_yacc.o transform_lex.o shield.o	\
-transform_printable.o transform_select.o transform_identity.o transform_text.o	\
-transform_create_table.o transform_insert.o transform_auto_increment.o		\
-transform_create_index.o transform_drop_table.o transform_date_function.o	\
-transform_interval.o transform_natural.o	 transform_print_package.o		\
-transform_chain.o introspection_table.o					\
-introspection_column.o introspection_column_type.o			\
-not_found_exception.o database.o 					\
-unsupported_exception.o syntax_exception.o	util.o			\
+
+EXCEPTION_OBJS := not_found_exception.o unsupported_exception.o	\
+syntax_exception.o
+
+DATABASE_OBJS := database.o database_result_set.o database_parameter.o
+
+SHIELD_OBJS := transform_common.o transform_yacc.o transform_lex.o	\
+shield.o transform_printable.o transform_select.o transform_identity.o	\
+transform_text.o transform_create_table.o transform_insert.o		\
+transform_auto_increment.o transform_create_index.o			\
+transform_drop_table.o transform_date_function.o transform_interval.o	\
+transform_natural.o transform_print_package.o transform_chain.o		\
+introspection_table.o introspection_column.o				\
+introspection_column_type.o $(DATABASE_OBJS) \
+util.o $(EXCEPTION_OBJS)
 
 SHIELD_LEX_TEST_OBJS := transform_lex_test.o 
 INTROSPECTION_TEST_OBJS := introspection_test.o	\
 introspection_table.o introspection.o
+DATABASE_TEST_OBJS := database_test.o $(DATABASE_OBJS) util.o $(EXCEPTION_OBJS)
+
 LDFLAGS := @LDFLAGS@ -ll -locci -lclntsh -lpthread
 
 PROGRAMS := shield shield_lex_test shield_make_package_string
@@ -34,6 +42,9 @@ shield_lex_test: $(SHIELD_LEX_TEST_OBJS)
 
 introspection_test: $(INTROSPECTION_TEST_OBJS)
 	$(CXX) $(INTROSPECTION_TEST_OBJS) -o $@ $(LDFLAGS)
+
+database_test: $(DATABASE_TEST_OBJS)
+	$(CXX) $(DATABASE_TEST_OBJS) -o $@ $(LDFLAGS)
 
 transform_lex.cc: transform_lex.y
 	flex -i -otransform_lex.cc transform_lex.y 

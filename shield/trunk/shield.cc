@@ -7,50 +7,51 @@ using namespace std;
 
 #include "exception.hh"
 #include "transform.hh"
+#include "database.hh"
 
 namespace shield
 {
 
-namespace transform
-{
+  namespace transform
+  {
 #include "transform_yacc.hh"
-}
+  }
 
 
-/*
+  /*
 
-replace from TABLE set key=4, col=7;
+  replace from TABLE set key=4, col=7;
 
-=>
+  =>
 
-delete from TABLE
-where ((not shield.is_unique('key','TABLE')) or key = 4)
-and ((not shield.is_unique('col','TABLE')) or col = 7);
+  delete from TABLE
+  where ((not shield.is_unique('key','TABLE')) or key = 4)
+  and ((not shield.is_unique('col','TABLE')) or col = 7);
 
-insert into TABLE
-(key, col)
-values
-(4, 7)
+  insert into TABLE
+  (key, col)
+  values
+  (4, 7)
 
-*/
-
-static void print_help (ostream &s)
-{
-  s << "Usage: shield [OPTION]... ." << endl;
-  s << "Convert MySQLP sql code read from stdin inte Oracle equivalents written to stdout." << endl;
-}
-
-static void parse_args (int argc, char **argv)
-{
-  string username = "", password = "", host = "";
-
-  /*    
-	Parse options
   */
-  while( 1 )
-    {
+
+  static void print_help (ostream &s)
+  {
+    s << "Usage: shield [OPTION]... ." << endl;
+    s << "Convert MySQLP sql code read from stdin inte Oracle equivalents written to stdout." << endl;
+  }
+
+  static void parse_args (int argc, char **argv)
+  {
+    string username = "", password = "", host = "localhost";
+
+    /*    
+	  Parse options
+    */
+    while( 1 )
+      {
         static struct option
-            long_options[] =
+	  long_options[] =
 	  {
 	    {   
 	      "help", no_argument, 0, 'H'
@@ -82,7 +83,7 @@ static void parse_args (int argc, char **argv)
 
         int opt = getopt_long( argc,
                                argv,
-                               "uphPH",
+                               "u:p:h:PH",
                                long_options,
                                &opt_index );
 
@@ -102,12 +103,28 @@ static void parse_args (int argc, char **argv)
 	    transform::print_package ();
 	    break;
 
+	  case 'u':
+	    username = optarg;
+	    break;
+
+	  case 'p':
+	    password = optarg;
+	    break;
+
+	  case 'h':
+	    host = optarg;
+	    break;
+
 	  case '?':
 	    exit (1);
 
 	  }
-}
-}
+	
+      }
+
+    database::init (username, password,host);
+
+  }
 
 }
 

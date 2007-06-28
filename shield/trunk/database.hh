@@ -11,6 +11,8 @@
 #define DATABASE_HH
 
 #include <string>
+#include <map>
+#include <occi.h>
 
 using namespace std;
 
@@ -21,7 +23,68 @@ namespace shield
   {
     
     /**
-       Call thsi function at atartup to set login information. This
+       A wrapper class used to give parameters to an sql query. Used
+       together with a result_set as given from the query function and
+       the '<<' operator.
+    */
+
+    class parameter
+    {
+    public:
+      parameter (const char *s);
+      parameter (const string &s);
+      parameter (int i);
+      parameter (const parameter &p);
+
+      string str () const;
+      
+    private:
+      string __val;
+    }
+    ;
+
+    /**
+       A class representing a result set.
+    */
+    class result_set
+    {
+    public:
+      
+      result_set (oracle::occi::Statement *stmt, const string &query);
+      
+      bool is_null (string col);      
+      int get_int (string col);
+      string get_string (string col);
+      bool next ();
+      
+      void close ();
+      
+    private:
+      
+      friend result_set &operator << (result_set &r, const parameter &p);
+      
+      bool __is_metadata_init;
+      bool __is_executed;
+      
+      map<string,int> __col_lookup;
+      vector<parameter> __param;
+      
+      string __query;
+      
+      oracle::occi::Statement *__stmt;
+      oracle::occi::ResultSet *__rs;
+      
+      int get_col_index (string col);
+      void metadata_init ();
+      void set_parameter (const parameter &p);
+      void execute ();
+    }
+    ;
+
+    result_set &operator << (result_set &r, const parameter &p);
+
+    /**
+       Call this function at atartup to set login information. This
        function must not be called exactly once.
     */
     void init (string username, string password, string host);
@@ -29,7 +92,7 @@ namespace shield
     /**
        Execute the specified query
     */
-    bool query (string q, ...);
+    result_set &query (string q);
     
     /**
        Get the last error

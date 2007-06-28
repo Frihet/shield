@@ -2,10 +2,12 @@
 #include "introspection.hh"
 #include "transform.hh"
 
-using namespace shield;
+using namespace shield::introspection;
 
-namespace introspection
+namespace shield
 {
+  namespace introspection
+  {
   
   static map<string, table> table_map;
   
@@ -23,4 +25,4 @@ namespace introspection
 
 }
 
-
+}
