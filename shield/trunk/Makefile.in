@@ -68,7 +68,7 @@ transform_print_package.cc: shield_make_package_string shield_package.sql
 	echo "}" >>$@.tmp
 	mv $@.tmp $@
 
-shield.o: transform_yacc.hh
+transform_lex_wrapper.o: transform_lex.cc
 
 #
 # These dependencies make sure that autoconf and configure are run

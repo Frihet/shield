@@ -1,28 +1,31 @@
-# DO NOT DELETE THIS LINE -- make depend depends on it.
+# DO NOT DELETE
 
 transform_common.o: transform.hh exception.hh util.hh
-shield.o: exception.hh transform.hh util.hh database.hh
+transform_yacc.o: transform.hh exception.hh util.hh transform_yacc.hh
+transform_lex_wrapper.o: transform.hh exception.hh util.hh
+shield.o: exception.hh transform.hh util.hh database.hh transform_yacc.hh
 transform_printable.o: transform.hh exception.hh util.hh
-transform_select.o: transform.hh exception.hh util.hh
+transform_select.o: transform.hh exception.hh util.hh introspection.hh
 transform_identity.o: transform.hh exception.hh util.hh
 transform_text.o: transform.hh exception.hh util.hh
 transform_create_table.o: transform.hh exception.hh util.hh
 transform_insert.o: transform.hh exception.hh util.hh
 transform_auto_increment.o: transform.hh exception.hh util.hh
 transform_create_index.o: transform.hh exception.hh util.hh
-transform_drop_table.o: transform.hh exception.hh util.hh
+transform_drop_table.o: transform.hh exception.hh util.hh introspection.hh
 transform_date_function.o: transform.hh exception.hh util.hh
 transform_interval.o: transform.hh exception.hh util.hh
 transform_natural.o: transform.hh exception.hh util.hh
 transform_chain.o: transform.hh exception.hh util.hh
 introspection_table.o: introspection.hh transform.hh exception.hh util.hh
 introspection_table.o: database.hh
+introspection.o: introspection.hh transform.hh exception.hh util.hh
 introspection_column.o: introspection.hh
 introspection_column_type.o: introspection.hh util.hh exception.hh
 database.o: database.hh exception.hh
 database_result_set.o: database.hh exception.hh util.hh
-database_parameter.o: database.hh util.hh exception.hh
+database_parameter.o: database.hh exception.hh util.hh
 util.o: util.hh exception.hh
-not_found_exception.o: exception.hh
-unsupported_exception.o: exception.hh
-syntax_exception.o: exception.hh
+exception_not_found.o: exception.hh
+exception_unsupported.o: exception.hh util.hh
+exception_syntax.o: exception.hh

@@ -3,13 +3,13 @@
 ok=0
 tot=0
 function test_query() {
-    (cat $1; echo ';' )| ./shield >/dev/null 2>/dev/null
+    cat $1| ./shield  -u system -p changeme 2>tmp.err >/dev/null
     foo=$?
     if test $foo != 0; then 
 	echo "status $foo on in file $1 query:"
 	cat $1
 	echo
-	(cat $1; echo ';' )| ./shield 2>&1 >/dev/null 
+	cat tmp.err
 	echo
 	echo
     else

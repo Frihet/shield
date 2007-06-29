@@ -71,10 +71,10 @@ namespace shield
       bool has_wild=false;
       bool has_ungrouped=false;
   
-      map<string, printable *> alias_lookup;
+      map<string, printable *> field_alias;
+      map<string, printable *> table_alias;
       set<string> group_field;
 
-  
       if (!__item_list)
 	{
 	  throw exception::syntax ("No item list for select");
@@ -133,7 +133,7 @@ namespace shield
 	  
 	      if (it->get_alias ())
 		{
-		  alias_lookup[it->get_alias ()->str ()] = new text (it->get_item ()->str ());
+		  field_alias[it->get_alias ()->str ()] = new text (it->get_item ()->str ());
 		}
 
 	      /*
@@ -193,7 +193,7 @@ namespace shield
       if (__having_clause)
 	{
 	  post << "\nhaving";
-	  print_having (post, __having_clause, alias_lookup);
+	  print_having (post, __having_clause, field_alias);
 	}
 
       if (__order_clause)
@@ -204,67 +204,9 @@ namespace shield
       if (__limit_clause )
 	post << ") where" << *__limit_clause;
 
-      /*
-	Handle special case of limit+wildcards
-      */
-
       chain *item_list;
-
-      if (__limit_clause && has_wild)
-	{
-
-	  item_list = new chain ();
-	  item_list->set_separator (",");
-
-	  if (__group_clause)
-	    {
-	      throw exception::syntax ("Limit clauses, wildcards and group clauses in the same query is not supported");
-	    }
-
-	  for (i=__item_list->begin (); i<__item_list->end (); i++)
-	    {
-	      printable *pr = *i;
-	      select_item *it = dynamic_cast<select_item *> (pr);
-	      assert (it);
-
-	      select_item_wild * wi = dynamic_cast<select_item_wild *> (it);
-
-	      if (wi)
-		{
-
-		  string le;
-
-		  if (wi->get_namespace ())
-		    {
-		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and limit clauses. Yes, this may seem like a pretty arbitrary limitation. Sorry.");
-		    }
-
-		  if (wi->get_table ())
-		    {
-		      le = wi->get_table ()->str ();
-		    }
-		  else
-		    {
-		      le = __table_list-> str ();
-		    }
-
-		  introspection::table &t = introspection::get_table (le);
-
-		  introspection::table::column_const_iterator i;
-
-		  for (i=t.column_begin (); i<t.column_end (); i++)
-		    {
-		      item_list->push (new select_item (new text ((*i).get_name (),IDENTIFIER), 0));
-		    }
-		}
-	      else
-		{
-		  item_list->push (it);
-		}
-	    }
-
-	}
-      else if (__group_clause && (has_wild || has_ungrouped))
+      
+      if (__group_clause && (has_wild || has_ungrouped))
 	{
 
 	  item_list = new chain ();
@@ -298,7 +240,7 @@ namespace shield
 
 		  if (id->get_namespace ())
 		    {
-		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. Sorry.");
+		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. I'm lazy. Sorry.");
 		    }
 
 		  if (id->get_table ())
@@ -345,7 +287,7 @@ namespace shield
 
 		  if (wi->get_namespace ())
 		    {
-		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. Sorry.");
+		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. I'm lazy. Sorry.");
 		    }
 	      
 		  if (wi->get_table ())
@@ -383,7 +325,56 @@ namespace shield
 		{
 		  item_list->push (*i);
 		}
+	      
+	    }
 	  
+	}
+      else if (__limit_clause && has_wild)
+	{
+
+	  item_list = new chain ();
+	  item_list->set_separator (",");
+
+	  for (i=__item_list->begin (); i<__item_list->end (); i++)
+	    {
+	      printable *pr = *i;
+	      select_item *it = dynamic_cast<select_item *> (pr);
+	      assert (it);
+
+	      select_item_wild * wi = dynamic_cast<select_item_wild *> (it);
+
+	      if (wi)
+		{
+
+		  string le;
+
+		  if (wi->get_namespace ())
+		    {
+		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and limit clauses. Yes, this may seem like a pretty arbitrary limitation. Sorry.");
+		    }
+
+		  if (wi->get_table ())
+		    {
+		      le = wi->get_table ()->str ();
+		    }
+		  else
+		    {
+		      le = __table_list-> str ();
+		    }
+
+		  introspection::table &t = introspection::get_table (le);
+
+		  introspection::table::column_const_iterator i;
+
+		  for (i=t.column_begin (); i<t.column_end (); i++)
+		    {
+		      item_list->push (new select_item (new text ((*i).get_name (),IDENTIFIER), 0));
+		    }
+		}
+	      else
+		{
+		  item_list->push (it);
+		}
 	    }
 
 	}

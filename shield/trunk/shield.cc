@@ -17,24 +17,6 @@ namespace shield
 #include "transform_yacc.hh"
   }
 
-
-  /*
-
-  replace from TABLE set key=4, col=7;
-
-  =>
-
-  delete from TABLE
-  where ((not shield.is_unique('key','TABLE')) or key = 4)
-  and ((not shield.is_unique('col','TABLE')) or col = 7);
-
-  insert into TABLE
-  (key, col)
-  values
-  (4, 7)
-
-  */
-
   static void print_help (ostream &s)
   {
     s << "Usage: shield [OPTION]... ." << endl;
