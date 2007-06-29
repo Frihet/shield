@@ -34,7 +34,7 @@ print (ostream &stream) const
 {
   //int *aaa = 0;
   // *aaa = 3;
-  throw exception::syntax_exception ("Tried to print object of type printable");
+  throw exception::syntax ("Tried to print object of type printable");
 }
 
 ostream &operator << (ostream &stream, const printable &e)

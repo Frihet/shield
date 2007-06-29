@@ -8,6 +8,7 @@ namespace shield
   namespace transform
   {
 
+    const char sep = '\0';
 
     bool is_reserved (const string &in)
     {
@@ -45,6 +46,7 @@ namespace shield
 	  "desc", "maxextents", "rowlabel", "whenever",
 	  "distinct", "minus", "rownum", "where",
 	  "drop", "mode", "rows", "with", "shield",
+	  "shield_rownum"
 	}
       ;
 

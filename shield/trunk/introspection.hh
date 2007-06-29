@@ -14,6 +14,12 @@ namespace shield
   namespace introspection
   {
 
+    /**
+       An incomplete list of types. These are the types currently used
+       by shield. No attempt has been made to cover all oracle
+       types. Remember that when adding more types here, the
+       column_type class also needs modification.
+    */
     enum column_type_enum
       {
 	CHAR,
@@ -29,13 +35,38 @@ namespace shield
     class column_type
     {
     public:
+
+      /**
+	 Construct a new type. 
+	 
+	 \param t a string describing the type, such as 'varchar2' or 'float'
+      */
       column_type (string t);
 
+      /**
+	 returns true of this type is of a character string type
+      */
       bool is_char () const;
+
+      /**
+	 returns true of this type is of a number type
+      */
       bool is_number () const;
+      
+      /**
+	 returns true of this type is of a lob (large object) type
+      */
       bool is_lob () const;
   
+      /**
+	 Returns the column_type_enum representing this type
+      */
+      column_type_enum get_type () const;
+
     private:
+      /**
+	 The type of this column
+      */
       column_type_enum __type;
     }
     ;
@@ -44,6 +75,9 @@ namespace shield
     {
     public:
 
+      /**
+	 select * from foo where is_parent( id, 123, "foo", "id", "parent_id")
+      */
       column (string name, string type);
 
       /**
@@ -93,6 +127,11 @@ namespace shield
 	 Return end iterator for all columns
       */
       column_const_iterator column_end ();
+
+      /**
+	 Check that this table exists
+      */
+      bool exists ();
   
     private:
 

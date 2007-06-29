@@ -44,7 +44,7 @@ static string mysql_unescape (const string &in)
 	  i++;
 	  if (i == in.end ())
 	    {
-	      throw exception::syntax_exception ("Malformed string");
+	      throw exception::syntax ("Malformed string");
 	    }
 
 	  char c = *i;
@@ -100,7 +100,7 @@ static string mysql_unescape (const string &in)
 
   if (i != in.end () )
     {
-      throw exception::syntax_exception ("Malformed string");
+      throw exception::syntax ("Malformed string");
     }
 
   return out;

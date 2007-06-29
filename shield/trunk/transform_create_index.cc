@@ -128,7 +128,7 @@ create_index::print (ostream &stream) const
 
       if (__name)
 	{
-	  throw exception::syntax_exception ("Named primary keys are not supported!");
+	  throw exception::syntax ("Named primary keys are not supported!");
 	}
 
       stream << "alter table" << *table_name << " add primary key (" << *key_list << ")";
@@ -139,7 +139,7 @@ create_index::print (ostream &stream) const
 
       if (!__name)
 	{
-	  throw exception::syntax_exception ("Unnamed non-primary keys are not supported!");
+	  throw exception::syntax ("Unnamed non-primary keys are not supported!");
 	}
       
       string t_name = table_name->str ();
@@ -163,7 +163,7 @@ create_index::print (ostream &stream) const
       stream << "on" << *table_name << " (" << *key_list << ")";
     }
   
-  stream << ";" << endl << endl;
+  stream  << endl << endl;
 
 }
 

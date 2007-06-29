@@ -6,71 +6,80 @@
 
 using namespace oracle::occi;
 
-using namespace shield::exception;
-
 namespace shield
 {
 
-namespace database
-{
-  string username="", password="", host="";
-  bool is_init=false, is_connect=false;
-
-  Environment *env;
-  Connection *conn;
-
-  result_set last_rs = result_set (0, "");
-
-  static void destroy ();
-
-  void init (string u, string p, string h)
+  namespace database
   {
-    username = u;
-    password=p;
-    host=h;    
-    is_init = true;
+    static string username="", password="", host="";
+    static bool is_init=false, is_connect=false;
 
-    atexit (&destroy);
+    static Environment *env;
+    static Connection *conn;
+
+    static result_set last_rs (0, 0, "");
+
+    static void destroy ();
+
+    void init (string u, string p, string h)
+    {
+      username = u;
+      password=p;
+      host=h;    
+      is_init = true;
+
+    }
+
+    static void connect ()
+    {
+      if (is_connect)
+	{
+	  return;
+	}
+
+      if (!is_init)
+	{
+	  throw shield::exception::syntax ("Tried to use database without supplying login information");
+	}
+
+      env = Environment::createEnvironment ();
+      conn = env->createConnection (username, password, host);
+
+      assert (conn);
+
+      atexit (&destroy);
+      
+    }
+
+    static void destroy ()
+    {
+      last_rs.close ();
+
+      /*
+	FIXME:
+	
+	These are commented out because they cause the app to
+	crash on exit. According to
+	http://forums.oracle.com/forums/thread.jspa?threadID=400555&tstart=-1
+	this may be a known Oracle bug. Will have to investigate more later.
+      */
+      //env->terminateConnection (conn);
+      //Environment::terminateEnvironment (env);
+    }
+
+    result_set &query (string q)
+    {
+      connect ();
+
+      Statement *stmt = conn->createStatement ();
+      assert (stmt);
+
+      last_rs.close ();
+      last_rs = result_set (conn, stmt, q);
+      return last_rs;
+    }
+
+
   }
-
-  static void connect ()
-  {
-    if (is_connect)
-      {
-	return;
-      }
-
-    if (!is_init)
-      {
-	throw syntax_exception ("Tried to use database without supplying login information");
-      }
-
-    env = Environment::createEnvironment ();
-    conn = env->createConnection (username, password, host);
-
-    assert (conn);
-
-  }
-
-  static void destroy ()
-  {
-    //    conn->terminateStatement (stmt);
-    env->terminateConnection (conn);
-    //    env->terminateEnvironment ();
-  }
-
-  result_set &query (string q)
-  {
-    connect ();
-
-    Statement *stmt = conn->createStatement ();
-    assert (stmt);
-
-    last_rs = result_set (stmt, q);
-    return last_rs;
-  }
-
-
-}
 
 }

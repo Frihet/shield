@@ -1,6 +1,11 @@
+/** \file transform.hh
+
+The transform namespace contains all code for parsing MySQL sql and
+transforming it into Oracle sql.
+
+*/
 #ifndef TRANSFORM_HH
 #define TRANSFORM_HH
-
 
 #include <string>
 #include <iostream>
@@ -21,8 +26,10 @@ namespace shield
   namespace transform
   {
 
+    extern const char sep;
+    
     /**
-       The various types of sheild_text that exist
+       The various types of text that exist
     */
     enum text_type
       {
@@ -68,6 +75,9 @@ namespace shield
       }
     ;
 
+    /**
+       Different interval lengths
+    */
     enum interval_type
       {
 	INTERVAL_DAY,
@@ -103,6 +113,11 @@ namespace shield
     */
     void drop_item (ostream &stream, const string &item_type_external, const string &item_name);
 
+    /**
+       This is a class used to transform printables. It takes a
+       printable and returns another one. It is used together with the
+       transform function of printables.
+    */
     class catalyst
     {
     public:
@@ -129,56 +144,96 @@ namespace shield
       {
       }
 
-
+      /**
+	 Return the transformed string representation of this printable.
+      */
       string str () const
       {
 	std::ostringstream out;
 	if (!(out << *this))
-	  throw shield::exception::syntax_exception("stringify called on invalid type");
+	  throw shield::exception::syntax ("stringify called on invalid type");
 	return trim (out.str());
       }
 
+      /**
+	 Set the list of properties. These are used to e.g. tell a
+	 printable what table it belongs to.
+      */
       void set_property (map<string,printable *> &prop)
       {
 	__prop = prop;
       }
 
-      bool get_push_front ()
+      /**
+	 Returns true if this type of printable should be pushed to
+	 the front rather than the back of a chain. This is needed
+	 sometimes because MySQL allows mixing indices and fields in
+	 e.g. create table queries, but oracle needs them ordered. 
+      */
+      bool get_push_front () const
       {
 	return __push_front;
       }
 
+      /**
+	 Sets the value of push_front.
+      */
       void set_push_front (bool pf)
       {
 	__push_front = pf;
       }
 
+      /**
+	 Sets the context of this printable. 
+      */
       void set_context (context c)
       {
 	__context = c;
       }
 
+      /**
+	 Returns the context of this printable. The context needs to
+	 be known because in mysql it is legal to compare values from
+	 different contexts, like a date and a string, and type
+	 conversion will be implicitly performed. This does not happen
+	 in oracle.
+      */
       context get_context () const
       {
 	return __context;
       }
 
+      /**
+	 Sets whether the whitespace before this printable should be
+         skipped.
+      */
       virtual void set_skip_space (bool ss)
       {
 	__skip_space = ss;
       }
 
+      /**
+	 Return true if the whitespace before this printable should be
+	 skipped.	 
+      */
       bool get_skip_space () const
       {
 	return __skip_space;
       }
 
+      /**
+	 Transform this printable and all it's subelements using the specified catalyst.
+      */
       virtual const printable *transform (catalyst &catalyst) const;
 
     protected:
       map<string,printable *> __prop;
 
       printable();
+      
+      /**
+	 Print the query to the specified stream
+      */
       virtual void print (ostream &stream) const;
 
     private:
@@ -190,7 +245,6 @@ namespace shield
 
     ostream &operator << (ostream &stream, const printable &e);
 
-
     /*
       A printable that represents an arbitrary piece of text, or a
       string literal, or an identifier.
@@ -199,23 +253,31 @@ namespace shield
       : public printable
     {
     public:
+
       text (const string &text, text_type type = EXACT, bool insert_whitespace=true)
 	: __val (text), __type (type)
       {
 	set_skip_space (!insert_whitespace);
       }
 
-      text (unsigned long long val, text_type type = EXACT)
+      text (unsigned long long val, text_type type = EXACT, bool insert_whitespace=true)
 	: __val (stringify (val)), __type (type)
       {
 	set_context (NUMERIC);
+	set_skip_space (!insert_whitespace);
       }
-  
+
+      /**
+	 Returns the unescaped length of this item
+      */
       size_t length () const
       {
 	return __val.length ();
       }
 
+      /**
+	 Returns the type of text
+      */
       text_type get_type () const
       {
 	return __type;
@@ -231,7 +293,7 @@ namespace shield
     ;
 
     /**
-       A rpintable representing a select query.
+       A printable representing a select query.
     */
     class select
       : public printable
@@ -327,24 +389,37 @@ namespace shield
 	     printable *k=0,
 	     printable *l=0);
 
+      /**
+	 Set what character should be printed between each printable
+	 element. The default is nothing.
+      */
       void set_separator (const string &sep)
       {
 	__separator = sep;
       }
 
+      /**
+	 Push element onto this chain
+      */
       void push (printable *p);
 
-      bool empty ()
+      /**
+	 Returns true of this chain is empty
+      */
+      bool empty () const
       {
 	return __chain.empty ();
       }
 
-      vector<printable *>::const_iterator begin () const
+      /**
+	 Returns an iterator for this chain
+      */
+      const_iterator begin () const
       {
 	return __chain.begin ();
       }
 
-      vector<printable *>::const_iterator end () const 
+      const_iterator end () const 
       {
 	return __chain.end ();
       }
@@ -354,11 +429,17 @@ namespace shield
 	return __chain[idx];
       }
 
+      /**
+	 Returns the number of elements in this chain
+      */
       size_t size () const
       {
 	return __chain.size ();
       }
 
+      /**
+	 Set the number of items that should be printed before line breaking
+      */
       void set_line_break (int do_line_break)
       {
 	__do_line_break = do_line_break;
@@ -421,10 +502,8 @@ namespace shield
 
     }
     ;
-
-
-
-
+    
+    
     class limit : public printable
     {
     public:
@@ -438,7 +517,7 @@ namespace shield
 
       virtual void print (ostream &stream) const
       {
-	stream << " rownum >" << __from << " and rownum <= " << __to;
+	stream << " shield_rownum >" << __from << " and shield_rownum <= " << __to;
       }  
 
     private:
@@ -448,6 +527,13 @@ namespace shield
     }
     ;
 
+    /**
+       A class for defining a table attribute. The point of this class
+       is that a lot of things can be defined inline in a mysql create
+       table query that need to be defined as a separate query in
+       Oracle. This class has a get_post_render () method that allows
+       you to return a printable that is used _after_ the first query.
+    */
     class attribute
       : public printable
     {
@@ -473,7 +559,6 @@ namespace shield
 	  }
       }
 
-
     private:
 
       printable *__render;
@@ -481,6 +566,9 @@ namespace shield
     }
     ;
 
+    /**
+       A class for creating an index
+    */
     class create_index
       : public printable
     {
@@ -500,19 +588,19 @@ namespace shield
       {
 	__key_list = key_list;
       }
-
+      
       /*
 	Filter the __key_list to remove any columns which are known to be
 	of non-indexable type (i.e. clob) and return the result.
       */
       chain *get_filtered_key_list () const;
-
+      
     protected:
-
+      
       virtual void print (ostream &stream) const;
-
+      
     private:
-
+      
       printable *__name;
       chain *__key_list;
       key_type __type;
@@ -540,6 +628,10 @@ namespace shield
 	: __namespace (ns), __table (table), __field (field)
       {
       }
+
+      text *get_namespace ();
+      text *get_table ();
+      text *get_field ();
 
     protected:
 
@@ -583,30 +675,30 @@ namespace shield
       printable *__name;
       printable *__like_clause;
       bool __check;
-
+      
       void post_render (ostream &stream, attribute *attr, map<string, printable *> &prop) const;
     }
     ;
-
-
+    
+    
     class insert
       : public printable
     {
     public:
 
       insert();
-  
-  
+      
+      
       void set_ignore (bool i);
       void set_field_list (printable *l);
       void set_value_list (chain *l);
       void set_insert_update (printable *l);
       void set_name (printable *l);
       void set_eq_list (chain *l);
-
+      
     protected:
       virtual void print (ostream &stream) const;
-  
+      
     private:
       printable *__field_list;
       chain *__value_list;
@@ -620,15 +712,18 @@ namespace shield
       : public printable
     {
     public:
-
+      
       drop_table( printable *name, bool if_exists);
-
+      
     protected:
+      
       virtual void print (ostream &stream) const;
-  
+      
     private:
+      
       printable *__name;
       bool __if_exists;
+
     }
     ;
 
@@ -731,6 +826,7 @@ namespace shield
       }
 
     private:
+
       bool __indexable;
 
     }
@@ -771,6 +867,7 @@ namespace shield
       }
 
     private:
+
       printable *__name;
       type *__type;
       printable *__attrib;
@@ -879,7 +976,12 @@ namespace shield
     };
 
 
-
+    /**
+       A catalyst fo replacing a specific shield_text with another
+       printable. This is used in the having clause of selects,
+       because oracle forbids the use of aliases there for some odd
+       reason.
+    */
     class replace_identifier_catalyst
       : public catalyst
     {
@@ -907,8 +1009,10 @@ namespace shield
 	string st = t->str ();
 
 	if (__mapping.find (st) == __mapping.end ())
-	  return p;
-      
+	  {
+	    return p;
+	  }
+
 	return __mapping[st];
 
       }
@@ -921,13 +1025,16 @@ namespace shield
     void yyerror (char const *s);
     int yyparse ();
 
+    /**
+       Print the shield package definition
+    */
     void print_package ();
+
+    void *lex_set_string (const string &str);
 
   }
 
 }
-
 int yylex ();
-
 
 #endif

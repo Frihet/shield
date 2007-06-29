@@ -95,7 +95,7 @@ print (ostream &stream) const
 
       (*i)->set_skip_space (true);
       stream << "values (" << *(*i) << ")";
-      stream << ";\n\n";
+      stream << endl << endl;
     }
 }
 

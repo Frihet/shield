@@ -14,9 +14,10 @@ namespace shield
   {
 
     result_set::
-    result_set (oracle::occi::Statement *stmt, const string &query)
-      : __stmt (stmt), __is_metadata_init (false), __query (query), __is_executed (false), __rs (0)
+    result_set (oracle::occi::Connection *conn, oracle::occi::Statement *stmt, const string &query)
+      : __conn (conn), __stmt (stmt), __is_metadata_init (false), __query (query), __is_executed (false), __rs (0), __is_closed (false)
     {
+      //cerr << "result_set ( " << __stmt << ", " << __query << "); " << this << endl;
     }
 
     bool result_set::
@@ -55,7 +56,7 @@ namespace shield
       map<string,int>::const_iterator p = __col_lookup.find (to_lower (col));
       if (p == __col_lookup.end ())
 	{
-	  throw not_found_exception (col);
+	  throw not_found (col);
 	}
 
       return (*p).second;
@@ -66,19 +67,56 @@ namespace shield
     get_string (string col)
     {
       int idx = get_col_index (col);
-      return __rs->getString (idx);
+      //cerr << "Index of " << col << " is " << idx << endl;
+      //cerr << "call getString on " << __rs << endl;
+      try
+	{
+	  return __rs->getString (idx+1);
+	}
+      catch (std::exception &e)
+	{
+	  //cerr << "TRET" << endl;
+	  exit(0);
+	}
     }
 
     bool result_set::
     next ()
     {
+      //cerr << "11" << endl;
+
       execute ();
+      //cerr << "22" << endl;
       return __rs->next () != ResultSet::END_OF_FETCH;
     }
     
     void result_set::
     close ()
     {
+
+      if (__is_closed)
+	{
+	  return;
+	}
+
+      //cerr << "Start close ()" << endl;
+
+      __is_closed = true;
+
+      if (__stmt)
+	{
+
+	  //cerr << "Close result " << __rs << endl;
+	  if (__is_executed)
+	    {
+	      __stmt->closeResultSet (__rs);
+	    }
+	  
+	  //cerr << "Close statement " << __stmt << endl;
+	  __conn->terminateStatement (__stmt);
+	}
+
+      //cerr << "Finish close ()" << endl;
     }
 
     void result_set::
@@ -94,10 +132,13 @@ namespace shield
       if (__is_executed)
 	return;
 
+      //cerr << "execute query " << __query << " " << this << endl;
+      
       __is_executed = true;
       string q2;
       bool quoted = false;
       int param_pos = 0;
+      
       for (int i = 0; i <__query.length (); i++)
 	{
 	  if (quoted)
@@ -112,7 +153,7 @@ namespace shield
 		{
 		  if (param_pos == __param.size ())
 		    {
-		      throw syntax_exception ("Used more parameters than was supplied in query '" + __query + "'");
+		      throw syntax ("Used more parameters than was supplied in query '" + __query + "'");
 		    }
 		  q2 += __param[param_pos++].str ();
 		}
@@ -128,15 +169,18 @@ namespace shield
       
       if (param_pos != __param.size ())
 	{
-	  throw syntax_exception ("Did not use all supplied parameters in query '" + __query + "'");
+	  throw syntax ("Did not use all supplied parameters in query '" + __query + "'");
 	}
 
+      //cerr << "translated " << __query << " to " << q2 << endl;
       __rs = __stmt->executeQuery (q2);
+      //cerr << "execute returned " << __rs << endl;
     }
 
     result_set &operator << (result_set &r, const parameter &p)
     {
       r.set_parameter (p);
+      return r;
     }
     
   }

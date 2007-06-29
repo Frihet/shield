@@ -5,29 +5,33 @@ INSTALL := @INSTALL@
 CXXFLAGS := @CXXFLAGS@
 CPPFLAGS := @CPPFLAGS@
 
-EXCEPTION_OBJS := not_found_exception.o unsupported_exception.o	\
-syntax_exception.o
+INTROSPECTION_OBJS := introspection_table.o introspection.o	\
+introspection_column.o introspection_column_type.o
+
+EXCEPTION_OBJS := exception_not_found.o exception_unsupported.o	\
+exception_syntax.o
 
 DATABASE_OBJS := database.o database_result_set.o database_parameter.o
 
-SHIELD_OBJS := transform_common.o transform_yacc.o transform_lex.o	\
+SHIELD_OBJS := transform_common.o transform_yacc.o transform_lex_wrapper.o	\
 shield.o transform_printable.o transform_select.o transform_identity.o	\
 transform_text.o transform_create_table.o transform_insert.o		\
 transform_auto_increment.o transform_create_index.o			\
 transform_drop_table.o transform_date_function.o transform_interval.o	\
 transform_natural.o transform_print_package.o transform_chain.o		\
-introspection_table.o introspection_column.o				\
-introspection_column_type.o $(DATABASE_OBJS) \
-util.o $(EXCEPTION_OBJS)
+$(INTROSPECTION_OBJS) $(DATABASE_OBJS) util.o $(EXCEPTION_OBJS)
 
-SHIELD_LEX_TEST_OBJS := transform_lex_test.o 
+TRANSFORM_LEX_TEST_OBJS := transform_lex_test.o 
+
 INTROSPECTION_TEST_OBJS := introspection_test.o	\
-introspection_table.o introspection.o
-DATABASE_TEST_OBJS := database_test.o $(DATABASE_OBJS) util.o $(EXCEPTION_OBJS)
+$(INTROSPECTION_OBJS) $(DATABASE_OBJS) util.o $(EXCEPTION_OBJS)
+
+DATABASE_TEST_OBJS := database_test.o $(DATABASE_OBJS) util.o	\
+$(EXCEPTION_OBJS)
 
 LDFLAGS := @LDFLAGS@ -ll -locci -lclntsh -lpthread
 
-PROGRAMS := shield shield_lex_test shield_make_package_string
+PROGRAMS := shield transform_lex_test shield_make_package_string
 
 all: shield
 
@@ -37,8 +41,8 @@ shield: $(SHIELD_OBJS)
 shield_make_package_string: shield_make_package_string.cc
 	$(CXX) shield_make_package_string.cc -o $@
 
-shield_lex_test: $(SHIELD_LEX_TEST_OBJS)
-	$(CXX) $(SHIELD_LEX_TEST_OBJS) -o $@ $(LDFLAGS)
+transform_lex_test: $(TRANSFORM_LEX_TEST_OBJS)
+	$(CXX) $(TRANSFORM_LEX_TEST_OBJS) -o $@ $(LDFLAGS)
 
 introspection_test: $(INTROSPECTION_TEST_OBJS)
 	$(CXX) $(INTROSPECTION_TEST_OBJS) -o $@ $(LDFLAGS)
@@ -55,13 +59,14 @@ transform_yacc.cc: transform_yacc.y
 transform_yacc.hh: transform_yacc.cc
 
 transform_print_package.cc: shield_make_package_string shield_package.sql
-	echo "#include \"transform.hh\"" >$@
-	echo "void shield::transform::print_package ()" >>$@
-	echo "{" >>$@
-	echo -n "	cout << " >>$@
-	./shield_make_package_string < shield_package.sql >>$@
-	echo ";" >>$@
-	echo "}" >>$@
+	echo "#include \"transform.hh\"" >$@.tmp
+	echo "void shield::transform::print_package ()" >>$@.tmp
+	echo "{" >>$@.tmp
+	echo -n "	cout << " >>$@.tmp
+	./shield_make_package_string < shield_package.sql >>$@.tmp
+	echo ";" >>$@.tmp
+	echo "}" >>$@.tmp
+	mv $@.tmp $@
 
 shield.o: transform_yacc.hh
 

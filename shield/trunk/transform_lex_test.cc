@@ -6,23 +6,16 @@
 using namespace std;
 
 #include "transform.hh"
+/*
 namespace shield
 {
-#include "shield_yacc.hh"
-}
-
-#include "shield_lex.cc"
-
-namespace shield
-{
-  int foo ();
-
-  int foo ()
+  namespace transform
   {
-    return yylex ();
+#include "transform_yacc.hh"
   }
-
 }
+*/
+#include "transform_lex.cc"
 
 int
 main (void)
@@ -79,7 +72,7 @@ main (void)
   
   for( int i=0; i < sizeof(result)/sizeof(int);i++ )
     {
-      int d = shield::foo();
+      int d = yylex();
       if (d != result[i] )
 	{
 	  printf( "Symbol number %d: Got symbol ", i );

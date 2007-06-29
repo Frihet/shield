@@ -31,11 +31,15 @@ print (ostream &stream) const
 
   drop_item (stream, "sequence", name + "_s_");
 
+  stream << sep;
+
   stream << "create sequence " << name << "_s_" << endl;
   stream << "start with 1" << endl;
   stream << "increment by 1" << endl;
-  stream << "nomaxvalue;" << endl << endl;
-
+  stream << "nomaxvalue" << endl << endl;
+  
+  stream << sep;
+  
   stream << "create or replace trigger " << name << "_t_" << endl;
   stream << "before insert on " << t_name << endl;
   stream << "for each row" << endl;

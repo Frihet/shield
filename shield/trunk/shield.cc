@@ -132,36 +132,53 @@ namespace shield
 int
 main (int argc, char **argv)
 {
-  
+
+  string str="";
+
   setlocale (LC_ALL, "");
   
   shield::parse_args (argc, argv);
   
   int err = 0;
-  while( !err )
+  while( true )
     {
-      if (feof (stdin))
-	{
-	  break;
-	}
+      int c;
 
-      try
+      c = cin.get ();
+
+      if (c && c != EOF)
 	{
-	  err += shield::transform::yyparse ();
+	  str += c;
 	}
-      catch( shield::exception::unsupported_exception e )
+      else
 	{
-	  err ++;
-	  cerr << e;
-	  
-	  break;
-	}
-      catch( shield::exception::syntax_exception e )
-	{
-	  err ++;
-	  cerr << e;
-	  
-	  break;
+	  try
+	    {
+
+	      if (str != "")
+		{
+		  shield::transform::lex_set_string (str);
+		  err += shield::transform::yyparse ();
+		  cout << shield::transform::sep;
+		  cout << shield::transform::sep;
+		}
+
+	      str="";
+	      
+	    }
+	  catch (std::exception &e)
+	    {
+
+	      err ++;
+	      cerr << e.what () << endl;
+	      
+	      break;
+	    }
+
+	  if (c==EOF)
+	    {
+	      break;
+	    }
 	}
     }
   

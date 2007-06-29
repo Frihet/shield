@@ -22,7 +22,7 @@ namespace util
   {
     std::ostringstream out;
     if (!(out << x))
-      throw shield::exception::syntax_exception ("stringify called on invalid type");
+      throw shield::exception::syntax ("stringify called on invalid type");
     return out.str ();
   }
 

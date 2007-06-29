@@ -29,7 +29,7 @@ string type_string (interval_type t)
       return "minute";
 
     default:
-      throw exception::syntax_exception ("Interval of unknown type " + t);
+      throw exception::syntax ("Interval of unknown type " + t);
     }
 }
 

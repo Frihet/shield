@@ -22,7 +22,7 @@ int main (int argc, char **argv)
       while (rs.next ())
 	cout << "yo " << rs.get_string ("t") << endl;
     }
-  catch (shield::exception::syntax_exception e)
+  catch (std::exception &e)
     {
       cerr << e;
     }
