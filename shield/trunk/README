@@ -1,30 +1,4 @@
 
-COMPILING SHIELD
-
-Shield uses the Oracle OCCI library to connect to the oracle
-server. To obtain the headers and libraries needed to use OCCI,
-download the oracle instant client software. This software can be
-obtained free of charge at oracle.com.
-
-At the writing of this document, OCCI was still only distributed in
-binary form, compiled against an older version of the c++ standard
-library. Unfortunatly, all pieces of a program need to be compiled
-against the same library version. Because the standard library version
-is directly dependant on the compiler version, shield must be compiled
-using an older compiler. Under RHEL4, such a compiler can be installed
-by executing the following command as root:
-
-yum install compat-gcc-32-c++
-
-In order to use this compiler, use the following command to configure shield:
-
-env CXX=g++32 ./configure
-
-Other than this issue, compiling fish should be a simple case of
-
-./configure && make && make install
-
-
 IMPLEMENTATION DETAILS
 
 Shield uses a very simple memory management mechanism. All memory that
