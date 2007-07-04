@@ -35,13 +35,10 @@ $(EXCEPTION_OBJS)
 
 LDFLAGS := @LDFLAGS@ -ll -locci -lclntsh -lpthread
 
-PROGRAMS := shield transform_lex_test shield_make_package_string
+PROGRAMS := shield transform_lex_test shield_make_package_string database_test introspection_test
 
 OBJ := obj
 SRC := src
-
-$(OBJ)/%.o: $(SRC)/%.cc
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(SRC)/$*.cc -o $@ 
 
 all: shield
 
@@ -96,6 +93,12 @@ Makefile: Makefile.in configure
 depend: src/transform_yacc.hh src/transform_lex.cc
 	makedepend -fMakefile.depend -Y src/*.cc
 .PHONY: depend
+
+#
+# Rule for making objects
+#
+$(OBJ)/%.o: $(SRC)/%.cc
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(SRC)/$*.cc -o $@ 
 
 #
 # Include automatically generated dependencies (see depend target)

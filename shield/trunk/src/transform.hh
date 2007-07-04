@@ -712,6 +712,9 @@ namespace shield
       virtual chain *_get_condensed_table_list ();
 
     private:
+      /**
+	 Enum for all child node identifiers
+      */
       enum 
 	{
 	  __ITEM_LIST,
@@ -1389,6 +1392,9 @@ namespace shield
       virtual void _print (ostream &stream);
 
     private:
+      /**
+	 Enum for all child node identifiers
+      */
       enum {
 	OP,
 	ARG1,
@@ -1477,62 +1483,99 @@ namespace shield
     }
     ;
 
+
+    /**
+       Node representing an update query. Pretty simple query.
+    */
     class update
       : public query
     {
     public:
 
+      /**
+	 Setter for the table list
+      */
       void set_table_list (chain *name)
       {
 	_set_child (__NAME, name);
       }
 
+      /**
+	 Getter for the table list
+      */
       chain *get_table_list ()
       {
 	return dynamic_cast<chain *> (_get_child (__NAME));
       }
 
+      /**
+	 Setter for the update list
+      */
       void set_update_list (printable *name)
       {
 	_set_child (__UPDATE_LIST, name);
       }
 
+      /**
+	 Getter for the update list
+      */
       printable *get_update_list ()
       {
 	return _get_child (__UPDATE_LIST);
       }
 
+      /**
+	 Setter for the where clause
+      */
       void set_where_clause (printable *name)
       {
 	_set_child (__WHERE_CLAUSE, name);
       }
 
+      /**
+	 Getter for the where clause
+      */
       printable *get_where_clause ()
       {
 	return _get_child (__WHERE_CLAUSE);
       }
 
+      /**
+	 Setter for the order clause
+      */
       void set_order_clause (printable *name)
       {
 	_set_child (__ORDER_CLAUSE, name);
       }
 
+      /**
+	 Getter for the order clause
+      */
       printable *get_order_clause ()
       {
 	return _get_child (__ORDER_CLAUSE);
       }
 
+      /**
+	 Setter for the delete limit clause
+      */
       void set_delete_limit_clause (printable *name)
       {
 	_set_child (__DELETE_LIMIT_CLAUSE, name);
       }
 
+      /**
+	 Getter for the delete limit clause
+      */
       printable *get_delete_limit_clause ()
       {
 	return _get_child (__DELETE_LIMIT_CLAUSE);
       }
 
-      printable *internal_transform ()
+      /**
+	 Perform identity catalyst transform
+      */
+      virtual printable *internal_transform ()
       {
 	identity_catalyst i;
 	return this->transform (i);
@@ -1551,6 +1594,9 @@ namespace shield
 
     private:
 
+      /**
+	 Enum for all child node identifiers
+      */
       enum 
 	{
 	  __NAME,
@@ -1563,14 +1609,25 @@ namespace shield
     }
     ;
 
+    /**
+       Error callback for yyparse. Prints the specified error message.
+    */
     void yyerror (char const *s);
+
+    /**
+       PArse the whole syntax tree, transform it and write it out to
+       standard out
+    */
     int yyparse ();
     
     /**
        Print the shield package definition
     */
     void print_package ();
-    
+
+    /**
+       Set which string the lexer should tokenize
+    */    
     void *lex_set_string (const string &str);
 
   }
