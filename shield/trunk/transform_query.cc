@@ -14,13 +14,12 @@ namespace shield
     query::
     query ()
     {
-      __environment = new environment (this);
     }
 
-    environment *query::
-    get_environment ()
+    query *query::
+    get_query ()
     {
-      return __environment;
+      return this;
     }
 
     text *query::

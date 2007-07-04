@@ -37,7 +37,7 @@ namespace shield
 
       cerr << "Found lone field " << *t << endl;
 
-      text *table = t->get_environment ()->get_query ()->get_table (t);
+      text *table = p->get_query ()->get_table (t);
 
       if (!table)
 	{

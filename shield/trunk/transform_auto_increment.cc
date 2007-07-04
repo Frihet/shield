@@ -12,10 +12,8 @@ namespace transform
 void auto_increment::
 print (ostream &stream)
 {
-  environment *env = get_environment ();
-  assert (env);
-      
-  create_table *table_query = dynamic_cast<create_table *> (env->get_query ());
+
+  create_table *table_query = dynamic_cast<create_table *> (get_query ());
   assert (table_query);
 
   string t_name = table_query->get_name ()->str ();

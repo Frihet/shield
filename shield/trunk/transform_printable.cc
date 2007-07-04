@@ -23,7 +23,7 @@ namespace shield
 
     printable::
     printable()
-      : __push_front (false), __context (CONTEXT_UNDEFINED), __skip_space (false)
+      :  __push_front (false), __context (CONTEXT_UNDEFINED), __skip_space (false)
     {
       all_printable.push_back (this);
     }
@@ -41,11 +41,11 @@ namespace shield
       __parent = parent;
     }
 
-    environment *printable::
-    get_environment ()
+    query *printable::
+    get_query ()
     {
       if (__parent)
-	return __parent->get_environment ();
+	return __parent->get_query ();
 
       return 0;
     }

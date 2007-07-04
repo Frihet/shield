@@ -1,9 +1,17 @@
-/** \file transform.hh
+/** @file transform.hh
+
+@package shield
+@author Axel Liljencrantz
 
 The transform namespace contains all code for parsing MySQL sql and
 transforming it into Oracle sql.
 
+This file is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; version 2 or later.
+
 */
+
 #ifndef TRANSFORM_HH
 #define TRANSFORM_HH
 
@@ -29,25 +37,25 @@ namespace shield
     extern const char sep;
     
     /**
-       The various types of text that exist
+       The various types thet the text node can be of
     */
     enum text_type
       {
 	/**
-	   The text represents an exect sequence of characters and
+	   The text node represents an exect sequence of characters and
 	   should not be transformed
 	*/
 	EXACT, 
 	/**
-	   the text is an identifier, and reserved names should be avoided.
+	   The text node is an identifier, and reserved names should be avoided.
 	*/
 	IDENTIFIER,
 	/**
-	   the text is a quoted identifier, the quotes should be stripped.
+	   The text node is a quoted identifier, the quotes should be stripped.
 	*/
 	IDENTIFIER_QUOTED,
 	/**
-	   The text is a string literal, and should be converted to
+	   The text node is a string literal, and should be converted to
 	   an oracle style string literal
 	*/
 	LITERAL
@@ -55,11 +63,16 @@ namespace shield
     ;
 
     /**
-       Set of different types of keys
+       Set of different types of keys (indices)
     */
     enum key_type
       {
-	UNIQUE, PRIMARY_KEY, KEY
+	/** Unique key */
+	UNIQUE, 
+	/** Primary key */
+	PRIMARY_KEY, 
+	/** Synonym for unique key */
+	KEY
       }
     ;
 
@@ -118,17 +131,19 @@ namespace shield
     class limit;
     class chain;
     class printable;
+    class query;
     class type;
     class text;
-    class environment;
 
     /**
        Check whether the specified string is a reserved word
+
+       @param in The string to check
     */
     bool is_reserved( const string &in );
 
     /**
-       Delete all existing printable objects. This function is defined in printable.cc.
+       Delete all existing printables and subclasses, e.g. all existing nodes.
     */
     void printable_delete();
 
@@ -136,25 +151,37 @@ namespace shield
       This function emits the PL/SQL code needed to check if an item
       exists, and if so, drop it. An item can be a table, a sequence or an
       index.
+
+      @param stream The stream to output the code to
+      @param item_type_external The type of the item in Oracle sql. This can be for example index or table. 
+      @param item_name the name of the item to delete
     */
     void drop_item (ostream &stream, const string &item_type_external, const string &item_name);
 
     /**
-       This is a class used to transform printables. It takes a
-       printable and returns another one. It is used together with the
-       transform function of printables.
+       This is a functor class used to transform printables. It takes a
+       printable and returns it or another printable. It is used
+       together with the \c printable::transform function of printables to perform
+       transformations on the syntax tree.
     */
     class catalyst
     {
     public:
-      virtual printable *operator () (printable *p) = 0;
+
+      /**
+	 The transformation operation. Takes a printable as an
+	 argument and returns another one, or possibly the same one.
+	 
+	 @param node The node to transform
+      */
+      virtual printable *operator () (printable *node) = 0;
     };
 
     /**
-       A class representing a part of a sql query that can be printed using the << operator.
+       A class representing a node in the tree created by parsing a sql query. 
 
        This base class contains some infrastructure for printing, setting
-       properties, and automatic memory deallocation.
+       properties, handling children and automatic memory deallocation.
     */
     class printable
     {
@@ -170,7 +197,9 @@ namespace shield
       }
 
       /**
-	 Return the transformed string representation of this printable.
+	 Return the transformed string representation of this
+	 printable. This is done by using the << operator and then
+	 calling trim on the resulting string result.
       */
       string str ()
       {
@@ -178,25 +207,6 @@ namespace shield
 	if (!(out << *this))
 	  throw shield::exception::syntax ("stringify called on invalid type");
 	return trim (out.str());
-      }
-
-      /**
-	 Returns true if this type of printable should be pushed to
-	 the front rather than the back of a chain. This is needed
-	 sometimes because MySQL allows mixing indices and fields in
-	 e.g. create table queries, but oracle needs them ordered. 
-      */
-      bool get_push_front () const
-      {
-	return __push_front;
-      }
-
-      /**
-	 Sets the value of push_front.
-      */
-      void set_push_front (bool pf)
-      {
-	__push_front = pf;
       }
 
       /**
@@ -211,7 +221,7 @@ namespace shield
       }
 
       /**
-	 Returns the context of this printable. 
+	 Returns the \c context of this printable. 
       */
       virtual context get_context ()
       {
@@ -219,8 +229,8 @@ namespace shield
       }
 
       /**
-	 Sets whether the whitespace before this printable should be
-         skipped.
+	 Sets whether the whitespace before this printable can be
+         safely skipped.
       */
       virtual void set_skip_space (bool ss)
       {
@@ -237,35 +247,88 @@ namespace shield
       }
 
       /**
-	 Transform this printable and all it's subelements using the specified catalyst.
+	 Transform this node and all it's children in arbitrary order
+	 using the specified catalyst.
       */
       virtual printable *transform (catalyst &catalyst);
 
+      /**
+	 Return this nodes parent, or null if this is the root.
+      */
       printable *get_parent ()
       {
 	return __parent;
       }
       
+      /**
+	 Reparent this node.
+      */
       void set_parent (printable *parent);
 
-      virtual environment *get_environment ();
+      /**
+	 Return the query that this node is a part of
+      */
+      virtual query *get_query ();
 
+      /**
+	 This method is called for every node by the \c
+	 internal_catalyst as the first transformation of the syntax
+	 tree. This baseline implementation does nothing, but various
+	 subclasses of the printable node overload this method to
+	 perform node specific transformations.
+      */
       virtual printable *internal_transform ()
       {
 	return this;
       }
 
-    protected:
-      //      map<string,printable *> __prop;
+      /**
+	 Sets whether this node should be pushed to the front of its
+	 parent if its parent is a chain.
+      */
+      void set_push_front (bool push_front)
+      {
+	__push_front = push_front;
+      }
 
+      /**
+	 Returns true of this node should be pushed to the front of
+	 its parent if its parent is a chain.
+      */
+      bool get_push_front ()
+      {
+	return __push_front;
+      }
+
+    protected:
+
+      /**
+	 The constructor. It is protected to make sure that only
+	 subclasses are instantiated.
+      */
       printable();
       
       /**
-	 Print the query to the specified stream
+	 Print the query to the specified stream. This is only a
+	 virtual base method, all real action is performed by
+	 subclasses. If this method is not overloaded, a \c syntax
+	 exception will be thrown.
       */
       virtual void print (ostream &stream);
 
+      /**
+	 Add a new child node to this node, and identify it using the
+	 specified integer.
+
+	 @param id the integer to identify the child by
+	 @param value the child. If value is null, then the specified child is erased.
+      */
       void set_child (int id, printable *value);
+
+      /**
+	 Return the child with the specified id, or null if no child
+	 with that id exists.
+      */
       printable *get_child (int id);
 
 
@@ -273,13 +336,43 @@ namespace shield
 
       friend ostream &operator << (ostream &stream, printable &e);
 
-      bool __skip_space;
+      /**
+	 If set to true, this node should be pushed to the front not
+	 of the back of its parent if the parent is a chain.
+      */
       bool __push_front;
+
+      /**
+	 Flag used for determening wheter the space before this
+	 printable can be safely skipped. Since this only exists to
+	 make the formating nice, there are nodes that will ignore
+	 this information.
+      */
+      bool __skip_space;
+
+      /**
+	 The type context of this node. This is only valid for nodes that
+	 represent an expression.
+      */
       context __context;
+
+      /**
+	 The parent of this node
+      */
       printable *__parent;
+
+      /**
+	 A map of all children
+      */
       map<int, printable *> __children;
     };
 
+    /**
+       This is the base class of all nodes that represent a complete
+       query. Note that since a single MySQL query can result in
+       multiple Oracle queries, this does not need to be the root of
+       the tree. 
+    */
     class query
       : public printable
     {
@@ -287,44 +380,42 @@ namespace shield
     public:
       query ();
 
+      /**
+	 This is a lookup method that returns the table that the
+	 specified field belongs to.
+      */
       text *get_table (text *field);
+
+      /**
+	 This method takes a possibly aliased table name and returns
+	 the unaliased name.
+      */
       virtual text *unalias_table (text *table);
-      environment *get_environment ();
+
+      /**
+	 Returns this node
+      */
+      virtual query *get_query ();
 
     protected:
 
+      /**
+	 Returns a chain object whare each child is a table. The
+	 tables may be aliased.
+      */
       virtual chain *get_condensed_table_list ();
       
     private:
-      environment *__environment;
 
     }
     ;
 
+    /**
+       The output operator for a printable node. This operator calls
+       the virtual print method of the node in order to print the
+       whole tree.
+    */
     ostream &operator << (ostream &stream, printable &e);
-
-    class environment
-      : public printable
-    {
-
-    public:
-      
-      environment (query *q)
-	: __query (q)
-      {
-      }
-
-      query *get_query ()
-      {
-	return __query;
-      }
-      
-    private:
-      query *__query;
-      
-    }
-    ;
-
 
     /*
       A printable that represents an arbitrary piece of text, or a
@@ -408,9 +499,8 @@ namespace shield
       /**
 	 Push element onto this chain. Most of the chain interface
 	 mimics the stl vector interface, but this method is named
-	 push, not push_back. This is because this method can push to
-	 the front of the list if the item returns true on
-	 get_push_front (), though that feature seems to be disused.
+	 push, not push_back for historic reasons. This should
+	 probably be fixed.
       */
       void push (printable *p);
 
@@ -1225,8 +1315,7 @@ namespace shield
 	/**
 	   Check that the environment is healthy
 	*/
-	assert (p->get_environment ());
-	assert (p->get_environment ()->get_query ());
+	assert (p->get_query ());
 	
 	return p;
       }

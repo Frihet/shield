@@ -91,7 +91,7 @@ namespace shield
     {
       //      cerr << "get_context on identity "<< str () << endl;
 
-      query *q = get_environment ()->get_query ();
+      query *q = get_query ();
 
       if (!__table)
 	{

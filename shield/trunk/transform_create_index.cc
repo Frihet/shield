@@ -110,10 +110,7 @@ namespace shield
 
       assert (__key_list);      
 
-      environment *env = get_environment ();
-      assert (env);
-      
-      create_table *table_query = dynamic_cast<create_table *> (env->get_query ());
+      create_table *table_query = dynamic_cast<create_table *> (get_query ());
       assert (table_query);
 
       chain *field_list = table_query->get_field_list ();
