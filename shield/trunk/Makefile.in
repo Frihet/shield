@@ -5,45 +5,51 @@ INSTALL := @INSTALL@
 CXXFLAGS := @CXXFLAGS@
 CPPFLAGS := @CPPFLAGS@
 
-INTROSPECTION_OBJS := introspection_table.o introspection.o	\
-introspection_column.o introspection_column_type.o
+INTROSPECTION_OBJS := obj/introspection_table.o obj/introspection.o	\
+obj/introspection_column.o obj/introspection_column_type.o
 
-EXCEPTION_OBJS := exception_not_found.o exception_unsupported.o	\
-exception_syntax.o
+EXCEPTION_OBJS := obj/exception_not_found.o obj/exception_unsupported.o	\
+obj/exception_syntax.o
 
-DATABASE_OBJS := database.o database_result_set.o database_parameter.o
+DATABASE_OBJS := obj/database.o obj/database_result_set.o obj/database_parameter.o
 
-TRANSFORM_OBJS := transform_common.o transform_yacc.o			\
-transform_lex_wrapper.o transform_printable.o transform_select.o	\
-transform_identity.o transform_text.o transform_create_table.o		\
-transform_insert.o transform_auto_increment.o transform_create_index.o	\
-transform_drop_table.o transform_date_function.o transform_interval.o	\
-transform_query.o transform_print_package.o transform_chain.o		\
-transform_comparison.o transform_attribute.o transform_cast.o		\
-transform_identity_catalyst.o transform_update.o
+TRANSFORM_OBJS := obj/transform_common.o obj/transform_yacc.o			\
+obj/transform_lex_wrapper.o obj/transform_printable.o obj/transform_select.o	\
+obj/transform_identity.o obj/transform_text.o obj/transform_create_table.o		\
+obj/transform_insert.o obj/transform_auto_increment.o obj/transform_create_index.o	\
+obj/transform_drop_table.o obj/transform_date_function.o obj/transform_interval.o	\
+obj/transform_query.o obj/transform_print_package.o obj/transform_chain.o		\
+obj/transform_comparison.o obj/transform_attribute.o obj/transform_cast.o		\
+obj/transform_identity_catalyst.o obj/transform_update.o
 
-SHIELD_OBJS := shield.o $(TRANSFORM_OBJS) $(INTROSPECTION_OBJS)	\
-$(DATABASE_OBJS) util.o $(EXCEPTION_OBJS)
+SHIELD_OBJS := obj/shield.o $(TRANSFORM_OBJS) $(INTROSPECTION_OBJS)	\
+$(DATABASE_OBJS) obj/util.o $(EXCEPTION_OBJS)
 
-TRANSFORM_LEX_TEST_OBJS := transform_lex_test.o 
+TRANSFORM_LEX_TEST_OBJS := obj/transform_lex_test.o 
 
-INTROSPECTION_TEST_OBJS := introspection_test.o	\
-$(INTROSPECTION_OBJS) $(DATABASE_OBJS) util.o $(EXCEPTION_OBJS)
+INTROSPECTION_TEST_OBJS := obj/introspection_test.o	\
+$(INTROSPECTION_OBJS) $(DATABASE_OBJS) obj/util.o $(EXCEPTION_OBJS)
 
-DATABASE_TEST_OBJS := database_test.o $(DATABASE_OBJS) util.o	\
+DATABASE_TEST_OBJS := obj/database_test.o $(DATABASE_OBJS) obj/util.o	\
 $(EXCEPTION_OBJS)
 
 LDFLAGS := @LDFLAGS@ -ll -locci -lclntsh -lpthread
 
 PROGRAMS := shield transform_lex_test shield_make_package_string
 
+OBJ := obj
+SRC := src
+
+$(OBJ)/%.o: $(SRC)/%.cc
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(SRC)/$*.cc -o $@ 
+
 all: shield
 
 shield: $(SHIELD_OBJS)
 	$(CXX) $(SHIELD_OBJS) -o $@ $(LDFLAGS)
 
-shield_make_package_string: shield_make_package_string.cc
-	$(CXX) shield_make_package_string.cc -o $@
+shield_make_package_string: src/shield_make_package_string.cc
+	$(CXX) src/shield_make_package_string.cc -o $@
 
 transform_lex_test: $(TRANSFORM_LEX_TEST_OBJS)
 	$(CXX) $(TRANSFORM_LEX_TEST_OBJS) -o $@ $(LDFLAGS)
@@ -54,15 +60,15 @@ introspection_test: $(INTROSPECTION_TEST_OBJS)
 database_test: $(DATABASE_TEST_OBJS)
 	$(CXX) $(DATABASE_TEST_OBJS) -o $@ $(LDFLAGS)
 
-transform_lex.cc: transform_lex.y
-	flex -i -otransform_lex.cc transform_lex.y 
+src/transform_lex.cc: src/transform_lex.y
+	flex -i -osrc/transform_lex.cc src/transform_lex.y 
 
-transform_yacc.cc: transform_yacc.y
-	bison -d transform_yacc.y -o transform_yacc.cc --report=state
+src/transform_yacc.cc: src/transform_yacc.y
+	bison -d src/transform_yacc.y -o src/transform_yacc.cc 
 
-transform_yacc.hh: transform_yacc.cc
+src/transform_yacc.hh: src/transform_yacc.cc
 
-transform_print_package.cc: shield_make_package_string shield_package.sql
+src/transform_print_package.cc: shield_make_package_string shield_package.sql
 	echo "#include \"transform.hh\"" >$@.tmp
 	echo "void shield::transform::print_package ()" >>$@.tmp
 	echo "{" >>$@.tmp
@@ -71,8 +77,6 @@ transform_print_package.cc: shield_make_package_string shield_package.sql
 	echo ";" >>$@.tmp
 	echo "}" >>$@.tmp
 	mv $@.tmp $@
-
-transform_lex_wrapper.o: transform_lex.cc
 
 #
 # These dependencies make sure that autoconf and configure are run
@@ -89,8 +93,8 @@ Makefile: Makefile.in configure
 #
 # Update dependencies
 #
-depend: transform_yacc.hh
-	makedepend -fMakefile.depend -Y $(subst .o,.cc,$(SHIELD_OBJS))
+depend: src/transform_yacc.hh src/transform_lex.cc
+	makedepend -fMakefile.depend -Y src/*.cc
 .PHONY: depend
 
 #
@@ -98,10 +102,10 @@ depend: transform_yacc.hh
 #
 
 clean:
-	rm -f *.o 
-	rm -f transform_yacc.cc transform_yacc.hh 
-	rm -f transform_lex.cc transform_lex.hh
+	rm -f obj/*.o 
+	rm -f src/transform_yacc.cc src/transform_yacc.hh 
+	rm -f src/transform_lex.cc src/transform_lex.hh
 	rm -f $(PROGRAMS)
-	rm -f transform_print_package.cc
+	rm -f src/transform_print_package.cc
 
 include Makefile.depend
