@@ -10,10 +10,13 @@ namespace shield
     drop_table::drop_table( printable *name, bool if_exists)
       : __name (name), __if_exists (if_exists)
     {
+      __name->set_parent (this);
+
+      assert (__name->get_parent ());
     }
 
     void 
-    drop_table::print (ostream &stream) const
+    drop_table::print (ostream &stream)
     {
 
       if (__if_exists)
@@ -26,8 +29,9 @@ namespace shield
 	}
   
       stream << "drop table" << *__name << endl << endl;
-  
     }
+
+    
 
   }
 

@@ -17,6 +17,7 @@ namespace shield
 	__check (false),
 	__like_clause (0)
     {
+      __prev_index_list = new chain ();
     }
 
     void 
@@ -24,6 +25,8 @@ namespace shield
     {
       l->set_line_break (1);
       __field_list = l;
+      if (l)
+	l->set_parent (this);
     }
 
     void 
@@ -31,6 +34,8 @@ namespace shield
     {
       l->set_line_break (1);
       __key_list = l;
+      if (l)
+	l->set_parent (this);
     }
 
 
@@ -38,12 +43,16 @@ namespace shield
     create_table::set_create_options (printable *l)
     {
       __create_options = l;
+      if (l)
+	l->set_parent (this);
     }
 
     void 
     create_table::set_table_options (printable *l)
     {
       __table_options = l;
+      if (l)
+	l->set_parent (this);
     }
 
 
@@ -51,6 +60,8 @@ namespace shield
     create_table::set_initial_data (printable *l)
     {
       __initial_data = l;
+      if (l)
+	l->set_parent (this);
     }
 
 
@@ -58,6 +69,8 @@ namespace shield
     create_table::set_name (printable *l)
     {
       __name = l;
+      if (l)
+	l->set_parent (this);
     }
 
 
@@ -65,6 +78,8 @@ namespace shield
     create_table::set_like_clause (printable *l)
     {
       __like_clause = l;
+      if (l)
+	l->set_parent (this);
     }
 
 
@@ -75,40 +90,24 @@ namespace shield
     }
 
     void create_table::
-    post_render (ostream &stream, attribute *attr, map<string, printable *> &prop) const
+    post_render (ostream &stream, attribute *attr)
     {
-      /**
-	 'this2' is an ugly hack - this function is declared const, but it
-	 modifies the __prop variable. This should be ok, because __prop
-	 only contains info on the rest of the parse tree - rerunning
-	 print should yield the same result. We do this using a
-	 const_cast.
-      */
-      create_table *this2 = const_cast<create_table *> (this);
 
       printable *post = attr->get_post_render ();
       if (post)
 	{
-	  post->set_property (prop);
 	  stream << *post;
 
 	  create_index *idx = dynamic_cast<create_index *> (post);
 	  if (idx)
 	    {
-	      printable *idx_list = prop["index"];
-	      if (!idx_list)
-		{
-		  idx_list = new chain ();
-		  prop["index"] = idx_list;
-		}
-	  
-	      dynamic_cast<chain *> (idx_list)->push (idx);
+	      __prev_index_list->push (idx);
 	    }
 	}
     }
 
     void create_table::
-    print (ostream &stream) const
+    print (ostream &stream)
     {
       assert (__name);
       assert (__field_list || __like_clause);
@@ -152,7 +151,7 @@ namespace shield
 			{
 			  attribute *attr = dynamic_cast<attribute *> (*j);
 			  stream << sep;
-			  post_render (stream, attr, prop);
+			  post_render (stream, attr);
 			  stream << endl << endl;
 			}
 		    }
@@ -175,11 +174,43 @@ namespace shield
 	    {
 	      attribute *attr = dynamic_cast<attribute *> (*i);
 	      stream << sep;
-	      post_render (stream, attr, prop);
+	      post_render (stream, attr);
 	      stream << endl << endl;
 	    }
 	}
     }
+
+
+    printable *create_table::
+    transform (catalyst &catalyst)
+    {
+
+      if (__field_list)
+	__field_list = dynamic_cast<chain *> (__field_list->transform (catalyst));
+
+      if (__key_list)
+	__key_list = dynamic_cast<chain *> (__key_list->transform (catalyst));
+
+      if (__create_options)
+	__create_options = __create_options->transform (catalyst);
+
+      if (__table_options)
+	__table_options = __table_options->transform (catalyst);
+
+      if (__initial_data)
+	__initial_data = __initial_data->transform (catalyst);
+
+      if (__name)
+	__name = __name->transform (catalyst);
+
+      if (__like_clause)
+	__like_clause = __like_clause->transform (catalyst);
+
+      return catalyst (this);
+    }
+
+
+
 
   }
 

@@ -55,18 +55,6 @@ namespace shield
     ;
 
     /**
-       The various possible contexts for a printable to be in
-    */
-    enum context
-      {
-	UNDEFINED, 
-	NUMERIC, 
-	STRING,
-	DEFINED
-      }
-    ;
-
-    /**
        Set of different types of keys
     */
     enum key_type
@@ -89,12 +77,50 @@ namespace shield
       }
     ;
 
-    class select_item;
+    
+    /**
+       The various possible contexts for a printable to be in
+    */
+    enum context
+      {
+	/**
+	   Unknown context.
+	*/
+	CONTEXT_UNDEFINED,
+	/**
+	   Any lob context, like lob, clob, blob
+	*/
+	CONTEXT_LOB,
+	/**
+	   Any numeric context
+	*/
+	CONTEXT_NUMBER, 
+	/**
+	   Any string context, like char, varchar, etc.
+	*/
+	CONTEXT_STRING,
+	/**
+	   Any type that can be sorted, compared, etc. I.e. _not_ lob.
+	*/
+	CONTEXT_SORTABLE,
+	/**
+	   A date type
+	*/
+	CONTEXT_DATE,
+	/**
+	   A datetime object
+	*/
+	CONTEXT_DATETIME,
+      }
+    ;
+
+    class printable_alias;
     class limit;
     class chain;
     class printable;
     class type;
     class text;
+    class environment;
 
     /**
        Check whether the specified string is a reserved word
@@ -121,7 +147,7 @@ namespace shield
     class catalyst
     {
     public:
-      virtual const printable *operator () (const printable *p) = 0;
+      virtual printable *operator () (printable *p) = 0;
     };
 
     /**
@@ -133,12 +159,11 @@ namespace shield
     class printable
     {
     public:
-  
-      friend ostream &operator << (ostream &stream, const printable &e);
 
       /**
-	 Make empty virtual destructor since we use delete on the base
-	 class to free derived classes.
+	 Make empty virtual destructor since otherwise one cannot use
+	 delete on a derived class to delete memory allocated in the
+	 base. Oh C++, how I love thee.
       */
       virtual ~printable()
       {
@@ -147,21 +172,12 @@ namespace shield
       /**
 	 Return the transformed string representation of this printable.
       */
-      string str () const
+      string str ()
       {
 	std::ostringstream out;
 	if (!(out << *this))
 	  throw shield::exception::syntax ("stringify called on invalid type");
 	return trim (out.str());
-      }
-
-      /**
-	 Set the list of properties. These are used to e.g. tell a
-	 printable what table it belongs to.
-      */
-      void set_property (map<string,printable *> &prop)
-      {
-	__prop = prop;
       }
 
       /**
@@ -184,7 +200,10 @@ namespace shield
       }
 
       /**
-	 Sets the context of this printable. 
+	 Set the context of this printable to be the desired
+	 state. This function does not work on all subclasses - many
+	 of them, such as field names, know what context they belong
+	 to and ignore this value.
       */
       void set_context (context c)
       {
@@ -192,13 +211,9 @@ namespace shield
       }
 
       /**
-	 Returns the context of this printable. The context needs to
-	 be known because in mysql it is legal to compare values from
-	 different contexts, like a date and a string, and type
-	 conversion will be implicitly performed. This does not happen
-	 in oracle.
+	 Returns the context of this printable. 
       */
-      context get_context () const
+      virtual context get_context ()
       {
 	return __context;
       }
@@ -224,26 +239,92 @@ namespace shield
       /**
 	 Transform this printable and all it's subelements using the specified catalyst.
       */
-      virtual const printable *transform (catalyst &catalyst) const;
+      virtual printable *transform (catalyst &catalyst);
+
+      printable *get_parent ()
+      {
+	return __parent;
+      }
+      
+      void set_parent (printable *parent);
+
+      virtual environment *get_environment ();
+
+      virtual printable *internal_transform ()
+      {
+	return this;
+      }
 
     protected:
-      map<string,printable *> __prop;
+      //      map<string,printable *> __prop;
 
       printable();
       
       /**
 	 Print the query to the specified stream
       */
-      virtual void print (ostream &stream) const;
+      virtual void print (ostream &stream);
+
+      void set_child (int id, printable *value);
+      printable *get_child (int id);
+
 
     private:
+
+      friend ostream &operator << (ostream &stream, printable &e);
 
       bool __skip_space;
       bool __push_front;
       context __context;
+      printable *__parent;
+      map<int, printable *> __children;
     };
 
-    ostream &operator << (ostream &stream, const printable &e);
+    class query
+      : public printable
+    {
+
+    public:
+      query ();
+
+      text *get_table (text *field);
+      virtual text *unalias_table (text *table);
+      environment *get_environment ();
+
+    protected:
+
+      virtual chain *get_condensed_table_list ();
+      
+    private:
+      environment *__environment;
+
+    }
+    ;
+
+    ostream &operator << (ostream &stream, printable &e);
+
+    class environment
+      : public printable
+    {
+
+    public:
+      
+      environment (query *q)
+	: __query (q)
+      {
+      }
+
+      query *get_query ()
+      {
+	return __query;
+      }
+      
+    private:
+      query *__query;
+      
+    }
+    ;
+
 
     /*
       A printable that represents an arbitrary piece of text, or a
@@ -257,13 +338,16 @@ namespace shield
       text (const string &text, text_type type = EXACT, bool insert_whitespace=true)
 	: __val (text), __type (type)
       {
+	if (type == LITERAL)
+	  set_context (CONTEXT_STRING);
+
 	set_skip_space (!insert_whitespace);
       }
 
       text (unsigned long long val, text_type type = EXACT, bool insert_whitespace=true)
 	: __val (stringify (val)), __type (type)
       {
-	set_context (NUMERIC);
+	set_context (CONTEXT_NUMBER);
 	set_skip_space (!insert_whitespace);
       }
 
@@ -284,90 +368,13 @@ namespace shield
       }
 
     protected:
-      virtual void print (ostream &stream) const;
+      virtual void print (ostream &stream);
 
     private:
       string __val;
       text_type __type;
     }
     ;
-
-    /**
-       A printable representing a select query.
-    */
-    class select
-      : public printable
-    {
-    public:
-      select();
-  
-      void set_item_list( chain *list )
-      {
-	__item_list = list;
-      }
-
-      void set_table_list( chain *list )
-      {
-	__table_list = list;
-      }
-
-      void set_where_clause( printable *clause )
-      {
-	__where_clause = clause;
-      }
-
-      void set_group_clause( chain *clause )
-      {
-	__group_clause = clause;
-      }
-
-      void set_having_clause( printable *clause )
-      {
-	__having_clause = clause;
-      }
-
-      void set_order_clause( printable *clause )
-      {
-	__order_clause = clause;
-      }
-
-      void set_limit_clause( limit *clause )
-      {
-	__limit_clause = clause;
-      }
-
-      void set_procedure_clause( printable *clause )
-      {
-	__procedure_clause = clause;
-      }
-
-      void set_into_clause( printable *clause )
-      {
-	__into_clause = clause;
-      }
-
-      void set_option_clause( printable *clause )
-      {
-	__option_clause = clause;
-      }
-
-    protected:
-    
-      virtual void print (ostream &stream) const;
-
-    private:
-      chain *__item_list;
-      chain *__table_list;
-      printable *__where_clause;
-      chain *__group_clause;
-      printable *__having_clause;
-      printable *__order_clause;
-      limit *__limit_clause;
-      printable *__procedure_clause;
-      printable *__into_clause;
-      printable *__option_clause;
-    };
-
 
     class chain 
       : public printable
@@ -399,7 +406,11 @@ namespace shield
       }
 
       /**
-	 Push element onto this chain
+	 Push element onto this chain. Most of the chain interface
+	 mimics the stl vector interface, but this method is named
+	 push, not push_back. This is because this method can push to
+	 the front of the list if the item returns true on
+	 get_push_front (), though that feature seems to be disused.
       */
       void push (printable *p);
 
@@ -452,11 +463,11 @@ namespace shield
 	  __chain[0]->set_skip_space (ss);
       }
 
-      virtual const printable *transform (catalyst &catalyst) const;
+      virtual printable *transform (catalyst &catalyst);
 
     protected:
 
-      virtual void print (ostream &stream) const;
+      virtual void print (ostream &stream);
 
       virtual chain *construct () const
       {
@@ -469,6 +480,168 @@ namespace shield
       int __do_line_break;
     }
     ;
+
+    class limit 
+      : public printable
+    {
+    public:
+
+      limit (unsigned long long from, unsigned long long to)
+	: __from (from), __to(to)
+      {
+      }
+
+    protected:
+
+      virtual void print (ostream &stream)
+      {
+	stream << " shield_rownum >" << __from << " and shield_rownum <= " << __to;
+      }  
+
+    private:
+      unsigned long long __from;
+      unsigned long long __to;
+
+    }
+    ;
+
+    /**
+       A printable representing a select query.
+    */
+    class select
+      : public query
+    {
+    public:
+      select();
+  
+      void set_item_list( chain *list )
+      {
+	set_child (__ITEM_LIST, list);
+      }
+
+      chain *get_item_list ()
+      {
+	return dynamic_cast<chain *> (get_child (__ITEM_LIST));
+      }
+
+      void set_table_list( chain *list )
+      {
+	set_child (__TABLE_LIST, list);
+      }
+
+      chain *get_table_list ()
+      {
+	return dynamic_cast<chain *> (get_child (__TABLE_LIST));
+      }
+
+      void set_where_clause( printable *clause )
+      {
+	set_child (__WHERE_CLAUSE, clause);
+      }
+
+      printable *get_where_clause ()
+      {
+	return get_child (__WHERE_CLAUSE);
+      }
+
+      void set_group_clause( chain *clause )
+      {
+	set_child (__GROUP_CLAUSE, clause);
+      }
+
+      chain *get_group_clause ()
+      {
+	return dynamic_cast<chain *> (get_child (__GROUP_CLAUSE));
+      }
+
+      void set_having_clause( printable *clause )
+      {
+	set_child (__HAVING_CLAUSE, clause);
+      }
+
+      printable *get_having_clause ()
+      {
+	return get_child (__HAVING_CLAUSE);
+      }
+
+      void set_order_clause( printable *clause )
+      {
+	set_child (__HAVING_CLAUSE, clause);
+      }
+
+      printable *get_order_clause ()
+      {
+	return get_child (__ORDER_CLAUSE);
+      }
+
+      void set_limit_clause( limit *clause )
+      {
+	set_child (__LIMIT_CLAUSE, clause);
+      }
+
+      limit *get_limit_clause ()
+      {
+	return dynamic_cast<limit *> (get_child (__LIMIT_CLAUSE));
+      }
+
+      void set_procedure_clause( printable *clause )
+      {
+	set_child (__PROCEDURE_CLAUSE, clause);
+      }
+
+      printable *get_procedure_clause ()
+      {
+	return get_child (__PROCEDURE_CLAUSE);
+      }
+
+      void set_into_clause( printable *clause )
+      {
+	set_child (__INTO_CLAUSE, clause);
+      }
+
+      printable *get_into ()
+      {
+	return get_child (__INTO_CLAUSE);
+      }
+
+      void set_option_clause( printable *clause )
+      {
+	set_child (__OPTION_CLAUSE, clause);
+      }
+
+      printable *get_option_clause ()
+      {
+	return get_child (__OPTION_CLAUSE);
+      }
+
+      string get_table (text *id);
+
+      virtual text *unalias_table (text *alias);
+
+      virtual chain *get_condensed_table_list ();
+
+      virtual printable *internal_transform ();
+
+    protected:
+    
+      virtual void print (ostream &stream);
+
+    private:
+      enum 
+	{
+	  __ITEM_LIST,
+	  __TABLE_LIST,
+	  __WHERE_CLAUSE,
+	  __GROUP_CLAUSE,
+	  __HAVING_CLAUSE,
+	  __ORDER_CLAUSE,
+	  __LIMIT_CLAUSE,
+	  __PROCEDURE_CLAUSE,
+	  __INTO_CLAUSE,
+	  __OPTION_CLAUSE
+	};
+    };
+
 
     class paran 
       : public chain
@@ -488,7 +661,7 @@ namespace shield
       }
 
     protected:
-      virtual void print (ostream &stream) const
+      virtual void print (ostream &stream)
       {
 	stream << " (";
 	chain::print (stream);
@@ -504,29 +677,6 @@ namespace shield
     ;
     
     
-    class limit : public printable
-    {
-    public:
-
-      limit (unsigned long long from, unsigned long long to)
-	: __from (from), __to(to)
-      {
-      }
-
-    protected:
-
-      virtual void print (ostream &stream) const
-      {
-	stream << " shield_rownum >" << __from << " and shield_rownum <= " << __to;
-      }  
-
-    private:
-      unsigned long long __from;
-      unsigned long long __to;
-
-    }
-    ;
-
     /**
        A class for defining a table attribute. The point of this class
        is that a lot of things can be defined inline in a mysql create
@@ -542,6 +692,12 @@ namespace shield
       attribute (printable *render=0, printable *post_render=0)
 	: __render (render), __post_render (post_render)
       {
+	if (__render)
+	  __render->set_parent (this);
+
+	if (__post_render)
+	  __post_render->set_parent (this);
+
       }
   
       printable *get_post_render ()
@@ -549,9 +705,11 @@ namespace shield
 	return __post_render;
       }
 
+      virtual printable *transform (catalyst &catalyst);
+
     protected:
 
-      virtual void print (ostream &stream) const
+      virtual void print (ostream &stream)
       {
 	if (__render)
 	  {
@@ -570,39 +728,32 @@ namespace shield
        A class for creating an index
     */
     class create_index
-      : public printable
+      : public query
     {
     public:
 
-      void set_key_type (key_type type)
-      {
-	__type = type;
-      }
+      void set_key_type (key_type type);
+      void set_name (printable *name);
+      void set_key_list (chain *key_list);
 
-      void set_name (printable *name)
-      {
-	__name = name;
-      }
-
-      void set_key_list (chain *key_list)
-      {
-	__key_list = key_list;
-      }
-      
       /*
 	Filter the __key_list to remove any columns which are known to be
 	of non-indexable type (i.e. clob) and return the result.
       */
-      chain *get_filtered_key_list () const;
+      chain *get_filtered_key_list (chain *field_list);
       
+      virtual printable *transform (catalyst &catalyst);
+
     protected:
       
-      virtual void print (ostream &stream) const;
+      virtual void print (ostream &stream);
       
     private:
       
       printable *__name;
+
       chain *__key_list;
+
       key_type __type;
     }
     ;
@@ -612,10 +763,17 @@ namespace shield
     {
     public:
   
+      void set_field_name (printable *field_name)
+      {
+	__field_name = field_name;
+      }
+
     protected:
   
-      virtual void print (ostream &stream) const;
-  
+      virtual void print (ostream &stream);
+    private:
+      
+      printable *__field_name;
     }
     ;
 
@@ -627,15 +785,24 @@ namespace shield
       identity (text *ns=0, text *table=0, text *field=0)
 	: __namespace (ns), __table (table), __field (field)
       {
+	if (ns)
+	  ns->set_parent (this);
+	if (table)
+	  table->set_parent (this);
+	if (field)
+	  field->set_parent (this);
       }
 
       text *get_namespace ();
       text *get_table ();
       text *get_field ();
 
+      virtual printable *transform (catalyst &catalyst);
+      virtual context get_context ();
+
     protected:
 
-      virtual void print (ostream &stream) const;
+      virtual void print (ostream &stream);
 
     private:
 
@@ -647,7 +814,7 @@ namespace shield
     ;
 
     class create_table 
-      : public printable
+      : public query
     {
     public:
 
@@ -662,9 +829,25 @@ namespace shield
       void set_like_clause (printable *l);
       void set_check_existance (bool check);
   
+      printable *transform (catalyst &catalyst);
   
+      printable *get_name ()
+      {
+	return __name;
+      }
+
+      chain *get_prev_index_list ()
+      {
+	__prev_index_list;
+      }
+
+      chain *get_field_list ()
+      {
+	return __field_list;
+      }
+
     protected:
-      virtual void print (ostream &stream) const;
+      virtual void print (ostream &stream);
   
     private:
       chain *__field_list;
@@ -674,15 +857,16 @@ namespace shield
       printable *__initial_data;
       printable *__name;
       printable *__like_clause;
+      chain *__prev_index_list;
       bool __check;
       
-      void post_render (ostream &stream, attribute *attr, map<string, printable *> &prop) const;
+      void post_render (ostream &stream, attribute *attr);
     }
     ;
     
     
     class insert
-      : public printable
+      : public query
     {
     public:
 
@@ -697,7 +881,8 @@ namespace shield
       void set_eq_list (chain *l);
       
     protected:
-      virtual void print (ostream &stream) const;
+      virtual void print (ostream &stream);
+      virtual chain *get_condensed_table_list ();
       
     private:
       printable *__field_list;
@@ -709,7 +894,7 @@ namespace shield
     ;
 
     class drop_table
-      : public printable
+      : public query
     {
     public:
       
@@ -717,7 +902,7 @@ namespace shield
       
     protected:
       
-      virtual void print (ostream &stream) const;
+      virtual void print (ostream &stream);
       
     private:
       
@@ -740,7 +925,7 @@ namespace shield
 
     protected:
     
-      virtual void print (ostream &stream) const;
+      virtual void print (ostream &stream);
 
     private:
       printable *__call;
@@ -763,32 +948,11 @@ namespace shield
 
     protected:
     
-      virtual void print (ostream &stream) const;
+      virtual void print (ostream &stream);
   
     private:
 
       interval_type __type;
-      printable *__expr;
-    }
-    ;
-
-    class natural
-      : public printable
-    {
-    public:
-
-      natural (printable *expr)
-	: __expr(expr)
-      {
-	set_context (DEFINED);
-      }
-
-    protected:
-    
-      virtual void print (ostream &stream) const;
-  
-    private:
-
       printable *__expr;
     }
     ;
@@ -859,7 +1023,7 @@ namespace shield
 
     protected:
     
-      virtual void print (ostream &stream) const
+      virtual void print (ostream &stream)
       {
 	stream << "\t" << *__name << *__type;
 	if (__attrib)
@@ -875,11 +1039,14 @@ namespace shield
     }
     ;
 
-    class select_item
+    /**
+       A printable with an alias
+    */
+    class printable_alias
       : public printable
     {
     public:
-      select_item (printable *item=0, text *alias=0)
+      printable_alias (printable *item=0, text *alias=0)
 	: __item (item), __alias (alias)
       {
       }
@@ -906,7 +1073,7 @@ namespace shield
 
     protected:
     
-      virtual void print (ostream &stream) const
+      virtual void print (ostream &stream)
       {
 	stream << *__item;
 
@@ -916,7 +1083,7 @@ namespace shield
       void print_alias (ostream &stream) const
       {
 	if( __alias && __alias->length () )
-	  stream << " as" << *__alias;
+	  stream << *__alias;
       }
   
   
@@ -929,11 +1096,11 @@ namespace shield
 
 
     class select_item_wild 
-      : public select_item
+      : public printable_alias
     {
     public:
       select_item_wild (text *ns=0, text *table=0)
-	: select_item (0, 0), __namespace (ns), __table (table)
+	: printable_alias (0, 0), __namespace (ns), __table (table)
       {
       }
 
@@ -951,7 +1118,7 @@ namespace shield
 
     protected:
 
-      virtual void print (ostream &stream) const
+      virtual void print (ostream &stream)
       {
 	stream << " ";
 
@@ -992,9 +1159,9 @@ namespace shield
       {
       }
 
-      virtual const printable *operator () (const printable *p)
+      virtual printable *operator () (printable *p)
       {
-	const text *t = dynamic_cast<const text *> (p);
+	text *t = dynamic_cast<text *> (p);
 	if (!t)
 	  {
 	    return p;
@@ -1022,14 +1189,316 @@ namespace shield
     }
     ;
 
+    /**
+       Simple class to validate that the tree is sane. Never changes any nodes.
+    */
+    class validation_catalyst
+      : public catalyst
+    {
+    public:
+
+      virtual printable *operator () (printable *p)
+      {
+	/*
+	  Check that we have a valid node
+	*/
+	assert (p);
+	
+	query *q = dynamic_cast<query *> (p);
+	
+	if (!q)
+	{
+	  /*
+	    Only queries may be a root
+	  */
+	  assert (p->get_parent ());
+
+	  /*
+	    Check for short infinite loops. We should really check for
+	    arbitrarily long loops as well, but in practice they don't
+	    happen.
+	  */
+	  assert (p != p->get_parent ());
+	}
+	
+
+	/**
+	   Check that the environment is healthy
+	*/
+	assert (p->get_environment ());
+	assert (p->get_environment ()->get_query ());
+	
+	return p;
+      }
+    }
+    ;
+
+    /**
+       This catalyst transforms any identifiers that are represented
+       by a text node into one represented by an identity node.
+    */
+    class identity_catalyst
+      : public catalyst
+    {
+    public:
+      virtual printable *operator () (printable *p);
+    }
+    ;
+
+    class internal_catalyst 
+      : public catalyst
+    {
+    public:
+      virtual printable *operator () (printable *p)
+      {
+	return p->internal_transform ();
+      }
+    }
+    ;
+
+    /**
+       This catalyst locates any table names in a from clause. If
+       there is a table alias, it is returned in preference over the
+       actual table name. 
+    */
+    class find_table_catalyst
+      : public catalyst
+    {
+    public:
+      find_table_catalyst ()
+      {
+	__res = new chain ();
+      }
+
+      /**
+	 The catalyst function. Detects printable_alias nodes and
+	 handles them.
+      */
+      virtual printable *operator () (printable *p)
+      {
+	printable_alias *a = dynamic_cast<printable_alias *> (p);
+	if (a)
+	  {
+	    if (a->get_alias ())
+	      __res->push (a->get_alias ());
+	    else
+	      __res->push (a->get_item ());	      
+	  }
+	return p;
+      }
+
+      /**
+	 Return the accumulated list of tables
+      */
+      chain *get_table_list ()
+      {
+	return __res;
+      }
+
+    private:
+      chain *__res;
+    }
+    ;
+
+    /**
+       A function representing a comparison operation. This nodes
+       exists to handle implicit conversions. At print time, a cast
+       node may be emitted for either argument.
+    */
+    class comparison
+      : public printable
+    {
+    public:
+      comparison (printable *op, printable *arg1, printable *arg2);
+
+    protected:
+
+      virtual void print (ostream &stream);
+
+    private:
+      enum {
+	OP,
+	ARG1,
+	ARG2
+      }
+      ;
+
+    }
+    ;
+
+    /**
+       A node representing a type cast. 
+    */
+    class cast
+      : public printable
+    {
+    public:
+      cast (printable *p, context c);
+
+    protected:
+      virtual void print (ostream &stream);
+
+    private:
+      context __context;
+
+    }
+    ;
+
+    /**
+       This is not a real query - it is used to make a chain of real
+       queries be a legal return value - this class wraps the chain up
+       so that when the chain calls get_parent it will not die.
+    */
+    class fake_query
+      : public query
+    {
+    public:
+
+      /**
+	 Constructor. 
+
+	 No validation possible - acepts any argument.
+      */
+      fake_query (printable *p)
+	: __transform_identity (false)
+      {
+	set_child (0, p);
+      } 
+
+      virtual printable *internal_transform ()
+      {
+	if (!__transform_identity)
+	  return this;
+	identity_catalyst i;
+	return this->transform (i);
+      }
+
+      /**
+	 This function can be called to set whether the
+	 identity_catalyst transformation should be performed. The
+	 default is false (no).
+      */
+      void set_transform_identity (bool v)
+      {
+	__transform_identity = v;
+      }
+      
+    protected:
+
+      virtual void print (ostream &stream)
+      {
+	printable *inner = get_child (0);
+
+	if (!inner)
+	  throw shield::exception::syntax ("Tried to print null fake_query node");
+
+	stream << *inner;
+      }
+
+    private:
+
+      /**
+	 Whether identity transformation should be performed
+      */
+      bool __transform_identity;
+      
+    }
+    ;
+
+    class update
+      : public query
+    {
+    public:
+
+      void set_table_list (chain *name)
+      {
+	set_child (__NAME, name);
+      }
+
+      chain *get_table_list ()
+      {
+	return dynamic_cast<chain *> (get_child (__NAME));
+      }
+
+      void set_update_list (printable *name)
+      {
+	set_child (__UPDATE_LIST, name);
+      }
+
+      printable *get_update_list ()
+      {
+	return get_child (__UPDATE_LIST);
+      }
+
+      void set_where_clause (printable *name)
+      {
+	set_child (__WHERE_CLAUSE, name);
+      }
+
+      printable *get_where_clause ()
+      {
+	return get_child (__WHERE_CLAUSE);
+      }
+
+      void set_order_clause (printable *name)
+      {
+	set_child (__ORDER_CLAUSE, name);
+      }
+
+      printable *get_order_clause ()
+      {
+	return get_child (__ORDER_CLAUSE);
+      }
+
+      void set_delete_limit_clause (printable *name)
+      {
+	set_child (__DELETE_LIMIT_CLAUSE, name);
+      }
+
+      printable *get_delete_limit_clause ()
+      {
+	return get_child (__DELETE_LIMIT_CLAUSE);
+      }
+
+      virtual chain *get_condensed_table_list ()
+      {
+	find_table_catalyst c;
+	transform (c);
+	return c.get_table_list ();
+      }
+
+      printable *internal_transform ()
+      {
+	identity_catalyst i;
+	return this->transform (i);
+      }
+
+    protected:
+
+      virtual void print (ostream &stream);
+
+    private:
+
+      enum 
+	{
+	  __NAME,
+	  __UPDATE_LIST,
+	  __WHERE_CLAUSE,
+	  __ORDER_CLAUSE,
+	  __DELETE_LIMIT_CLAUSE
+	}
+      ;
+    }
+    ;
+
     void yyerror (char const *s);
     int yyparse ();
-
+    
     /**
        Print the shield package definition
     */
     void print_package ();
-
+    
     void *lex_set_string (const string &str);
 
   }

@@ -26,7 +26,7 @@ namespace shield
       
       __is_col_init = true;
       
-      string q = "select column_name, data_type from user_tab_cols where table_name = %";
+      string q = "select column_name, data_type from user_tab_cols where table_name = % order by column_id";
       
       result_set &rs = query (q) << to_upper (__name);
 

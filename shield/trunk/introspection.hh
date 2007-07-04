@@ -114,7 +114,8 @@ namespace shield
       typedef std::vector<column>::const_iterator column_const_iterator; 
 
       /**
-	 Return the column with the specified name
+	 Return the column with the specified name. Throws the
+	 not_found exception if no column by tyhat name exists.
       */
       const column &get_column (string name);
 

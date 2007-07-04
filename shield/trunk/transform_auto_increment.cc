@@ -10,12 +10,16 @@ namespace transform
    Print 
 */
 void auto_increment::
-print (ostream &stream) const
+print (ostream &stream)
 {
-  map<string,printable *> prop = __prop;
+  environment *env = get_environment ();
+  assert (env);
+      
+  create_table *table_query = dynamic_cast<create_table *> (env->get_query ());
+  assert (table_query);
 
-  string t_name = prop["table_name"]->str ();
-  string f_name = prop["field_name"]->str ();
+  string t_name = table_query->get_name ()->str ();
+  string f_name = __field_name->str ();
 
   string name = t_name + "_" + f_name;
 

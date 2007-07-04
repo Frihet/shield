@@ -5,6 +5,7 @@
 #include "exception.hh"
 
 using namespace oracle::occi;
+using namespace shield;
 
 namespace shield
 {
@@ -27,7 +28,6 @@ namespace shield
       password=p;
       host=h;    
       is_init = true;
-
     }
 
     static void connect ()
@@ -39,7 +39,7 @@ namespace shield
 
       if (!is_init)
 	{
-	  throw shield::exception::syntax ("Tried to use database without supplying login information");
+	  throw exception::syntax ("Tried to use database without supplying login information");
 	}
 
       env = Environment::createEnvironment ();

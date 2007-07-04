@@ -1,3 +1,13 @@
+/**
+   \file transform_select.cc
+
+   This is the file for writing out Oracle style sql code for a select
+   query. It is probably the single most complicated query, since
+   there are so many optional query parts, and so many of them work
+   differently in Oracle. The code is a bit ugly in places and there
+   are a few situations where valid but rare cases are not handeld
+   correctly. Needs a bit more work.
+*/
 #include <set>
 
 #include "transform.hh"
@@ -13,27 +23,34 @@ namespace shield
 
     select::
     select()
-      : __limit_clause (0), 
-	__item_list (0),
-	__table_list (0), 
-	__where_clause (0),
-	__group_clause (0),
-	__having_clause (0), 
-	__order_clause (0), 
-	__procedure_clause (0), 
-	__into_clause (0)
     {
     }
 
-    void print_having (ostream &stream, const printable *having, map<string, printable *> &mapping)
+    /**
+       This function creates a version of the having clause where all
+       uses of aliases have been replaced with the original code, and
+       then prints it.
+    */
+    void 
+    print_having (ostream &stream, 
+		  printable *having,
+		  map<string, printable *> &mapping)
     {
       replace_identifier_catalyst cat (mapping);
 
-      const printable *t = having->transform (cat);
+      printable *t = having->transform (cat);
       stream << *t;
     }
 
-    static printable *aggregate (text *field, text *alias, string table)
+    /**
+       This function uses introspection to find out what type a table
+       column is of, and
+    */
+    static printable *
+    aggregate (text *field, 
+	       text *alias,
+	       const string &table_alias,
+	       const string &table)
     {
       string func_name;
 
@@ -53,46 +70,102 @@ namespace shield
 	{
 	  func_name = "shield_arb_agg_num";
 	}
-
-      printable *val = new chain (new text (func_name), new paran (new identity (0, new text (table), field)));
-      printable *res = new select_item (val, alias);
+      paran *p = new paran (new identity (0, new text (table_alias), field));
+      printable *val = new chain (new text (func_name), p);
+      printable *res = new printable_alias (val, alias);
 
       return res;
     }
 
+    /**
+       Search the specified tree searching for printable_alias objects
+       and save their mapping
+    */
+    static void 
+    get_table_alias (printable *it, map<string, printable *> &table_alias)
+    {
+      chain *ch = dynamic_cast<chain *> (it);
+      printable_alias *al = dynamic_cast<printable_alias *> (it);
+
+      if (al)
+	{
+	  if (al->get_alias ())
+	    {
+	      // cerr << "alias " << al->get_alias ()->str () << " -> " << al->get_item ()->str () << endl;
+	      table_alias[al->get_alias ()->str ()] = al->get_item ();
+	    }
+	}
+      else if (ch)
+	{
+	  chain::const_iterator i;
+	  for (i=ch->begin (); i<ch->end (); i++)
+	    {
+	      get_table_alias (*i, table_alias);
+	    }
+	}
+    }
+
     void select::
-    print (ostream &stream) const
+    print (ostream &stream)
     {
 
       std::ostringstream pre, post;
   
       chain::const_iterator i;
 
+      /**
+	 This is set to true if the field list contains wildcards
+      */
       bool has_wild=false;
+
+      /**
+	 This is set to true of there are fields that are not grouped on
+      */
       bool has_ungrouped=false;
   
+      /*
+	Mappings from field aliases to the underlying field
+	definition. The field definition may be an expression.
+      */
       map<string, printable *> field_alias;
+
+      /**
+	 Mapping between table aliases and the actual table names.
+      */
       map<string, printable *> table_alias;
+
+      /**
+	 Set of fields on which grouping is performed
+      */
       set<string> group_field;
 
-      if (!__item_list)
+      if (!get_item_list ())
 	{
 	  throw exception::syntax ("No item list for select");
 	}
 
-      if (__limit_clause)
+      /*
+	We use the magic rownum field to simulate the limit clause.
+
+	Since rownum is only increased on actually used rows, we need
+	to assign rownum to a temporary field and perform the real
+	limit in the outer select.
+      */
+      if (get_limit_clause ())
 	{
-	  __item_list->push (new select_item (new text ("rownum", EXACT), new text ("shield_rownum", EXACT)));
+	  get_item_list ()->push (new printable_alias (new text ("rownum", EXACT),
+						  new text ("shield_rownum", EXACT)));
 	}
+
       /*
 	Find out if there are any wildcards among the select items.  When
 	using group by or limit clauses, we need to special case
 	wildcards.
       */
-      for (i=__item_list->begin (); i<__item_list->end (); i++)
+      for (i=get_item_list ()->begin (); i<get_item_list ()->end (); i++)
 	{
 	  printable *pr = *i;
-	  select_item *it = dynamic_cast<select_item *> (pr);
+	  printable_alias *it = dynamic_cast<printable_alias *> (pr);
 	  assert (it);
       
 	  if (dynamic_cast<select_item_wild *> (it))
@@ -108,12 +181,11 @@ namespace shield
 	around. If we are using a group by clause, we need to find out
 	some information about the query in order to properly transform
 	it.
-      */
-  
-      if (__group_clause)
+      */  
+      if (get_group_clause ())
 	{
 
-	  for (i=__group_clause->begin (); i<__group_clause->end (); i++)
+	  for (i=get_group_clause ()->begin (); i<get_group_clause ()->end (); i++)
 	    {
 	      printable *pr = *i;
 
@@ -126,10 +198,12 @@ namespace shield
 	      group_field.insert (id);
 	    }
 
-	  for (i=__item_list->begin (); i<__item_list->end (); i++)
+	  get_table_alias (get_table_list (), table_alias);
+	  
+	  for (i=get_item_list ()->begin (); i<get_item_list ()->end (); i++)
 	    {
 	      printable *pr = *i;
-	      select_item *it = dynamic_cast<select_item *> (pr);
+	      printable_alias *it = dynamic_cast<printable_alias *> (pr);
 	  
 	      if (it->get_alias ())
 		{
@@ -146,13 +220,22 @@ namespace shield
 	      */
 	  
 	      text *txt = dynamic_cast<text *> (it->get_item ());
+	      identity *id = dynamic_cast<identity *> (it->get_item ());
 	  
 	      if (txt)
 		{
+		  id = new identity (0, 0, txt);
+		}
+
+	      if (id)
+		{
+
+		  txt = id->get_field ();
+
 		  if (txt->get_type () == IDENTIFIER || 
 		      txt->get_type () == IDENTIFIER_QUOTED)
 		    {
-		      if (group_field.find (txt->str ()) == group_field.end ())
+		      if (group_field.find (id->str ()) == group_field.end ())
 			{
 			  has_ungrouped = true;
 			}
@@ -161,63 +244,63 @@ namespace shield
 	    }
 	}
 
-      if (__limit_clause)
+      if (get_limit_clause ())
 	pre << "select * from (";
 
       pre << "select";
 
-      if (__option_clause)
-	pre << *__option_clause;
+      if (get_option_clause ())
+	pre << *get_option_clause ();
 
       post << "from";
 
-      if (__table_list && !__table_list->empty ())
+      if (get_table_list () && !get_table_list ()->empty ())
 	{
-	  post << *__table_list;
+	  post << *get_table_list ();
 	}
       else
 	{
 	  post << " dual";
 	}
 
-      if (__where_clause)
+      if (get_where_clause ())
 	{
-	  post << "\nwhere" << *__where_clause;
+	  post << "\nwhere" << *get_where_clause ();
 	}
 
-      if (__group_clause)
+      if (get_group_clause ())
 	{
-	  post << "\ngroup by" << *__group_clause;
+	  post << "\ngroup by" << *get_group_clause ();
 	}
 
-      if (__having_clause)
+      if (get_having_clause ())
 	{
 	  post << "\nhaving";
-	  print_having (post, __having_clause, field_alias);
+	  print_having (post, get_having_clause (), field_alias);
 	}
 
-      if (__order_clause)
+      if (get_order_clause ())
 	{
-	  post << "\norder by" << *__order_clause;
+	  post << "\norder by" << *get_order_clause ();
 	}
 
-      if (__limit_clause )
-	post << ") where" << *__limit_clause;
+      if (get_limit_clause () )
+	post << ") where" << *get_limit_clause ();
 
       chain *item_list;
       
-      if (__group_clause && (has_wild || has_ungrouped))
+      if (get_group_clause () && (has_wild || has_ungrouped))
 	{
 
 	  item_list = new chain ();
 	  item_list->set_separator (",");
 
-	  for (i=__item_list->begin (); i<__item_list->end (); i++)
+	  for (i=get_item_list ()->begin (); i<get_item_list ()->end (); i++)
 	    {
 	      bool handled = false;
 
 	      printable *pr = *i;
-	      select_item *it = dynamic_cast<select_item *> (pr);
+	      printable_alias *it = dynamic_cast<printable_alias *> (pr);
 	  
 	      /*
 		Try and locate all used fields. There are lots of
@@ -236,7 +319,7 @@ namespace shield
 
 	      if (id)
 		{
-		  string table_name = __table_list-> str ();
+		  string table_name = get_table_list ()-> str ();
 
 		  if (id->get_namespace ())
 		    {
@@ -267,7 +350,12 @@ namespace shield
 			  handled = true;
 			  
 			  text *alias = it->get_alias ();
-			  item_list->push (aggregate (txt, alias, table_name));
+			  
+			  string unaliased_table_name = table_name;
+			  if (table_alias.find (table_name) != table_alias.end ())
+			    unaliased_table_name = table_alias[table_name]->str ();
+
+			  item_list->push (aggregate (txt, alias, table_name, unaliased_table_name));
 			  
 			}
 		      else
@@ -277,9 +365,9 @@ namespace shield
 			}
 		    }
 		}
-	  
+	      
 	      select_item_wild * wi = dynamic_cast<select_item_wild *> (it);
-	  
+	      
 	      if (wi)
 		{
 	      
@@ -296,7 +384,7 @@ namespace shield
 		    }
 		  else
 		    {
-		      le = __table_list-> str ();
+		      le = get_table_list ()-> str ();
 		    }
 
 
@@ -309,11 +397,16 @@ namespace shield
 		      string name = (*i).get_name ();
 		      if (group_field.find (name) == group_field.end ())
 			{
-			  item_list->push (aggregate (new text (name), 0, le));
+
+			  string unaliased_table_name = le;
+			  if (table_alias.find (le) != table_alias.end ())
+			    unaliased_table_name = table_alias[le]->str ();
+
+			  item_list->push (aggregate (new text (name), 0, le, unaliased_table_name));
 			}
 		      else
 			{
-			  item_list->push (new select_item (new text (name), 0));
+			  item_list->push (new printable_alias (new text (name), 0));
 			}
 		    }
 
@@ -329,20 +422,20 @@ namespace shield
 	    }
 	  
 	}
-      else if (__limit_clause && has_wild)
+      else if (get_limit_clause () && has_wild)
 	{
 
 	  item_list = new chain ();
 	  item_list->set_separator (",");
 
-	  for (i=__item_list->begin (); i<__item_list->end (); i++)
+	  for (i=get_item_list ()->begin (); i<get_item_list ()->end (); i++)
 	    {
 	      printable *pr = *i;
-	      select_item *it = dynamic_cast<select_item *> (pr);
+	      printable_alias *it = dynamic_cast<printable_alias *> (pr);
 	      assert (it);
 
 	      select_item_wild * wi = dynamic_cast<select_item_wild *> (it);
-
+	      
 	      if (wi)
 		{
 
@@ -359,7 +452,7 @@ namespace shield
 		    }
 		  else
 		    {
-		      le = __table_list-> str ();
+		      le = get_table_list ()-> str ();
 		    }
 
 		  introspection::table &t = introspection::get_table (le);
@@ -368,7 +461,7 @@ namespace shield
 
 		  for (i=t.column_begin (); i<t.column_end (); i++)
 		    {
-		      item_list->push (new select_item (new text ((*i).get_name (),IDENTIFIER), 0));
+		      item_list->push (new printable_alias (new text ((*i).get_name (),IDENTIFIER), 0));
 		    }
 		}
 	      else
@@ -380,12 +473,55 @@ namespace shield
 	}
       else
 	{
-	  item_list = __item_list;
+	  item_list = get_item_list ();
 	}
       
       stream << pre.str () << *item_list << "\n" << post.str () << endl << endl;      
   
     }
+
+    chain *select::
+    get_condensed_table_list ()
+    {
+      find_table_catalyst cat;
+      get_table_list ()->transform (cat);
+      return cat.get_table_list ();
+    }
+
+    text *select::
+    unalias_table (text *alias)
+    {
+      cerr << "Unalias table " << alias->str () << endl;
+
+      map<string, printable *> table_alias;
+      get_table_alias (get_table_list (), table_alias);
+
+      if (table_alias.find (alias->str ()) != table_alias.end ())
+	{
+	  printable *res = table_alias[alias->str ()];
+	  
+	  text *txt = dynamic_cast<text *> (res);
+	  identity *id = dynamic_cast<identity *> (res);
+	  
+	  if (id)
+	    {
+	      txt = id->get_table ();
+	    }
+
+	  assert (txt);
+	  return txt;
+	}
+      return alias;
+    }
+
+    printable *select::
+    internal_transform ()
+    {
+      identity_catalyst i;
+      return this->transform (i);
+    }
+
+
 
   }
 

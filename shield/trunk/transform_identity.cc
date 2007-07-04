@@ -1,4 +1,8 @@
 #include "transform.hh"
+#include "introspection.hh"
+#include "exception.hh"
+
+using namespace shield;
 
 namespace shield
 {
@@ -7,7 +11,7 @@ namespace shield
   {
 
     void identity::
-    print (ostream &stream) const
+    print (ostream &stream)
     {
       bool printed = false;
 
@@ -64,6 +68,59 @@ namespace shield
     text *identity::get_field ()
     {
       return __field;
+    }
+
+    printable *identity::
+    transform (catalyst &catalyst)
+    {
+      
+      if (__namespace)
+	__namespace = dynamic_cast<text *> (__namespace->transform (catalyst));
+
+      if (__table)
+	__table = dynamic_cast<text *> (__table->transform (catalyst));
+
+      if (__field)
+	__field = dynamic_cast<text *> (__field->transform (catalyst));
+
+      return catalyst (this);
+    }
+
+    context identity::
+    get_context ()
+    {
+      //      cerr << "get_context on identity "<< str () << endl;
+
+      query *q = get_environment ()->get_query ();
+
+      if (!__table)
+	{
+	  __table = q->get_table (__field);
+	}
+
+      assert (__table);
+
+      text *real_table = q->unalias_table (__table);
+ 
+      //      cerr << "Table " << __table->str () << " unaliased to " << real_table->str () << endl;
+     
+      //      cerr << "before introspection of table " << real_table->str ()<< endl;
+      introspection::table &itbl = introspection::get_table (real_table->str ());
+      const introspection::column &ic = itbl.get_column (__field->str ());
+      const introspection::column_type &tp = ic.get_type ();
+      //      cerr << "after introspection" << endl;
+
+      if (tp.is_char ())
+	return CONTEXT_STRING;
+
+      if (tp.is_number ())
+	return CONTEXT_NUMBER;
+
+      if (tp.is_lob ())
+	return CONTEXT_LOB;
+
+      throw exception::syntax ("Unknown column type in column " + this->str ());
+      
     }
 
   }

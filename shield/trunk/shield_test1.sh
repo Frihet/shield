@@ -18,7 +18,7 @@ function test_query() {
     tot=$(($tot+1))
 }
 
-for i in sql/axel_evil* sql2/axel_evil*; do
+for i in sql/axel_evil*; do
     test_query $i
 done
 

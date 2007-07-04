@@ -13,13 +13,17 @@ exception_syntax.o
 
 DATABASE_OBJS := database.o database_result_set.o database_parameter.o
 
-SHIELD_OBJS := transform_common.o transform_yacc.o transform_lex_wrapper.o	\
-shield.o transform_printable.o transform_select.o transform_identity.o	\
-transform_text.o transform_create_table.o transform_insert.o		\
-transform_auto_increment.o transform_create_index.o			\
+TRANSFORM_OBJS := transform_common.o transform_yacc.o			\
+transform_lex_wrapper.o transform_printable.o transform_select.o	\
+transform_identity.o transform_text.o transform_create_table.o		\
+transform_insert.o transform_auto_increment.o transform_create_index.o	\
 transform_drop_table.o transform_date_function.o transform_interval.o	\
-transform_natural.o transform_print_package.o transform_chain.o		\
-$(INTROSPECTION_OBJS) $(DATABASE_OBJS) util.o $(EXCEPTION_OBJS)
+transform_query.o transform_print_package.o transform_chain.o		\
+transform_comparison.o transform_attribute.o transform_cast.o		\
+transform_identity_catalyst.o transform_update.o
+
+SHIELD_OBJS := shield.o $(TRANSFORM_OBJS) $(INTROSPECTION_OBJS)	\
+$(DATABASE_OBJS) util.o $(EXCEPTION_OBJS)
 
 TRANSFORM_LEX_TEST_OBJS := transform_lex_test.o 
 

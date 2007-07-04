@@ -34,7 +34,7 @@ string type_string (interval_type t)
 }
 
 void 
-interval::print (ostream &stream) const
+interval::print (ostream &stream)
 {
   stream << " interval" << *__expr << " " << type_string (__type);
 }
