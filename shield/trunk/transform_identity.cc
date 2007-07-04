@@ -11,7 +11,7 @@ namespace shield
   {
 
     void identity::
-    print (ostream &stream)
+    _print (ostream &stream)
     {
       bool printed = false;
 

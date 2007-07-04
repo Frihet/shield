@@ -88,7 +88,7 @@ namespace shield
     }
 
     void insert::
-    print (ostream &stream)
+    _print (ostream &stream)
     {
       assert (__name);
       assert (__value_list);
@@ -140,7 +140,7 @@ namespace shield
     }
 
     chain *insert::
-    get_condensed_table_list ()
+    _get_condensed_table_list ()
     {
       return new chain (__name);
     }

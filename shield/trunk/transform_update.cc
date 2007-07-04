@@ -8,7 +8,7 @@ namespace shield
 
 
     void update::
-    print (ostream &stream)
+    _print (ostream &stream)
     {
       assert (get_table_list ());
       assert (get_update_list ());

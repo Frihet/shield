@@ -314,7 +314,7 @@ namespace shield
 	 subclasses. If this method is not overloaded, a \c syntax
 	 exception will be thrown.
       */
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
 
       /**
 	 Add a new child node to this node, and identify it using the
@@ -323,13 +323,13 @@ namespace shield
 	 @param id the integer to identify the child by
 	 @param value the child. If value is null, then the specified child is erased.
       */
-      void set_child (int id, printable *value);
+      void _set_child (int id, printable *value);
 
       /**
 	 Return the child with the specified id, or null if no child
 	 with that id exists.
       */
-      printable *get_child (int id);
+      printable *_get_child (int id);
 
 
     private:
@@ -403,7 +403,7 @@ namespace shield
 	 Returns a chain object whare each child is a table. The
 	 tables may be aliased.
       */
-      virtual chain *get_condensed_table_list ();
+      virtual chain *_get_condensed_table_list ();
       
     private:
 
@@ -459,7 +459,7 @@ namespace shield
       }
 
     protected:
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
 
     private:
       string __val;
@@ -557,12 +557,7 @@ namespace shield
 
     protected:
 
-      virtual void print (ostream &stream);
-
-      virtual chain *construct () const
-      {
-	return new chain ();
-      }
+      virtual void _print (ostream &stream);
 
     private:
       vector<printable *> __chain;
@@ -583,7 +578,7 @@ namespace shield
 
     protected:
 
-      virtual void print (ostream &stream)
+      virtual void _print (ostream &stream)
       {
 	stream << " shield_rownum >" << __from << " and shield_rownum <= " << __to;
       }  
@@ -606,115 +601,115 @@ namespace shield
   
       void set_item_list( chain *list )
       {
-	set_child (__ITEM_LIST, list);
+	_set_child (__ITEM_LIST, list);
       }
 
       chain *get_item_list ()
       {
-	return dynamic_cast<chain *> (get_child (__ITEM_LIST));
+	return dynamic_cast<chain *> (_get_child (__ITEM_LIST));
       }
 
       void set_table_list( chain *list )
       {
-	set_child (__TABLE_LIST, list);
+	_set_child (__TABLE_LIST, list);
       }
 
       chain *get_table_list ()
       {
-	return dynamic_cast<chain *> (get_child (__TABLE_LIST));
+	return dynamic_cast<chain *> (_get_child (__TABLE_LIST));
       }
 
       void set_where_clause( printable *clause )
       {
-	set_child (__WHERE_CLAUSE, clause);
+	_set_child (__WHERE_CLAUSE, clause);
       }
 
       printable *get_where_clause ()
       {
-	return get_child (__WHERE_CLAUSE);
+	return _get_child (__WHERE_CLAUSE);
       }
 
       void set_group_clause( chain *clause )
       {
-	set_child (__GROUP_CLAUSE, clause);
+	_set_child (__GROUP_CLAUSE, clause);
       }
 
       chain *get_group_clause ()
       {
-	return dynamic_cast<chain *> (get_child (__GROUP_CLAUSE));
+	return dynamic_cast<chain *> (_get_child (__GROUP_CLAUSE));
       }
 
       void set_having_clause( printable *clause )
       {
-	set_child (__HAVING_CLAUSE, clause);
+	_set_child (__HAVING_CLAUSE, clause);
       }
 
       printable *get_having_clause ()
       {
-	return get_child (__HAVING_CLAUSE);
+	return _get_child (__HAVING_CLAUSE);
       }
 
       void set_order_clause( printable *clause )
       {
-	set_child (__HAVING_CLAUSE, clause);
+	_set_child (__HAVING_CLAUSE, clause);
       }
 
       printable *get_order_clause ()
       {
-	return get_child (__ORDER_CLAUSE);
+	return _get_child (__ORDER_CLAUSE);
       }
 
       void set_limit_clause( limit *clause )
       {
-	set_child (__LIMIT_CLAUSE, clause);
+	_set_child (__LIMIT_CLAUSE, clause);
       }
 
       limit *get_limit_clause ()
       {
-	return dynamic_cast<limit *> (get_child (__LIMIT_CLAUSE));
+	return dynamic_cast<limit *> (_get_child (__LIMIT_CLAUSE));
       }
 
       void set_procedure_clause( printable *clause )
       {
-	set_child (__PROCEDURE_CLAUSE, clause);
+	_set_child (__PROCEDURE_CLAUSE, clause);
       }
 
       printable *get_procedure_clause ()
       {
-	return get_child (__PROCEDURE_CLAUSE);
+	return _get_child (__PROCEDURE_CLAUSE);
       }
 
       void set_into_clause( printable *clause )
       {
-	set_child (__INTO_CLAUSE, clause);
+	_set_child (__INTO_CLAUSE, clause);
       }
 
       printable *get_into ()
       {
-	return get_child (__INTO_CLAUSE);
+	return _get_child (__INTO_CLAUSE);
       }
 
       void set_option_clause( printable *clause )
       {
-	set_child (__OPTION_CLAUSE, clause);
+	_set_child (__OPTION_CLAUSE, clause);
       }
 
       printable *get_option_clause ()
       {
-	return get_child (__OPTION_CLAUSE);
+	return _get_child (__OPTION_CLAUSE);
       }
 
       string get_table (text *id);
 
       virtual text *unalias_table (text *alias);
 
-      virtual chain *get_condensed_table_list ();
-
       virtual printable *internal_transform ();
 
     protected:
     
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
+
+      virtual chain *_get_condensed_table_list ();
 
     private:
       enum 
@@ -751,18 +746,13 @@ namespace shield
       }
 
     protected:
-      virtual void print (ostream &stream)
+      virtual void _print (ostream &stream)
       {
 	stream << " (";
-	chain::print (stream);
+	chain::_print (stream);
 	stream << ")";
       }
   
-      virtual chain *construct () const
-      {
-	return new paran ();
-      }  
-
     }
     ;
     
@@ -799,7 +789,7 @@ namespace shield
 
     protected:
 
-      virtual void print (ostream &stream)
+      virtual void _print (ostream &stream)
       {
 	if (__render)
 	  {
@@ -836,7 +826,7 @@ namespace shield
 
     protected:
       
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
       
     private:
       
@@ -851,19 +841,19 @@ namespace shield
     class auto_increment
       : public printable
     {
+
     public:
-  
       void set_field_name (printable *field_name)
       {
 	__field_name = field_name;
       }
 
     protected:
-  
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
+
     private:
-      
       printable *__field_name;
+
     }
     ;
 
@@ -892,7 +882,7 @@ namespace shield
 
     protected:
 
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
 
     private:
 
@@ -937,7 +927,7 @@ namespace shield
       }
 
     protected:
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
   
     private:
       chain *__field_list;
@@ -971,8 +961,8 @@ namespace shield
       void set_eq_list (chain *l);
       
     protected:
-      virtual void print (ostream &stream);
-      virtual chain *get_condensed_table_list ();
+      virtual void _print (ostream &stream);
+      virtual chain *_get_condensed_table_list ();
       
     private:
       printable *__field_list;
@@ -992,7 +982,7 @@ namespace shield
       
     protected:
       
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
       
     private:
       
@@ -1014,8 +1004,7 @@ namespace shield
       }
 
     protected:
-    
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
 
     private:
       printable *__call;
@@ -1037,8 +1026,7 @@ namespace shield
       }
 
     protected:
-    
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
   
     private:
 
@@ -1112,8 +1100,7 @@ namespace shield
       }
 
     protected:
-    
-      virtual void print (ostream &stream)
+      virtual void _print (ostream &stream)
       {
 	stream << "\t" << *__name << *__type;
 	if (__attrib)
@@ -1162,8 +1149,7 @@ namespace shield
       }
 
     protected:
-    
-      virtual void print (ostream &stream)
+      virtual void _print (ostream &stream)
       {
 	stream << *__item;
 
@@ -1207,8 +1193,7 @@ namespace shield
   
 
     protected:
-
-      virtual void print (ostream &stream)
+      virtual void _print (ostream &stream)
       {
 	stream << " ";
 
@@ -1401,8 +1386,7 @@ namespace shield
       comparison (printable *op, printable *arg1, printable *arg2);
 
     protected:
-
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
 
     private:
       enum {
@@ -1425,7 +1409,7 @@ namespace shield
       cast (printable *p, context c);
 
     protected:
-      virtual void print (ostream &stream);
+      virtual void _print (ostream &stream);
 
     private:
       context __context;
@@ -1451,7 +1435,7 @@ namespace shield
       fake_query (printable *p)
 	: __transform_identity (false)
       {
-	set_child (0, p);
+	_set_child (0, p);
       } 
 
       virtual printable *internal_transform ()
@@ -1473,10 +1457,9 @@ namespace shield
       }
       
     protected:
-
-      virtual void print (ostream &stream)
+      virtual void _print (ostream &stream)
       {
-	printable *inner = get_child (0);
+	printable *inner = _get_child (0);
 
 	if (!inner)
 	  throw shield::exception::syntax ("Tried to print null fake_query node");
@@ -1501,59 +1484,52 @@ namespace shield
 
       void set_table_list (chain *name)
       {
-	set_child (__NAME, name);
+	_set_child (__NAME, name);
       }
 
       chain *get_table_list ()
       {
-	return dynamic_cast<chain *> (get_child (__NAME));
+	return dynamic_cast<chain *> (_get_child (__NAME));
       }
 
       void set_update_list (printable *name)
       {
-	set_child (__UPDATE_LIST, name);
+	_set_child (__UPDATE_LIST, name);
       }
 
       printable *get_update_list ()
       {
-	return get_child (__UPDATE_LIST);
+	return _get_child (__UPDATE_LIST);
       }
 
       void set_where_clause (printable *name)
       {
-	set_child (__WHERE_CLAUSE, name);
+	_set_child (__WHERE_CLAUSE, name);
       }
 
       printable *get_where_clause ()
       {
-	return get_child (__WHERE_CLAUSE);
+	return _get_child (__WHERE_CLAUSE);
       }
 
       void set_order_clause (printable *name)
       {
-	set_child (__ORDER_CLAUSE, name);
+	_set_child (__ORDER_CLAUSE, name);
       }
 
       printable *get_order_clause ()
       {
-	return get_child (__ORDER_CLAUSE);
+	return _get_child (__ORDER_CLAUSE);
       }
 
       void set_delete_limit_clause (printable *name)
       {
-	set_child (__DELETE_LIMIT_CLAUSE, name);
+	_set_child (__DELETE_LIMIT_CLAUSE, name);
       }
 
       printable *get_delete_limit_clause ()
       {
-	return get_child (__DELETE_LIMIT_CLAUSE);
-      }
-
-      virtual chain *get_condensed_table_list ()
-      {
-	find_table_catalyst c;
-	transform (c);
-	return c.get_table_list ();
+	return _get_child (__DELETE_LIMIT_CLAUSE);
       }
 
       printable *internal_transform ()
@@ -1563,8 +1539,15 @@ namespace shield
       }
 
     protected:
+      virtual void _print (ostream &stream);
 
-      virtual void print (ostream &stream);
+      virtual chain *_get_condensed_table_list ()
+      {
+	find_table_catalyst c;
+	transform (c);
+	return c.get_table_list ();
+      }
+
 
     private:
 

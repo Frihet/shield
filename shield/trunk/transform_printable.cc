@@ -30,7 +30,7 @@ namespace shield
 
 
     void printable::
-    print (ostream &stream)
+    _print (ostream &stream)
     {
       throw exception::syntax ("Tried to print object of type printable");
     }
@@ -52,12 +52,12 @@ namespace shield
 
     ostream &operator << (ostream &stream, printable &p)
     {
-      p.print (stream);
+      p._print (stream);
       return stream;
     }
 
     void printable::
-    set_child (int id, printable *value)
+    _set_child (int id, printable *value)
     {
       __children[id] = value;
       if (value)
@@ -65,7 +65,7 @@ namespace shield
     }
     
     printable *printable::
-    get_child (int id)
+    _get_child (int id)
     {
 
       map<int, printable *>::const_iterator i;

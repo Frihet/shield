@@ -12,13 +12,13 @@ namespace shield
     cast (printable *p, context c)
       : __context (c)
     {
-      set_child (0, p);
+      _set_child (0, p);
     }
     
     void cast::
-    print (ostream &stream)
+    _print (ostream &stream)
     {
-      printable *inner = get_child (0);
+      printable *inner = _get_child (0);
 
       if (!inner)
 	throw shield::exception::syntax ("Cast of null node");

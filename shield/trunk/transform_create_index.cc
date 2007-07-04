@@ -104,8 +104,8 @@ namespace shield
       return true;
     }
 
-    void 
-    create_index::print (ostream &stream)
+    void create_index::
+    _print (ostream &stream)
     {
 
       assert (__key_list);      

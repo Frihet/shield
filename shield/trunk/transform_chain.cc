@@ -38,7 +38,7 @@ namespace shield
 
 
     void chain::
-    print (ostream &stream)
+    _print (ostream &stream)
     {
       vector<printable *>::const_iterator i;
 

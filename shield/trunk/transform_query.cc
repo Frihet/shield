@@ -31,7 +31,7 @@ namespace shield
     text *query::
     get_table (text *field)
     {
-      chain *list = get_condensed_table_list ();
+      chain *list = _get_condensed_table_list ();
 
       //      cerr << "Looking for table for field " << field->str () << endl;
 
@@ -79,7 +79,7 @@ namespace shield
     }
 
     chain *query::
-    get_condensed_table_list ()
+    _get_condensed_table_list ()
     {
       throw exception::syntax ("Called get_condensed_table_list () on query which does not supply table list");
     }

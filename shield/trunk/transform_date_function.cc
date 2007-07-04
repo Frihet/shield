@@ -6,8 +6,8 @@ namespace shield
 namespace transform
 {
 
-void 
-date_function::print (ostream &stream)
+void date_function::
+_print (ostream &stream)
 {
   
   stream << " ";

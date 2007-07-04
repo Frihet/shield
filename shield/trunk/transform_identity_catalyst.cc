@@ -35,8 +35,6 @@ namespace shield
 	  return p;
 	}
 
-      cerr << "Found lone field " << *t << endl;
-
       text *table = p->get_query ()->get_table (t);
 
       if (!table)
@@ -44,8 +42,6 @@ namespace shield
 	  cerr << "Could not find corresponding table for identity " << p->str () << "!!" << endl;
 	  return p;
 	}
-
-      cerr << "Belongs in table " << table->str () << endl;
 
       identity *res = new identity (0, table, t);
       res->set_parent (parent);

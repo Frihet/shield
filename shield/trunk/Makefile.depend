@@ -1,22 +1,26 @@
 # DO NOT DELETE
 
+shield.o: exception.hh transform.hh util.hh database.hh
 transform_common.o: transform.hh exception.hh util.hh
-transform_yacc.o: transform.hh exception.hh util.hh transform_yacc.hh
 transform_lex_wrapper.o: transform.hh exception.hh util.hh
-shield.o: exception.hh transform.hh util.hh database.hh transform_yacc.hh
 transform_printable.o: transform.hh exception.hh util.hh
 transform_select.o: transform.hh exception.hh util.hh introspection.hh
-transform_identity.o: transform.hh exception.hh util.hh
+transform_identity.o: transform.hh exception.hh util.hh introspection.hh
 transform_text.o: transform.hh exception.hh util.hh
 transform_create_table.o: transform.hh exception.hh util.hh
-transform_insert.o: transform.hh exception.hh util.hh
+transform_insert.o: transform.hh exception.hh util.hh introspection.hh
 transform_auto_increment.o: transform.hh exception.hh util.hh
 transform_create_index.o: transform.hh exception.hh util.hh
 transform_drop_table.o: transform.hh exception.hh util.hh introspection.hh
 transform_date_function.o: transform.hh exception.hh util.hh
 transform_interval.o: transform.hh exception.hh util.hh
-transform_natural.o: transform.hh exception.hh util.hh
+transform_query.o: transform.hh exception.hh util.hh introspection.hh
 transform_chain.o: transform.hh exception.hh util.hh
+transform_comparison.o: transform.hh exception.hh util.hh
+transform_attribute.o: transform.hh exception.hh util.hh
+transform_cast.o: transform.hh exception.hh util.hh
+transform_identity_catalyst.o: transform.hh exception.hh util.hh
+transform_update.o: transform.hh exception.hh util.hh
 introspection_table.o: introspection.hh transform.hh exception.hh util.hh
 introspection_table.o: database.hh
 introspection.o: introspection.hh transform.hh exception.hh util.hh

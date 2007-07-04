@@ -106,7 +106,7 @@ namespace shield
     }
 
     void select::
-    print (ostream &stream)
+    _print (ostream &stream)
     {
 
       std::ostringstream pre, post;
@@ -481,7 +481,7 @@ namespace shield
     }
 
     chain *select::
-    get_condensed_table_list ()
+    _get_condensed_table_list ()
     {
       find_table_catalyst cat;
       get_table_list ()->transform (cat);

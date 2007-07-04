@@ -107,7 +107,7 @@ namespace shield
     }
 
     void create_table::
-    print (ostream &stream)
+    _print (ostream &stream)
     {
       assert (__name);
       assert (__field_list || __like_clause);

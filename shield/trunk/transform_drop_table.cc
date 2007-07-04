@@ -15,8 +15,8 @@ namespace shield
       assert (__name->get_parent ());
     }
 
-    void 
-    drop_table::print (ostream &stream)
+    void drop_table::
+    _print (ostream &stream)
     {
 
       if (__if_exists)

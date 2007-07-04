@@ -89,7 +89,7 @@ Makefile: Makefile.in configure
 #
 # Update dependencies
 #
-depend:
+depend: transform_yacc.hh
 	makedepend -fMakefile.depend -Y $(subst .o,.cc,$(SHIELD_OBJS))
 .PHONY: depend
 

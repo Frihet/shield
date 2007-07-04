@@ -33,8 +33,8 @@ string type_string (interval_type t)
     }
 }
 
-void 
-interval::print (ostream &stream)
+void interval::
+_print (ostream &stream)
 {
   stream << " interval" << *__expr << " " << type_string (__type);
 }

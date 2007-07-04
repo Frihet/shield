@@ -134,7 +134,7 @@ namespace shield
     }
 
     void text::
-    print (ostream &stream)
+    _print (ostream &stream)
     {
       switch (__type)
 	{
