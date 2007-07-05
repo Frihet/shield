@@ -125,6 +125,10 @@ namespace shield
 
       for (i=__value_list->begin (); i<__value_list->end (); i++)
 	{
+
+	  if (i!=__value_list->begin ())
+	    stream << sep;
+
 	  stream << "insert into" << *__name << endl;
 	  if (__field_list)
 	    {
