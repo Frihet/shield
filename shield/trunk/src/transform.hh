@@ -525,6 +525,19 @@ namespace shield
 	return __chain.end ();
       }
 
+      /**
+	 Returns an iterator for this chain
+      */
+      iterator begin () 
+      {
+	return __chain.begin ();
+      }
+
+      iterator end ()  
+      {
+	return __chain.end ();
+      }
+
       printable *operator [] (int idx)
       {
 	return __chain[idx];
@@ -554,6 +567,12 @@ namespace shield
       }
 
       virtual printable *transform (catalyst &catalyst);
+
+      template<class iter> void
+      insert (iterator pos, iter begin, iter end)
+      {
+	__chain.insert (pos, begin, end);
+      }
 
     protected:
 
@@ -611,6 +630,7 @@ namespace shield
 
       void set_table_list( chain *list )
       {
+	assert (list);
 	_set_child (__TABLE_LIST, list);
       }
 
@@ -1127,23 +1147,24 @@ namespace shield
     {
     public:
       printable_alias (printable *item=0, text *alias=0)
-	: __item (item), __alias (alias)
       {
+	_set_child (ITEM, item);
+	_set_child (ALIAS, alias);
       }
 
       printable *get_item ()
-      {
-	return __item;
+      { 
+	return _get_child (ITEM);
       }
 
       void set_alias (text *alias)
       {
-	__alias = alias;
+	_set_child (ALIAS, alias);
       }
 
       text *get_alias ()
       {
-	return __alias;
+	return dynamic_cast<text *> (_get_child (ALIAS));
       }
 
       bool has_alias ()
@@ -1154,21 +1175,25 @@ namespace shield
     protected:
       virtual void _print (ostream &stream)
       {
-	stream << *__item;
+	stream << *get_item ();
 
 	print_alias (stream);
       }
 
-      void print_alias (ostream &stream) const
+      void print_alias (ostream &stream)
       {
-	if( __alias && __alias->length () )
-	  stream << *__alias;
+	text *alias = get_alias ();
+	if( alias && alias->length () )
+	  stream << *alias;
       }
-  
-  
+
     private:
-      printable *__item;
-      text *__alias;
+      enum
+	{
+	  ITEM,
+	  ALIAS
+	}
+      ;
 
     }
     ;
@@ -1275,38 +1300,7 @@ namespace shield
     {
     public:
 
-      virtual printable *operator () (printable *p)
-      {
-	/*
-	  Check that we have a valid node
-	*/
-	assert (p);
-	
-	query *q = dynamic_cast<query *> (p);
-	
-	if (!q)
-	{
-	  /*
-	    Only queries may be a root
-	  */
-	  assert (p->get_parent ());
-
-	  /*
-	    Check for short infinite loops. We should really check for
-	    arbitrarily long loops as well, but in practice they don't
-	    happen.
-	  */
-	  assert (p != p->get_parent ());
-	}
-	
-
-	/**
-	   Check that the environment is healthy
-	*/
-	assert (p->get_query ());
-	
-	return p;
-      }
+      virtual printable *operator () (printable *p);
     }
     ;
 
@@ -1318,7 +1312,15 @@ namespace shield
       : public catalyst
     {
     public:
+      identity_catalyst (query *q)
+	: __query (q)
+      {
+      }
+
       virtual printable *operator () (printable *p);
+      
+    private:
+      query *__query;
     }
     ;
 
@@ -1342,7 +1344,8 @@ namespace shield
       : public catalyst
     {
     public:
-      find_table_catalyst ()
+      find_table_catalyst (query *q)
+	: __query (q)
       {
 	__res = new chain ();
       }
@@ -1351,18 +1354,7 @@ namespace shield
 	 The catalyst function. Detects printable_alias nodes and
 	 handles them.
       */
-      virtual printable *operator () (printable *p)
-      {
-	printable_alias *a = dynamic_cast<printable_alias *> (p);
-	if (a)
-	  {
-	    if (a->get_alias ())
-	      __res->push (a->get_alias ());
-	    else
-	      __res->push (a->get_item ());	      
-	  }
-	return p;
-      }
+      virtual printable *operator () (printable *p);
 
       /**
 	 Return the accumulated list of tables
@@ -1371,9 +1363,10 @@ namespace shield
       {
 	return __res;
       }
-
+      
     private:
       chain *__res;
+      query *__query;
     }
     ;
 
@@ -1448,7 +1441,7 @@ namespace shield
       {
 	if (!__transform_identity)
 	  return this;
-	identity_catalyst i;
+	identity_catalyst i (this);
 	return this->transform (i);
       }
 
@@ -1577,7 +1570,7 @@ namespace shield
       */
       virtual printable *internal_transform ()
       {
-	identity_catalyst i;
+	identity_catalyst i (this);
 	return this->transform (i);
       }
 
@@ -1586,7 +1579,7 @@ namespace shield
 
       virtual chain *_get_condensed_table_list ()
       {
-	find_table_catalyst c;
+	find_table_catalyst c (this);
 	transform (c);
 	return c.get_table_list ();
       }

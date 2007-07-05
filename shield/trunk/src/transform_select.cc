@@ -117,7 +117,7 @@ namespace shield
 	 This is set to true if the field list contains wildcards
       */
       bool has_wild=false;
-
+      
       /**
 	 This is set to true of there are fields that are not grouped on
       */
@@ -422,8 +422,14 @@ namespace shield
 	    }
 	  
 	}
-      else if (get_limit_clause () && has_wild)
+      else if (true)//get_limit_clause () && has_wild)
 	{
+
+	  /**
+	     We shouldn't really expand all wildcards, but it is far
+	     easier to always do it than to figure out all the
+	     situations when it should happen.
+	  */
 
 	  item_list = new chain ();
 	  item_list->set_separator (",");
@@ -452,7 +458,9 @@ namespace shield
 		    }
 		  else
 		    {
-		      le = get_table_list ()-> str ();
+		      find_table_catalyst cat (this);
+		      get_table_list ()->transform (cat);
+		      le = (*cat.get_table_list ()->begin ())->str ();
 		    }
 
 		  introspection::table &t = introspection::get_table (le);
@@ -469,21 +477,23 @@ namespace shield
 		  item_list->push (it);
 		}
 	    }
-
 	}
       else
 	{
 	  item_list = get_item_list ();
 	}
       
-      stream << pre.str () << *item_list << "\n" << post.str () << endl << endl;      
+      stream << pre.str () << *item_list << "\n" << post.str ();
+
+      if (!get_parent ())
+	stream << endl << endl;      
   
     }
 
     chain *select::
     _get_condensed_table_list ()
     {
-      find_table_catalyst cat;
+      find_table_catalyst cat (this);
       get_table_list ()->transform (cat);
       return cat.get_table_list ();
     }
@@ -491,8 +501,6 @@ namespace shield
     text *select::
     unalias_table (text *alias)
     {
-      cerr << "Unalias table " << alias->str () << endl;
-
       map<string, printable *> table_alias;
       get_table_alias (get_table_list (), table_alias);
 
@@ -517,11 +525,9 @@ namespace shield
     printable *select::
     internal_transform ()
     {
-      identity_catalyst i;
+      identity_catalyst i (this);
       return this->transform (i);
     }
-
-
 
   }
 

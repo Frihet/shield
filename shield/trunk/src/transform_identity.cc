@@ -93,14 +93,16 @@ namespace shield
 
       query *q = get_query ();
 
-      if (!__table)
+      text *table = __table;
+
+      if (!table)
 	{
-	  __table = q->get_table (__field);
+	  table = q->get_table (__field);
 	}
 
-      assert (__table);
+      assert (table);
 
-      text *real_table = q->unalias_table (__table);
+      text *real_table = q->unalias_table (table);
  
       //      cerr << "Table " << __table->str () << " unaliased to " << real_table->str () << endl;
      

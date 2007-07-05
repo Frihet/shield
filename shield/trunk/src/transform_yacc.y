@@ -670,7 +670,7 @@ namespace transform
 	NCHAR_STRING opt_component key_cache_name
         sp_opt_label BIN_NUM label_ident 
 
-%type <select_val> select_part2 select_init2 select_from select_into
+%type <select_val> select_part2 select_init2 select_from select_into opt_select_from select_derived2 select_paren
 
 %type <printable_val> expr simple_expr factor bool_term bool_and_expr bool_or_expr bool_factor 
 
@@ -1674,8 +1674,15 @@ merge_insert_types:
        | LAST_SYM        { throw exception::unsupported (__FILE__, __LINE__); };
 
 opt_select_from:
-	opt_limit_clause {}
-	| select_from select_lock_type;
+	opt_limit_clause { throw exception::unsupported (__FILE__, __LINE__); }
+	| select_from select_lock_type
+	{
+	  $$ = $1;
+
+	  if( $2 )
+	    throw exception::unsupported (__FILE__, __LINE__); 
+	}
+	;
 
 udf_func_type:
 	/* empty */	{ throw exception::unsupported (__FILE__, __LINE__); }
@@ -1841,11 +1848,11 @@ type:
 	| YEAR_SYM opt_len field_options { throw exception::unsupported (__FILE__, __LINE__); }
 	| DATE_SYM			
 	{
-	  $$ = new type (new text ("varchar2"), new paran ( new text ("10")));
+	  $$ = new type (new text ("date"));
 	}
 	| TIME_SYM
 	{
-	  $$ = new type (new text ("varchar2"), new paran ( new text ("8")));
+	  $$ = new type (new text ("date"));
 	}
 	| TIMESTAMP opt_len
 	  {
@@ -1853,7 +1860,7 @@ type:
 	  }
 	| DATETIME			
 	{
-	  $$ = new type (new text ("varchar2"), new paran ( new text ("19")));
+	  $$ = new type (new text ("datetime"));
 	}
 	| TINYBLOB			{ throw exception::unsupported (__FILE__, __LINE__); }
 	| BLOB_SYM opt_len		{ throw exception::unsupported (__FILE__, __LINE__); }
@@ -2610,7 +2617,9 @@ select_init:
 select_paren:
 	SELECT_SYM select_part2
 	  { throw exception::unsupported (__FILE__, __LINE__); }
-	| '(' select_paren ')';
+	| '(' select_paren ')'
+	  { $$ = $2; }
+	;
 
 select_init2:
 	select_part2
@@ -3839,33 +3848,46 @@ table_factor:
           expr '}'
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| select_derived_init get_select_lex select_derived2
-          { throw exception::unsupported (__FILE__, __LINE__); }
+          {
+	    assert ($3);
+	    $$ = new printable_alias ($3);
+	  }	  
 	| '(' get_select_lex select_derived union_opt ')' opt_table_alias
-	{ throw exception::unsupported (__FILE__, __LINE__); }
+	{ 
+	  assert ($3);
+	  $$ = new printable_alias (new paran ($2, $3, $4), $6);
+	}
         ;
 
 /* handle contents of parentheses in join expression */
 select_derived:
 	  get_select_lex
-	  { throw exception::unsupported (__FILE__, __LINE__); }
           derived_table_list
-          { throw exception::unsupported (__FILE__, __LINE__); }
+	    {
+	      $$ = $2; 
+	    }
  	;
 
 select_derived2:
-        { throw exception::unsupported (__FILE__, __LINE__); }
         select_options select_item_list
-	{ throw exception::unsupported (__FILE__, __LINE__); }
 	opt_select_from
+	{ 
+	  select *sel = $3;
+	  if (!sel)
+	    sel = new select ();
+
+	  sel->set_option_clause ($1);
+	  sel->set_item_list ($2);
+	  $$ = sel;
+	}
         ;
 
 get_select_lex:
-	/* Empty */ { throw exception::unsupported (__FILE__, __LINE__); }
+	/* Empty */ { $$ = 0; }
         ;
 
 select_derived_init:
           SELECT_SYM
-          { throw exception::unsupported (__FILE__, __LINE__); }
         ;
 
 opt_outer:
@@ -6029,7 +6051,7 @@ union_list:
 	;
 
 union_opt:
-	/* Empty */ { throw exception::unsupported (__FILE__, __LINE__); }
+	/* Empty */ { $$ = 0; }
 	| union_list { throw exception::unsupported (__FILE__, __LINE__); }
 	| union_order_or_limit { throw exception::unsupported (__FILE__, __LINE__); }
 	;
@@ -6055,8 +6077,11 @@ subselect:
         SELECT_SYM subselect_start subselect_init subselect_end
         { throw exception::unsupported (__FILE__, __LINE__); }
         | '(' subselect_start subselect ')'
-          { throw exception::unsupported (__FILE__, __LINE__); }
-          union_clause subselect_end { throw exception::unsupported (__FILE__, __LINE__); };
+          union_clause subselect_end 
+	  {
+	    throw exception::unsupported (__FILE__, __LINE__); 
+	  }
+	;
 
 subselect_init:
   select_init2

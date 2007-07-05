@@ -41,7 +41,7 @@ $(OBJ_DIR)/transform_insert.o $(OBJ_DIR)/transform_auto_increment.o $(OBJ_DIR)/t
 $(OBJ_DIR)/transform_drop_table.o $(OBJ_DIR)/transform_date_function.o $(OBJ_DIR)/transform_interval.o	\
 $(OBJ_DIR)/transform_query.o $(OBJ_DIR)/transform_print_package.o $(OBJ_DIR)/transform_chain.o		\
 $(OBJ_DIR)/transform_comparison.o $(OBJ_DIR)/transform_attribute.o $(OBJ_DIR)/transform_cast.o		\
-$(OBJ_DIR)/transform_identity_catalyst.o $(OBJ_DIR)/transform_update.o
+$(OBJ_DIR)/transform_identity_catalyst.o $(OBJ_DIR)/transform_update.o $(OBJ_DIR)/transform_find_table_catalyst.o $(OBJ_DIR)/transform_validation_catalyst.o
 
 #
 # Listings of which object files are needed by which programs
@@ -142,9 +142,9 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(SRC_DIR)/$*.cc -o $@ 
 
 $(OBJ_DIR)/%.d: $(SRC_DIR)/%.cc
-	if test ! -f $(SRC_DIR)/transform_lex.hh; then \
+	@if test ! -f $(SRC_DIR)/transform_lex.hh; then \
 		flex -i -osrc/transform_lex.cc src/transform_lex.y; \
-	fi 
+	fi;\
 	if test ! -f $(SRC_DIR)/transform_yacc.hh; then \
 		bison -d src/transform_yacc.y -o src/transform_yacc.cc; \
 	fi

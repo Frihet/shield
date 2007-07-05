@@ -23,7 +23,7 @@ namespace shield
 
     printable::
     printable()
-      :  __push_front (false), __context (CONTEXT_UNDEFINED), __skip_space (false)
+      :  __push_front (false), __context (CONTEXT_UNDEFINED), __skip_space (false), __parent (0)
     {
       all_printable.push_back (this);
     }
@@ -38,6 +38,7 @@ namespace shield
     void printable::
     set_parent (printable *parent)
     {
+      assert (parent);
       __parent = parent;
     }
 

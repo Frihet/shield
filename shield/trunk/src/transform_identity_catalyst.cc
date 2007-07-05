@@ -14,6 +14,7 @@ namespace shield
 
       //cerr << "Identity transform on element << " << p->str () << endl;
 
+      
       text * t = dynamic_cast<text *> (p);
 
       if (!t)
@@ -27,6 +28,7 @@ namespace shield
 	  return p;
 	}
 
+
       printable *parent = t->get_parent ();
       bool parent_is_id = dynamic_cast<identity *> (parent) != 0;
 
@@ -34,6 +36,9 @@ namespace shield
 	{
 	  return p;
 	}
+
+      if (p->get_query () != __query)
+	return p;
 
       text *table = p->get_query ()->get_table (t);
 
@@ -43,7 +48,7 @@ namespace shield
 	  return p;
 	}
 
-      identity *res = new identity (0, table, t);
+      identity *res = new identity (0, 0, t);
       res->set_parent (parent);
 
       return res;

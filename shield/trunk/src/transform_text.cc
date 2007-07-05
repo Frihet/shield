@@ -184,6 +184,9 @@ namespace shield
 	    break;
 	  }
 
+	  /**
+	     This token is of literal type, i.e. it is literal data that is suppied by the user
+	  */
 	case LITERAL:
 	  {
 	    if (__val.size () && __val[0] == ':')

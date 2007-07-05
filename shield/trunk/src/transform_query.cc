@@ -33,7 +33,7 @@ namespace shield
     {
       chain *list = _get_condensed_table_list ();
 
-      //      cerr << "Looking for table for field " << field->str () << endl;
+      //cerr << "Looking for table for field " << field->str () << endl;
 
       chain::const_iterator i;
       for (i=list->begin (); i<list->end (); i++)
@@ -53,7 +53,7 @@ namespace shield
 
 	  assert (unaliased);
 
-	  cerr << "Looking in table " << unaliased->str () << endl;
+	  //cerr << "Looking in table " << unaliased->str () << endl;
 
 	  introspection::table &table = introspection::get_table (unaliased->str ());
 
@@ -61,7 +61,7 @@ namespace shield
 	    {
 	      const introspection::column &col = table.get_column (field->str ());
 	      
-	      cerr << "Found it" << endl;
+	      //cerr << "Found it" << endl;
 	      /*
 		If that column didn't exist, an exception would have been thrown. We found it! Yay!
 
@@ -71,7 +71,7 @@ namespace shield
 	    }
 	  catch (exception::not_found &e)
 	    {
-	      cerr << "Not there" << endl;
+	      //     cerr << "Not there" << endl;
 	    }
 	}
 
