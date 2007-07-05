@@ -1,13 +1,13 @@
+b
 
 
-
-#include "log.hh"
+#include "logger.hh"
 
 using namespace std;
 
 int main ()
 {
-  log::log l1("first"), l2("second"), l3("third");
+  logger::logger l1("first"), l2("second"), l3("third");
 
   l1.enable ();
   l3.enable ();

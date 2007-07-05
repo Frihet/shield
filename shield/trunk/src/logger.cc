@@ -1,8 +1,8 @@
 #include <time.h>
 
-#include "log.hh"
+#include "logger.hh"
 
-namespace log
+namespace logger
 {
 
   /**
@@ -10,7 +10,7 @@ namespace log
   */  
   const static int TIME_BUFF_SIZE = 32;
 
-  log &log::
+  logger &logger::
   operator << (const string &message)
   {
     if (!is_enabled ())
@@ -21,7 +21,7 @@ namespace log
     return *this;
   }
 
-  string log::__timestamp (void)
+  string logger::__timestamp (void)
   {
     char buff[TIME_BUFF_SIZE];
     

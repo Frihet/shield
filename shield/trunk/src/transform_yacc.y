@@ -850,15 +850,15 @@ query:
 	      validation_catalyst v;
 	      $1 = $1->transform (v);
 
-	      cerr << "Validation catalyst pass 1 done" << endl;
+	      debug << "Validation catalyst pass 1 done";
 
 	      internal_catalyst i;
 	      $1 = $1->transform (i);	      
-	      cerr << "Internal catalyst done" << endl;
+	      debug << "Internal catalyst done";
 
 	      $1 = $1->transform (v);
 
-	      cerr << "Validation catalyst pass 2 done" << endl;
+	      debug << "Validation catalyst pass 2 done";
 
 
 	      cout << *$1;

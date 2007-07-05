@@ -1,3 +1,16 @@
+/**
+@file introspection.hh
+
+A set of functions and classes for obtaining introspection information on the tables of a Oracle database.
+
+@package Shield
+@author Axel Liljencrantz
+
+This file is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; version 2 or later.
+
+*/
 #ifndef INTROSPECTION_HH
 #define INTROSPECTION_HH
 
@@ -31,7 +44,9 @@ namespace shield
       }
     ;
 
-
+    /**
+       A class representing a data type.
+    */
     class column_type
     {
     public:
@@ -71,6 +86,10 @@ namespace shield
     }
     ;
 
+    /**
+       A class representing a column in a table. The name and type of
+       the column can be optained from objects of this class.
+    */
     class column
     {
     public:
@@ -93,7 +112,7 @@ namespace shield
     private:
     
       /**
-	 The column name
+	 The name of this column
       */
       string __name;
 
@@ -104,6 +123,11 @@ namespace shield
     }
     ;
 
+    /**
+       A class representing a table in the Oracle database. Currently,
+       this class can be used to obtain column information. In the
+       future, information about indexes will also be available.
+    */
     class table
     {
     public:

@@ -10,10 +10,13 @@ namespace shield
 
     const char sep = '\0';
 
+    logger::logger warning ("shield: warning");
+    logger::logger debug ("shield: debug");
+
     bool is_reserved (const string &in)
     {
 
-      /**
+      /*
 	 Mind you, these are the _oracle_ reserved words, not MySQL reserved words.
       */
       string reserved[] = 

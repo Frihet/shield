@@ -1,4 +1,8 @@
-
+/*
+   This is the file where the Shield main loop is defined. Nothing
+   interesting happens here, the main loop calls out to yyparse to do
+   everything even remotely cool.
+*/
 #include <iostream>
 using namespace std;
 
@@ -17,18 +21,26 @@ namespace shield
 #include "transform_yacc.hh"
   }
 
-  static void print_help (ostream &s)
+  /**
+     Print a short help message.
+
+     @param stream the stream to print the message to
+  */
+  static void print_help (ostream &stream)
   {
-    s << "Usage: shield [OPTION]... ." << endl;
-    s << "Convert MySQLP sql code read from stdin inte Oracle equivalents written to stdout." << endl;
+    stream << "Usage: shield [OPTION]... ." << endl;
+    stream << "Convert MySQLP sql code read from stdin inte Oracle equivalents written to stdout." << endl;
   }
 
+  /**
+     Parse command line arguments
+  */
   static void parse_args (int argc, char **argv)
   {
     string username = "", password = "", host = "localhost";
 
     /*    
-	  Parse options
+	  Main parse loop
     */
     while( 1 )
       {
@@ -110,6 +122,9 @@ namespace shield
 
 }
 
+/**
+   Check that environment looks ok. 
+*/
 static void startup_test ()
 {
   if (!getenv ("ORACLE_HOME"))
@@ -118,7 +133,6 @@ static void startup_test ()
       exit (1);
     }
 }
-
 
 int
 main (int argc, char **argv)
@@ -131,7 +145,10 @@ main (int argc, char **argv)
   setlocale (LC_ALL, "");
   
   shield::parse_args (argc, argv);
-  
+
+  shield::transform::debug.enable ();
+  logger::logger error ("shield: error");
+
   int err = 0;
   while( true )
     {
@@ -147,28 +164,28 @@ main (int argc, char **argv)
 	{
 	  try
 	    {
-
+	      
 	      if (str != "")
 		{
 		  shield::transform::lex_set_string (str);
 		  err += shield::transform::yyparse ();
-		  cout << shield::transform::sep;
-		  cout << shield::transform::sep;
-		  cout.flush ();
 		}
-
+	      
 	      str="";
 	      
 	    }
 	  catch (std::exception &e)
 	    {
-
 	      err ++;
-	      cerr << e.what () << endl;
+	      error << e.what ();
 	      
 	      break;
 	    }
 
+	  cout << shield::transform::sep;
+	  cout << shield::transform::sep;
+	  cout.flush ();
+		  
 	  if (c==EOF)
 	    {
 	      break;

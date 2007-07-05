@@ -1,11 +1,19 @@
 /**
-   \file database.hh
+   @file database.hh
 
    This file contains an extremely trivial abstraction of a single
    process-wide database connection. One needs to initialize using the
    init function to provide username, password, etc. The connection is
    then not actually created until the first query is executed. If a
    connection has been created, it is automatically closed on exit.
+
+   @package Shield
+   @author Axel Liljencrantz
+
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; version 2 or later.
+
 */
 #ifndef DATABASE_HH
 #define DATABASE_HH

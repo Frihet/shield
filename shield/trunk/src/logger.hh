@@ -1,11 +1,28 @@
-#ifndef LOG_HH
-#define LOG_HH
+/**
+@file logger.hh
+
+A logger class. The logger does not contain any concept of
+loglevels. Instead, the idea is to create lots and lots of logger
+objects. That way, it becomes easy to enable logging of a specific
+type of event, thus avoiding being drowned in unrelated log messages
+whever additional logging information is enabled.
+
+@author Axel Liljencrantz
+
+This file is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; version 2 or later.
+
+*/
+
+#ifndef LOGGER_HH
+#define LOGGER_HH
 
 #include <string>
 #include <iostream>
 #include <set>
 
-namespace log
+namespace logger
 {
   using namespace std;
   /**
@@ -13,7 +30,7 @@ namespace log
      message, and then individual classes are enabled or disabled.
   */
 
-  class log
+  class logger
   {
   public:
     
@@ -21,18 +38,16 @@ namespace log
        Construct a new log.
 
        @param name The name to prepend to every log message to identify the program and/or log type
-       
        @param stream the stream to log to
-
        @param enabled whether this log should start up enabled
     */
-    log (const string &name, ostream &stream=cerr, bool enabled = false)
+    logger (const string &name, ostream &stream=cerr, bool enabled = false)
       : __name (name), __stream (stream), __enabled (enabled)
     {
     }
 
     /**
-       Enables this log, i.e. makes it actually output log messages sent to it
+       Enables this logger, i.e. makes it actually output log messages sent to it
     */
     void enable (void)
     {
@@ -40,7 +55,7 @@ namespace log
     }
 
     /**
-       Disables this log, i.e. makes it not actually output log messages sent to it
+       Disables this logger, i.e. makes it not actually output log messages sent to it
     */
     void disable (void)
     {
@@ -48,7 +63,7 @@ namespace log
     }
 
     /**
-       Returns true if this log is enabled
+       Returns true if this logger is enabled
     */
     bool is_enabled (void)
     {
@@ -58,12 +73,12 @@ namespace log
     /**
        The logging operator
     */
-    log &operator << (const string &message);
+    logger &operator << (const string &message);
 
     /**
        Oveloaded operator for handling character literals
     */
-    log &operator << (const char *message)
+    logger &operator << (const char *message)
     {
       *this << string (message);
       return *this;
@@ -71,12 +86,15 @@ namespace log
 
   private:
 
+    /**
+       Returns a string containing a human-readable time stamp
+    */
     string __timestamp (void);
 
   private:
 
     /**
-       This flag is true if this log is enabled
+       This flag is true if this logger is enabled
     */
     bool __enabled;
     
@@ -94,4 +112,4 @@ namespace log
   ;
 }
 
-#endif //#ifndef LOG_HH
+#endif //#ifndef LOGGER_HH

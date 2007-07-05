@@ -1,14 +1,15 @@
-/** @file transform.hh
+/**
+   @file transform.hh
 
-@package shield
-@author Axel Liljencrantz
+   The transform namespace contains all code for parsing MySQL sql and
+   transforming it into Oracle sql.
 
-The transform namespace contains all code for parsing MySQL sql and
-transforming it into Oracle sql.
+   @package shield
+   @author Axel Liljencrantz
 
-This file is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; version 2 or later.
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; version 2 or later.
 
 */
 
@@ -24,9 +25,23 @@ as published by the Free Software Foundation; version 2 or later.
 
 #include "exception.hh"
 #include "util.hh"
+#include "logger.hh"
 
 using namespace std;
 using namespace util;
+
+/**
+   @mainpage Shield API documentation
+
+   @section Introduction
+
+   Shield, or SQL Helper Interfacce Enabling Legacy Databases, is a
+   wrapper program, that is intended to make it possible to use the
+   Oracle database program with program that where written for the
+   MySQL database.
+
+*/
+
 
 namespace shield
 {
@@ -35,6 +50,15 @@ namespace shield
   {
 
     extern const char sep;
+
+    /**
+       Logger object for transform warnings
+    */
+    extern logger::logger warning;
+    /**
+       Logger object for transform debug output
+    */
+    extern logger::logger debug;
     
     /**
        The various types thet the text node can be of
@@ -418,14 +442,31 @@ namespace shield
     ostream &operator << (ostream &stream, printable &e);
 
     /*
-      A printable that represents an arbitrary piece of text, or a
+      A printable that represents an arbitrary piece of text, a
       string literal, or an identifier.
+
+      When type is LITERAL, this class will automatically take care of
+      unescaping any mysql escape sequences and escape using oracle
+      syntax.
+
+      When type is EXACT, not transformation will be performed.
+
+      When type is IDENTIFIER, reserved words will have an underscore appended to them.
+
+      When type is IDENTIFIER_QUOTED, the quoting is stripped and reserved words will have an underscore appended to them.
     */
     class text 
       : public printable
     {
     public:
 
+      /**
+	 Construct a new text object using a string as the initial definition.
+
+	 @param text the original text message this object should represent
+	 @param type is the type of message
+	 @param insert_whitespace whether whitespace is needed before this token
+      */
       text (const string &text, text_type type = EXACT, bool insert_whitespace=true)
 	: __val (text), __type (type)
       {
@@ -435,6 +476,13 @@ namespace shield
 	set_skip_space (!insert_whitespace);
       }
 
+      /**
+	 Construct a new text object using a number as the initial definition.
+
+	 @param val the original value this object should represent
+	 @param type is the type of message
+	 @param insert_whitespace whether whitespace is needed before this token
+      */
       text (unsigned long long val, text_type type = EXACT, bool insert_whitespace=true)
 	: __val (stringify (val)), __type (type)
       {
@@ -443,7 +491,8 @@ namespace shield
       }
 
       /**
-	 Returns the unescaped length of this item
+	 Returns the raw (unformated) length of this item. Use str
+	 ().size () to determine the formated length.
       */
       size_t length () const
       {
@@ -459,14 +508,30 @@ namespace shield
       }
 
     protected:
+      
+      /**
+	 Print this node.
+      */
       virtual void _print (ostream &stream);
 
     private:
+
+      /**
+	 The value this object should represent
+      */
       string __val;
+      
+      /**
+	 the type of message
+      */
       text_type __type;
     }
     ;
 
+    /**
+       This class represents a sequence of child nodes with no known
+       internal relation. 
+    */
     class chain 
       : public printable
     {
@@ -474,6 +539,9 @@ namespace shield
       typedef vector<printable *>::const_iterator const_iterator;
       typedef vector<printable *>::iterator iterator;
 
+      /**
+	 Construct a new chain with the specifgied contents.
+      */
       chain (printable *a=0, 
 	     printable *b=0, 
 	     printable *c=0, 
@@ -538,6 +606,9 @@ namespace shield
 	return __chain.end ();
       }
 
+      /**
+	 Returns the child with the specified index
+      */
       printable *operator [] (int idx)
       {
 	return __chain[idx];
@@ -568,6 +639,13 @@ namespace shield
 
       virtual printable *transform (catalyst &catalyst);
 
+      /**
+	 insert the elements specified at the specified poistion.
+
+	 @param pos where to perform the insertion
+	 @param begin the first element to insert
+	 @param end the first element not to insert
+      */
       template<class iter> void
       insert (iterator pos, iter begin, iter end)
       {
@@ -579,12 +657,26 @@ namespace shield
       virtual void _print (ostream &stream);
 
     private:
+      /**
+	 The vecor containing all the items
+      */
       vector<printable *> __chain;
+      /**
+	 The separator string to print between all strings
+      */
       string __separator;
+      /**
+	 If non-zero, insert a newline after printing the specified
+	 number of children
+      */
       int __do_line_break;
     }
     ;
 
+    /**
+       This class represents a limit clause. It is implemented using
+       the implicit rownum column.
+    */
     class limit 
       : public printable
     {
@@ -718,8 +810,6 @@ namespace shield
       {
 	return _get_child (__OPTION_CLAUSE);
       }
-
-      string get_table (text *id);
 
       virtual text *unalias_table (text *alias);
 
@@ -1262,25 +1352,25 @@ namespace shield
       {
       }
 
-      virtual printable *operator () (printable *p)
+      virtual printable *operator () (printable *node)
       {
-	text *t = dynamic_cast<text *> (p);
+	text *t = dynamic_cast<text *> (node);
 	if (!t)
 	  {
-	    return p;
+	    return node;
 	  }
 
 	if (t->get_type () != IDENTIFIER &&
 	    t->get_type () != IDENTIFIER_QUOTED)
 	  {
-	    return p;
+	    return node;
 	  }
 
 	string st = t->str ();
 
 	if (__mapping.find (st) == __mapping.end ())
 	  {
-	    return p;
+	    return node;
 	  }
 
 	return __mapping[st];
@@ -1300,7 +1390,7 @@ namespace shield
     {
     public:
 
-      virtual printable *operator () (printable *p);
+      virtual printable *operator () (printable *node);
     }
     ;
 
@@ -1317,7 +1407,7 @@ namespace shield
       {
       }
 
-      virtual printable *operator () (printable *p);
+      virtual printable *operator () (printable *node);
       
     private:
       query *__query;
@@ -1328,9 +1418,9 @@ namespace shield
       : public catalyst
     {
     public:
-      virtual printable *operator () (printable *p)
+      virtual printable *operator () (printable *node)
       {
-	return p->internal_transform ();
+	return node->internal_transform ();
       }
     }
     ;
@@ -1354,7 +1444,7 @@ namespace shield
 	 The catalyst function. Detects printable_alias nodes and
 	 handles them.
       */
-      virtual printable *operator () (printable *p);
+      virtual printable *operator () (printable *node);
 
       /**
 	 Return the accumulated list of tables

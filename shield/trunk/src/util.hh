@@ -1,3 +1,16 @@
+/**
+@file util.hh
+
+A small set of commun utility functions.
+
+@package Shield
+@author Axel Liljencrantz
+
+This file is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; version 2 or later.
+
+*/
 #ifndef UTIL_HH
 #define UTIL_HH
 

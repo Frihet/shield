@@ -47,7 +47,7 @@ $(OBJ_DIR)/transform_identity_catalyst.o $(OBJ_DIR)/transform_update.o $(OBJ_DIR
 # Listings of which object files are needed by which programs
 #
 SHIELD_OBJS := $(OBJ_DIR)/shield.o $(TRANSFORM_OBJS) $(INTROSPECTION_OBJS)	\
-$(DATABASE_OBJS) $(OBJ_DIR)/util.o $(EXCEPTION_OBJS)
+$(DATABASE_OBJS) $(OBJ_DIR)/util.o $(EXCEPTION_OBJS) $(OBJ_DIR)/logger.o
 
 TRANSFORM_LEX_TEST_OBJS := $(OBJ_DIR)/transform_lex_test.o $(OBJ_DIR)/transform_lex_wrapper.o
 
