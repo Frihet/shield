@@ -110,12 +110,23 @@ namespace shield
 
 }
 
+static void startup_test ()
+{
+  if (!getenv ("ORACLE_HOME"))
+    {
+      cerr << "ORACLE_HOME environment variable is not set. Define it and restart shield." << endl;
+      exit (1);
+    }
+}
+
 
 int
 main (int argc, char **argv)
 {
 
   string str="";
+
+  startup_test ();
 
   setlocale (LC_ALL, "");
   
@@ -143,6 +154,7 @@ main (int argc, char **argv)
 		  err += shield::transform::yyparse ();
 		  cout << shield::transform::sep;
 		  cout << shield::transform::sep;
+		  cout.flush ();
 		}
 
 	      str="";
