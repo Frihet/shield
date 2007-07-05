@@ -15,7 +15,7 @@ INSTALL := @INSTALL@
 #
 CXXFLAGS := @CXXFLAGS@
 CPPFLAGS := @CPPFLAGS@ -I.
-LDFLAGS := @LDFLAGS@ -ll -locci -lclntsh -lpthread
+LDFLAGS := @LDFLAGS@ -ll -locci -lclntsh -lpthread -lnnz10
 
 #
 # Various build directories. Do not build in source directory.
