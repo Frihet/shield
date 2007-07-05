@@ -25,7 +25,7 @@ In order to use this compiler, run the following command before configuring shie
 
 CXX=g++32
 
-The main shield parser is roughly 200000 lines long, which is a pretty heavy burden for a C++ compiler. Unless you have huge amounts of memory (at least 2 GB) you will need to disable any optimization flags enabled by configure. This can be done by running the following command before configuring shield:
+The main shield parser is roughly 20000 lines long, which is a pretty heavy burden for a C++ compiler. Unless you have huge amounts of memory (at least 2 GB) you will need to disable any optimization flags enabled by configure. This can be done by running the following command before configuring shield:
 
 CFLAGS=
 

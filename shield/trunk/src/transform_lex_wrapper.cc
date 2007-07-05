@@ -7,7 +7,7 @@ using namespace std;
 
 #include "transform.hh"
 
-#include "transform_lex.cc"
+#include "src/transform_lex.cc"
 
 namespace shield
 {

@@ -1,47 +1,82 @@
+# Makefile for Shield
+#
+# Author: Axel Liljencrantz
+# Copyright: FreeCode AS
+# License: GPLv2 or later
 
+#
+# Programs used by make
+#
 CXX := @CXX@
 INSTALL := @INSTALL@
 
+#
+# Flags for different programs
+#
 CXXFLAGS := @CXXFLAGS@
-CPPFLAGS := @CPPFLAGS@
-
-INTROSPECTION_OBJS := obj/introspection_table.o obj/introspection.o	\
-obj/introspection_column.o obj/introspection_column_type.o
-
-EXCEPTION_OBJS := obj/exception_not_found.o obj/exception_unsupported.o	\
-obj/exception_syntax.o
-
-DATABASE_OBJS := obj/database.o obj/database_result_set.o obj/database_parameter.o
-
-TRANSFORM_OBJS := obj/transform_common.o obj/transform_yacc.o			\
-obj/transform_lex_wrapper.o obj/transform_printable.o obj/transform_select.o	\
-obj/transform_identity.o obj/transform_text.o obj/transform_create_table.o		\
-obj/transform_insert.o obj/transform_auto_increment.o obj/transform_create_index.o	\
-obj/transform_drop_table.o obj/transform_date_function.o obj/transform_interval.o	\
-obj/transform_query.o obj/transform_print_package.o obj/transform_chain.o		\
-obj/transform_comparison.o obj/transform_attribute.o obj/transform_cast.o		\
-obj/transform_identity_catalyst.o obj/transform_update.o
-
-SHIELD_OBJS := obj/shield.o $(TRANSFORM_OBJS) $(INTROSPECTION_OBJS)	\
-$(DATABASE_OBJS) obj/util.o $(EXCEPTION_OBJS)
-
-TRANSFORM_LEX_TEST_OBJS := obj/transform_lex_test.o 
-
-INTROSPECTION_TEST_OBJS := obj/introspection_test.o	\
-$(INTROSPECTION_OBJS) $(DATABASE_OBJS) obj/util.o $(EXCEPTION_OBJS)
-
-DATABASE_TEST_OBJS := obj/database_test.o $(DATABASE_OBJS) obj/util.o	\
-$(EXCEPTION_OBJS)
-
+CPPFLAGS := @CPPFLAGS@ -I.
 LDFLAGS := @LDFLAGS@ -ll -locci -lclntsh -lpthread
 
+#
+# Various build directories. Do not build in source directory.
+#
+OBJ_DIR := obj
+SRC_DIR := src
+
+#
+# All the different object files that need to be generated
+#
+INTROSPECTION_OBJS := $(OBJ_DIR)/introspection_table.o $(OBJ_DIR)/introspection.o	\
+$(OBJ_DIR)/introspection_column.o $(OBJ_DIR)/introspection_column_type.o
+
+EXCEPTION_OBJS := $(OBJ_DIR)/exception_not_found.o $(OBJ_DIR)/exception_unsupported.o	\
+$(OBJ_DIR)/exception_syntax.o
+
+DATABASE_OBJS := $(OBJ_DIR)/database.o $(OBJ_DIR)/database_result_set.o $(OBJ_DIR)/database_parameter.o
+
+TRANSFORM_OBJS := $(OBJ_DIR)/transform_common.o $(OBJ_DIR)/transform_yacc.o			\
+$(OBJ_DIR)/transform_lex_wrapper.o $(OBJ_DIR)/transform_printable.o $(OBJ_DIR)/transform_select.o	\
+$(OBJ_DIR)/transform_identity.o $(OBJ_DIR)/transform_text.o $(OBJ_DIR)/transform_create_table.o		\
+$(OBJ_DIR)/transform_insert.o $(OBJ_DIR)/transform_auto_increment.o $(OBJ_DIR)/transform_create_index.o	\
+$(OBJ_DIR)/transform_drop_table.o $(OBJ_DIR)/transform_date_function.o $(OBJ_DIR)/transform_interval.o	\
+$(OBJ_DIR)/transform_query.o $(OBJ_DIR)/transform_print_package.o $(OBJ_DIR)/transform_chain.o		\
+$(OBJ_DIR)/transform_comparison.o $(OBJ_DIR)/transform_attribute.o $(OBJ_DIR)/transform_cast.o		\
+$(OBJ_DIR)/transform_identity_catalyst.o $(OBJ_DIR)/transform_update.o
+
+#
+# Listings of which object files are needed by which programs
+#
+SHIELD_OBJS := $(OBJ_DIR)/shield.o $(TRANSFORM_OBJS) $(INTROSPECTION_OBJS)	\
+$(DATABASE_OBJS) $(OBJ_DIR)/util.o $(EXCEPTION_OBJS)
+
+TRANSFORM_LEX_TEST_OBJS := $(OBJ_DIR)/transform_lex_test.o $(OBJ_DIR)/transform_lex_wrapper.o
+
+INTROSPECTION_TEST_OBJS := $(OBJ_DIR)/introspection_test.o	\
+$(INTROSPECTION_OBJS) $(DATABASE_OBJS) $(OBJ_DIR)/util.o $(EXCEPTION_OBJS)
+
+DATABASE_TEST_OBJS := $(OBJ_DIR)/database_test.o $(DATABASE_OBJS) $(OBJ_DIR)/util.o	\
+$(EXCEPTION_OBJS)
+
+ALL_OBJS := $(TRANSFORM_OBJS) $(INTROSPECTION_OBJS) $(DATABASE_OBJS)	\
+$(EXCEPTION_OBJS) $(OBJ_DIR)/shield.o $(OBJ_DIR)/util.o $(OBJ_DIR)/transform_lex_test.o $(OBJ_DIR)/introspection_test.o $(OBJ_DIR)/database_test.o
+
+ALL_SRCS := $(subst $(OBJ_DIR)/,$(SRC_DIR)/,$(ALL_OBJS:.o=.cc))
+ALL_DEPS := $(ALL_OBJS:.o=.d)
+
+
+#
+# Listing of all programs that this Makefile can build
+#
 PROGRAMS := shield transform_lex_test shield_make_package_string database_test introspection_test
 
-OBJ := obj
-SRC := src
+#
+# Default action
+#
+all: $(PROGRAMS)
 
-all: shield
-
+#
+# How to build all the programs
+#
 shield: $(SHIELD_OBJS)
 	$(CXX) $(SHIELD_OBJS) -o $@ $(LDFLAGS)
 
@@ -57,6 +92,9 @@ introspection_test: $(INTROSPECTION_TEST_OBJS)
 database_test: $(DATABASE_TEST_OBJS)
 	$(CXX) $(DATABASE_TEST_OBJS) -o $@ $(LDFLAGS)
 
+#
+# How to generate the lexer/parser c sources
+#
 src/transform_lex.cc: src/transform_lex.y
 	flex -i -osrc/transform_lex.cc src/transform_lex.y 
 
@@ -65,6 +103,9 @@ src/transform_yacc.cc: src/transform_yacc.y
 
 src/transform_yacc.hh: src/transform_yacc.cc
 
+#
+# How to convert the package definition into C++ code
+#
 src/transform_print_package.cc: shield_make_package_string shield_package.sql
 	echo "#include \"transform.hh\"" >$@.tmp
 	echo "void shield::transform::print_package ()" >>$@.tmp
@@ -97,18 +138,22 @@ depend: src/transform_yacc.hh src/transform_lex.cc
 #
 # Rule for making objects
 #
-$(OBJ)/%.o: $(SRC)/%.cc
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(SRC)/$*.cc -o $@ 
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(SRC_DIR)/$*.cc -o $@ 
+
+$(OBJ_DIR)/%.d: $(SRC_DIR)/%.cc transform_yacc.hh transform_lex.hh
+	$(CXX) -MM -MG $(SRC_DIR)/$*.cc $(CPPFLAGS) | sed -e 's@^\(.*\)\.o:@'$(OBJ_DIR)'/\1.d '$(OBJ_DIR)'/\1.o:@' >$@
 
 #
 # Include automatically generated dependencies (see depend target)
 #
 
 clean:
-	rm -f obj/*.o 
+	rm -f $(OBJ_DIR)/*.o 
+	rm -f $(OBJ_DIR)/*.d 
 	rm -f src/transform_yacc.cc src/transform_yacc.hh 
 	rm -f src/transform_lex.cc src/transform_lex.hh
 	rm -f $(PROGRAMS)
 	rm -f src/transform_print_package.cc
 
-include Makefile.depend
+include $(ALL_DEPS)

@@ -24,7 +24,7 @@ int main (int argc, char **argv)
     }
   catch (std::exception &e)
     {
-      cerr << e;
+      cerr << e.what () << endl;
     }
   
 }

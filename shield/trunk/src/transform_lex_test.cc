@@ -6,16 +6,16 @@
 using namespace std;
 
 #include "transform.hh"
-/*
+
 namespace shield
 {
   namespace transform
   {
+
 #include "transform_yacc.hh"
+
   }
 }
-*/
-#include "transform_lex.cc"
 
 int
 main (void)
@@ -68,7 +68,7 @@ main (void)
     }
   ;
   
-  yy_scan_string (input.c_str ());
+  shield::transform::lex_set_string (input);
   
   for( int i=0; i < sizeof(result)/sizeof(int);i++ )
     {
