@@ -80,7 +80,7 @@ for i in /usr/lib/oracle/xe/app/oracle/product/*/server/rdbms /usr/lib/oracle/xe
     AC_MSG_CHECKING([for $i/lib library directory])
     if test -d $i/lib; then
         AC_MSG_RESULT(yes)
-        LDFLAGS="$LDFLAGS -L$i/lib/ -R$i/lib/"
+        LDFLAGS="$LDFLAGS -L$i/lib/ -Wl,-R$i/lib/"
     else
         AC_MSG_RESULT(no)
     fi
