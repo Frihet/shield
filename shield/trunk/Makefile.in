@@ -141,7 +141,13 @@ depend: src/transform_yacc.hh src/transform_lex.cc
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(SRC_DIR)/$*.cc -o $@ 
 
-$(OBJ_DIR)/%.d: $(SRC_DIR)/%.cc $(SRC_DIR)/transform_yacc.hh $(SRC_DIR)/transform_lex.hh
+$(OBJ_DIR)/%.d: $(SRC_DIR)/%.cc
+	if test ! -f $(SRC_DIR)/transform_lex.hh; then \
+		flex -i -osrc/transform_lex.cc src/transform_lex.y; \
+	fi 
+	if test ! -f $(SRC_DIR)/transform_yacc.hh; then \
+		bison -d src/transform_yacc.y -o src/transform_yacc.cc; \
+	fi
 	$(CXX) -MM -MG $(SRC_DIR)/$*.cc $(CPPFLAGS) | sed -e 's@^\(.*\)\.o:@'$(OBJ_DIR)'/\1.d '$(OBJ_DIR)'/\1.o:@' >$@
 
 #
