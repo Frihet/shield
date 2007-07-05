@@ -555,5 +555,7 @@ zerofill return ZEROFILL;
 [ \t\n\r] ;
 \#[^\n]*\n ;
 
+:[a-zA-Z0-9_]+ return  TEXT_STRING;
+
 . return 0;
 

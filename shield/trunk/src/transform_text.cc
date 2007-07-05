@@ -186,13 +186,23 @@ namespace shield
 
 	case LITERAL:
 	  {
-	    string unescaped = mysql_unescape( __val );
-	    string escaped = oracle_escape( unescaped );
+	    if (__val.size () && __val[0] == ':')
+	      {
+		if (!get_skip_space ())
+		  stream << " ";
 
-	    if (!get_skip_space ())
-	      stream << " ";
-
-	    stream << escaped;
+		stream << __val;
+	      }
+	    else
+	      {
+		string unescaped = mysql_unescape( __val );
+		string escaped = oracle_escape( unescaped );
+		
+		if (!get_skip_space ())
+		  stream << " ";
+		
+		stream << escaped;
+	      }
 	    break;
 	  }
       
