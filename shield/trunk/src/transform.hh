@@ -104,19 +104,23 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#include "exception.hh"
-#include "util.hh"
+//#include "util.hh"
 #include "logger.hh"
-
 
 namespace shield
 {
+
+  using namespace shield;
+
+  namespace catalyst
+  {
+    class catalyst;
+  }
 
   namespace transform
   {
 
     using namespace std;
-    using namespace util;
 
     extern const char sep;
 
@@ -261,25 +265,6 @@ namespace shield
     void drop_item (ostream &stream, const string &item_type_external, const string &item_name);
 
     /**
-       This is a functor class used to transform printables. It takes a
-       printable and returns it or another printable. It is used
-       together with the \c printable::transform function of printables to perform
-       transformations on the syntax tree.
-    */
-    class catalyst
-    {
-    public:
-
-      /**
-	 The transformation operation. Takes a printable as an
-	 argument and returns another one, or possibly the same one.
-	 
-	 @param node The node to transform
-      */
-      virtual printable *operator () (printable *node) = 0;
-    };
-
-    /**
        A class representing a node in the tree created by parsing a sql query. 
 
        This base class contains some infrastructure for printing, setting
@@ -303,13 +288,7 @@ namespace shield
 	 printable. This is done by using the << operator and then
 	 calling trim on the resulting string result.
       */
-      string str (void)
-      {
-	std::ostringstream out;
-	if (!(out << *this))
-	  throw shield::exception::syntax ("stringify called on invalid type");
-	return trim (out.str());
-      }
+      string str (void);
 
       /**
 	 Set the context of this printable to be the desired
@@ -352,8 +331,8 @@ namespace shield
 	 Transform this node and all it's children in arbitrary order
 	 using the specified catalyst.
       */
-      virtual printable *transform (catalyst &catalyst);
-
+      virtual printable *transform (shield::catalyst::catalyst &catalyst);
+      
       /**
 	 Return this nodes parent, or null if this is the root.
       */
@@ -561,12 +540,7 @@ namespace shield
 	 @param type is the type of message
 	 @param insert_whitespace whether whitespace is needed before this token
       */
-      text (unsigned long long val, text_type type = EXACT, bool insert_whitespace=true)
-	: __val (stringify (val)), __type (type)
-      {
-	set_context (CONTEXT_NUMBER);
-	set_skip_space (!insert_whitespace);
-      }
+      text (unsigned long long val, text_type type = EXACT, bool insert_whitespace=true);
 
       /**
 	 Returns the raw (unformated) length of this item. Use str
@@ -721,7 +695,7 @@ namespace shield
 	  __chain[0]->set_skip_space (ss);
       }
 
-      virtual printable *transform (catalyst &catalyst);
+      virtual printable *transform (catalyst::catalyst &catalyst);
 
       /**
 	 insert the elements specified at the specified poistion.
@@ -981,39 +955,32 @@ namespace shield
       : public printable
     {
     public:
-
       attribute (printable *render=0, printable *post_render=0)
-	: __render (render), __post_render (post_render)
       {
-	if (__render)
-	  __render->set_parent (this);
-
-	if (__post_render)
-	  __post_render->set_parent (this);
-
+	_set_child (__RENDER, render);
+	_set_child (__POST_RENDER, post_render);
       }
 
       printable *get_post_render (void)
       {
-	return __post_render;
+	return _get_child (__POST_RENDER);
       }
 
-      virtual printable *transform (catalyst &catalyst);
+      printable *get_render (void)
+      {
+	return _get_child (__RENDER);
+      }
 
     protected:
-
-      virtual void _print (ostream &stream)
-      {
-	if (__render)
-	  {
-	    stream << *__render;
-	  }
-      }
+      virtual void _print (ostream &stream);
 
     private:
-
-      printable *__render;
-      printable *__post_render;
+      enum
+	{
+	  __RENDER,
+	  __POST_RENDER
+	}
+      ;
     }
     ;
 
@@ -1122,7 +1089,7 @@ namespace shield
       void set_like_clause (printable *l);
       void set_check_existance (bool check);
   
-      printable *transform (catalyst &catalyst);
+      printable *transform (catalyst::catalyst &catalyst);
       
       printable *get_name (void)
       {
@@ -1463,130 +1430,6 @@ namespace shield
 
 
     /**
-       A catalyst fo replacing a specific shield_text with another
-       printable. This is used in the having clause of selects,
-       because oracle forbids the use of aliases there for some odd
-       reason.
-    */
-    class replace_identifier_catalyst
-      : public catalyst
-    {
-    public:
-
-      replace_identifier_catalyst (map<string, printable *> &mapping)
-	: __mapping (mapping)
-      {
-      }
-
-      virtual printable *operator () (printable *node)
-      {
-	text *t = dynamic_cast<text *> (node);
-	if (!t)
-	  {
-	    return node;
-	  }
-
-	if (t->get_type () != IDENTIFIER &&
-	    t->get_type () != IDENTIFIER_QUOTED)
-	  {
-	    return node;
-	  }
-
-	string st = t->str ();
-
-	if (__mapping.find (st) == __mapping.end ())
-	  {
-	    return node;
-	  }
-
-	return __mapping[st];
-
-      }
-
-    private:
-      map<string, printable *> __mapping;
-    }
-    ;
-
-    /**
-       Simple class to validate that the tree is sane. Never changes any nodes.
-    */
-    class validation_catalyst
-      : public catalyst
-    {
-    public:
-      
-      virtual printable *operator () (printable *node);
-    }
-    ;
-
-    /**
-       This catalyst transforms any identifiers that are represented
-       by a text node into one represented by an identity node.
-    */
-    class identity_catalyst
-      : public catalyst
-    {
-    public:
-      identity_catalyst (query *q)
-	: __query (q)
-      {
-      }
-
-      virtual printable *operator () (printable *node);
-      
-    private:
-      query *__query;
-    }
-    ;
-
-    class internal_catalyst 
-      : public catalyst
-    {
-    public:
-      virtual printable *operator () (printable *node)
-      {
-	return node->internal_transform ();
-      }
-    }
-    ;
-
-    /**
-       This catalyst locates any table names in a from clause. If
-       there is a table alias, it is returned in preference over the
-       actual table name. 
-    */
-    class find_table_catalyst
-      : public catalyst
-    {
-    public:
-      find_table_catalyst (query *q)
-	: __query (q)
-      {
-	__res = new chain ();
-      }
-
-      /**
-	 The catalyst function. Detects printable_alias nodes and
-	 handles them.
-      */
-      virtual printable *operator () (printable *node);
-
-      /**
-	 Return the accumulated list of tables
-      */
-      chain *get_table_list (void)
-      {
-	return __res;
-      }
-      
-    private:
-      chain *__res;
-      query *__query;
-    }
-    ;
-
-    /**
        A function representing a comparison operation. This nodes
        exists to handle implicit conversions. At print time, a cast
        node may be emitted for either argument.
@@ -1652,15 +1495,7 @@ namespace shield
       } 
 
     protected:
-      virtual void _print (ostream &stream)
-      {
-	printable *inner = _get_child (__INNER);
-
-	if (!inner)
-	  throw shield::exception::syntax ("Tried to print null fake_query node");
-
-	stream << *inner;
-      }
+      virtual void _print (ostream &stream);
 
     private:
       enum
@@ -1764,21 +1599,11 @@ namespace shield
       /**
 	 Perform identity catalyst transform
       */
-      virtual printable *internal_transform (void)
-      {
-	identity_catalyst i (this);
-	return this->transform (i);
-      }
+      virtual printable *internal_transform (void);
 
     protected:
       virtual void _print (ostream &stream);
-
-      virtual chain *_get_condensed_table_list (void)
-      {
-	find_table_catalyst c (this);
-	transform (c);
-	return c.get_table_list ();
-      }
+      virtual chain *_get_condensed_table_list (void);
 
 
     private:
@@ -1806,6 +1631,8 @@ namespace shield
     /**
        Parse the whole syntax tree, transform it and write it out to
        standard output.
+
+       If something happens, any subclass of shield::exception::exception may be thrown.
     */
     int yyparse (void);
     
@@ -1830,4 +1657,5 @@ namespace shield
 */
 int yylex (void);
 
-#endif
+#endif //#ifndef TRANSFORM_HH
+

@@ -11,8 +11,11 @@ namespace shield
     /*
       Map containing all previously introspected tables
     */
-    static map<string, table> table_map;
-    
+    namespace
+    {
+      map<string, table> table_map;
+    }
+
     table &get_table (string table_name)
     {
       if (table_map.find (table_name) == table_map.end ())

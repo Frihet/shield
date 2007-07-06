@@ -1,4 +1,5 @@
 #include "transform.hh"
+#include "catalyst.hh"
 
 namespace shield
 {
@@ -25,6 +26,23 @@ namespace shield
       
       stream << endl << endl;
     }
+
+    printable *update::
+    internal_transform (void)
+    {
+      catalyst::identity ident (this);
+      return this->transform (ident);
+    }
+
+
+    chain *update::
+    _get_condensed_table_list (void)
+    {
+      catalyst::find_table cat (this);
+      transform (cat);
+      return cat.get_table_list ();
+    }
+
 
   }
 

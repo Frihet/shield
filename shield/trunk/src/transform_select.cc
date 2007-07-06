@@ -9,9 +9,13 @@
    correctly. Needs a bit more work.
 */
 #include <set>
+#include <sstream>
 
 #include "transform.hh"
 #include "introspection.hh"
+#include "catalyst.hh"
+#include "exception.hh"
+#include "util.hh"
 
 using namespace shield;
 
@@ -20,6 +24,8 @@ namespace shield
 
   namespace transform
   {
+
+    using namespace util;
 
     select::
     select()
@@ -36,75 +42,79 @@ namespace shield
 		  printable *having,
 		  map<string, printable *> &mapping)
     {
-      replace_identifier_catalyst cat (mapping);
+      catalyst::replace_identifier cat (mapping);
 
       printable *t = having->transform (cat);
       stream << *t;
     }
 
-    /**
-       This function uses introspection to find out what type a table
-       column is of, and use the correct version of the arbitrary
-       aggregation functions defined toghether with the shield
-       package.
-    */
-    static printable *
-    aggregate (text *field, 
-	       text *alias,
-	       const string &table_alias,
-	       const string &table)
+    namespace
     {
-      string func_name;
+      /**
+	 This function uses introspection to find out what type a table
+	 column is of, and use the correct version of the arbitrary
+	 aggregation functions defined toghether with the shield
+	 package.
+      */
+      static printable *
+      aggregate (text *field, 
+		 text *alias,
+		 const string &table_alias,
+		 const string &table)
+      {
+	string func_name;
 
-      introspection::table &t = introspection::get_table (table);
-      const introspection::column &c = t.get_column (field->str ());
-      introspection::column_type y = c.get_type ();
+	introspection::table &t = introspection::get_table (table);
+	const introspection::column &c = t.get_column (field->str ());
+	introspection::column_type y = c.get_type ();
 
-      if (y.is_char ())
-	{
-	  func_name = "shield_arb_agg_char";
-	}
-      else if (y.is_lob ())
-	{
-	  func_name = "shield_arb_agg_clob";
-	} 
-      else if (y.is_number ())
-	{
-	  func_name = "shield_arb_agg_num";
-	}
-      paran *p = new paran (new identity (0, new text (table_alias), field));
-      printable *val = new chain (new text (func_name), p);
-      printable *res = new printable_alias (val, alias);
+	if (y.is_char ())
+	  {
+	    func_name = "shield_arb_agg_char";
+	  }
+	else if (y.is_lob ())
+	  {
+	    func_name = "shield_arb_agg_clob";
+	  } 
+	else if (y.is_number ())
+	  {
+	    func_name = "shield_arb_agg_num";
+	  }
+	paran *p = new paran (new identity (0, new text (table_alias), field));
+	printable *val = new chain (new text (func_name), p);
+	printable *res = new printable_alias (val, alias);
 
-      return res;
-    }
+	return res;
+      }
 
-    /**
-       Search the specified tree searching for printable_alias objects
-       and save their mapping
-    */
-    static void 
-    get_table_alias (printable *it, map<string, printable *> &table_alias)
-    {
-      chain *ch = dynamic_cast<chain *> (it);
-      printable_alias *al = dynamic_cast<printable_alias *> (it);
+      /**
+	 Search the specified tree searching for printable_alias objects
+	 and save their mapping
+      */
+      static void 
+      get_table_alias (printable *it, map<string, printable *> &table_alias)
+      {
+	chain *ch = dynamic_cast<chain *> (it);
+	printable_alias *al = dynamic_cast<printable_alias *> (it);
 
-      if (al)
-	{
-	  if (al->get_alias ())
-	    {
-	      // cerr << "alias " << al->get_alias ()->str () << " -> " << al->get_item ()->str () << endl;
-	      table_alias[al->get_alias ()->str ()] = al->get_item ();
-	    }
-	}
-      else if (ch)
-	{
-	  chain::const_iterator i;
-	  for (i=ch->begin (); i<ch->end (); i++)
-	    {
-	      get_table_alias (*i, table_alias);
-	    }
-	}
+	if (al)
+	  {
+	    if (al->get_alias ())
+	      {
+		// cerr << "alias " << al->get_alias ()->str () << " -> " << al->get_item ()->str () << endl;
+		table_alias[al->get_alias ()->str ()] = al->get_item ();
+	      }
+	  }
+	else if (ch)
+	  {
+	    chain::const_iterator i;
+	    for (i=ch->begin (); i<ch->end (); i++)
+	      {
+		get_table_alias (*i, table_alias);
+	      }
+	  }
+      }
+
     }
 
     void select::
@@ -156,7 +166,7 @@ namespace shield
       if (get_limit_clause ())
 	{
 	  get_item_list ()->push (new printable_alias (new text ("rownum", EXACT),
-						  new text ("shield_rownum", EXACT)));
+						       new text ("shield_rownum", EXACT)));
 	}
 
       /*
@@ -467,8 +477,12 @@ namespace shield
 		    }
 		  else
 		    {
-		      find_table_catalyst cat (this);
+		      catalyst::find_table cat (this);
 		      get_table_list ()->transform (cat);
+		      if (!cat.get_table_list ()->size ())
+			{
+			  throw shield::exception::not_found ("Select query table");
+			}
 		      le = (*cat.get_table_list ()->begin ())->str ();
 		    }
 
@@ -502,7 +516,7 @@ namespace shield
     chain *select::
     _get_condensed_table_list ()
     {
-      find_table_catalyst cat (this);
+      catalyst::find_table cat (this);
       get_table_list ()->transform (cat);
       return cat.get_table_list ();
     }
@@ -536,8 +550,8 @@ namespace shield
     printable *select::
     internal_transform ()
     {
-      identity_catalyst i (this);
-      return this->transform (i);
+      catalyst::identity id_catalyst (this);
+      return this->transform (id_catalyst);
     }
 
   }

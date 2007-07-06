@@ -1,4 +1,5 @@
 #include "transform.hh"
+#include "exception.hh"
 
 namespace shield
 {

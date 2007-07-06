@@ -1,5 +1,6 @@
 
 #include "transform.hh"
+#include "catalyst.hh"
 
 namespace shield
 {
@@ -63,7 +64,7 @@ namespace shield
 
 
     printable *chain::
-    transform (catalyst &catalyst)
+    transform (catalyst::catalyst &catalyst)
     {
 
       for (int i=0; i<__chain.size (); i++)

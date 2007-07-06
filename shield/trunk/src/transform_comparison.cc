@@ -1,11 +1,14 @@
 #include "transform.hh"
 #include "exception.hh"
+#include "util.hh"
 
 namespace shield
 {
 
   namespace transform
   {
+
+    using namespace util;
 
     comparison::
     comparison (printable *op, printable *arg1, printable *arg2)
@@ -36,9 +39,9 @@ namespace shield
       if (c1_in != c2_in)
 	{
 	  typedef pair<context,context> pair_ctx;
-
+	  
 	  map<pair_ctx,context> ctx_map;
-
+	  
 	  ctx_map[pair_ctx (CONTEXT_NUMBER,CONTEXT_STRING)] = CONTEXT_STRING;
 	  ctx_map[pair_ctx (CONTEXT_STRING,CONTEXT_NUMBER)] = CONTEXT_STRING;
 	  

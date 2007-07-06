@@ -1,6 +1,8 @@
 
 #include <assert.h>
+
 #include "transform.hh"
+#include "catalyst.hh"
 
 namespace shield
 {
@@ -182,7 +184,7 @@ namespace shield
 
 
     printable *create_table::
-    transform (catalyst &catalyst)
+    transform (catalyst::catalyst &catalyst)
     {
 
       if (__field_list)

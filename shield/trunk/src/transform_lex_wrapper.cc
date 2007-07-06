@@ -16,9 +16,12 @@ namespace shield
 
     YY_BUFFER_STATE current=0;
     
-    static void lex_cleanup ()
+    namespace
     {
-      yy_delete_buffer (current);
+      void lex_cleanup ()
+      {
+	yy_delete_buffer (current);
+      }
     }
 
     void *lex_set_string (const string &str)

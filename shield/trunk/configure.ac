@@ -47,6 +47,7 @@ fi
 #
 
 AC_PROG_CXX
+AC_PROG_CC
 AC_PROG_CXXCPP
 AC_PROG_INSTALL
 
@@ -59,33 +60,37 @@ AC_PROG_INSTALL
 
 for i in /usr/lib/oracle/xe/app/oracle/product/*/server/rdbms /usr/lib/oracle/xe/app/oracle/product/*/client/rdbms /usr/lib/oracle/xe/app/oracle/product/*/server /usr/lib/oracle/xe/app/oracle/product/*/client; do
 
-    AC_MSG_CHECKING([for $i/include include directory])
-    if test -d $i/include; then
-        AC_MSG_RESULT(yes)
-        CPPFLAGS="$CPPFLAGS -I$i/include/"
-        CXXFLAGS="$CXXFLAGS -I$i/include/"
-    else
-    AC_MSG_RESULT(no)
-    fi
+	AC_MSG_CHECKING([for $i/include include directory])
+	if test -d $i/include; then
+		AC_MSG_RESULT(yes)
+		CPPFLAGS="$CPPFLAGS -I$i/include/"
+		CXXFLAGS="$CXXFLAGS -I$i/include/"
+	else
+	AC_MSG_RESULT(no)
+	fi
 
-    AC_MSG_CHECKING([for $i/public include directory])
-    if test -d $i/public; then
-        AC_MSG_RESULT(yes)
-        CPPFLAGS="$CPPFLAGS -I$i/public/"
-        CXXFLAGS="$CXXFLAGS -I$i/public/"
-    else
-    AC_MSG_RESULT(no)
-    fi
+	AC_MSG_CHECKING([for $i/public include directory])
+	if test -d $i/public; then
+		AC_MSG_RESULT(yes)
+		CPPFLAGS="$CPPFLAGS -I$i/public/"
+		CXXFLAGS="$CXXFLAGS -I$i/public/"
+	else
+	AC_MSG_RESULT(no)
+	fi
 
-    AC_MSG_CHECKING([for $i/lib library directory])
-    if test -d $i/lib; then
-        AC_MSG_RESULT(yes)
-        LDFLAGS="$LDFLAGS -L$i/lib/ -Wl,-R$i/lib/"
-    else
-        AC_MSG_RESULT(no)
-    fi
+	AC_MSG_CHECKING([for $i/lib library directory])
+	if test -d $i/lib; then
+		AC_MSG_RESULT(yes)
+		LDFLAGS="$LDFLAGS -L$i/lib/ -Wl,-R$i/lib/"
+	else
+		AC_MSG_RESULT(no)
+	fi
 
 done
+
+if expr "$CXX" : g++.\* >/dev/null; then
+	LDFLAGS="$LDFLAGS -rdynamic"
+fi
 
 # Tell the world what we know
 AC_CONFIG_FILES([Makefile])

@@ -7,6 +7,8 @@
    then not actually created until the first query is executed. If a
    connection has been created, it is automatically closed on exit.
 
+   The functions in this function may throw the exception::database exception
+
    @package Shield
    @author Axel Liljencrantz
 
@@ -82,7 +84,7 @@ namespace shield
       }
 
       friend result_set &operator << (result_set &r, const parameter &p);
-      friend result_set &query (string q);
+      friend result_set &query (string q) throw (exception::database);
       
       bool __is_metadata_init;
       bool __is_executed;
@@ -118,12 +120,12 @@ namespace shield
        Call this function at atartup to set login information. This
        function must not be called exactly once.
     */
-    void init (string username, string password, string host);
+    void init (string username, string password, string host) throw (exception::database);
     
     /**
        Execute the specified query
     */
-    result_set &query (string q);
+    result_set &query (string q) throw (exception::database);
     
   }
   

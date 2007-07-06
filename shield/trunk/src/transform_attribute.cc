@@ -7,18 +7,14 @@ namespace shield
   namespace transform
   {
 
-    printable *attribute::
-    transform (catalyst &catalyst)
+    void attribute::
+    _print (std::ostream &stream)
     {
-      if (__render)
-	__render = __render->transform (catalyst);
-      
-      if (__post_render)
-	__post_render = __post_render->transform (catalyst);
-
-      return catalyst (this);
+      if (get_render ())
+	{
+	  stream << *get_render ();
+	}
     }
-
   }
 
 }

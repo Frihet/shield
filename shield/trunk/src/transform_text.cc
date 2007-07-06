@@ -1,3 +1,6 @@
+#include "util.hh"
+
+
 #include "transform.hh"
 
 namespace shield
@@ -6,131 +9,146 @@ namespace shield
   namespace transform
   {
 
-    /**
-       Remove quoting from quoted identifier
-    */
-    static string ident_unescape (const string &in)
+    using namespace util;
+
+    text::
+    text (unsigned long long val, text_type type, bool insert_whitespace)
+      : __val (stringify (val)), __type (type)
     {
-      return in.substr (1, in.length ()-2);
+      set_context (CONTEXT_NUMBER);
+      set_skip_space (!insert_whitespace);
     }
 
-    /**
-       Unescaped quoted mysql strings. Wildly incomplete, e.g. character
-       set specifications and numeric escapes are not yet supported.
-    */
-    static string mysql_unescape (const string &in)
+    namespace
     {
-      string out = "";
+
+      /**
+	 Remove quoting from quoted identifier
+      */
+      static string ident_unescape (const string &in)
+      {
+	return in.substr (1, in.length ()-2);
+      }
+
+      /**
+	 Unescaped quoted mysql strings. Wildly incomplete, e.g. character
+	 set specifications and numeric escapes are not yet supported.
+      */
+      static string mysql_unescape (const string &in)
+      {
+	string out = "";
   
-      char end;
-      string::const_iterator i;
+	char end;
+	string::const_iterator i;
 
-      i=in.begin (); 
+	i=in.begin (); 
   
-      end = *i;
-      i++;
+	end = *i;
+	i++;
 
-      while (true)
-	{
-	  char c = *i;
+	while (true)
+	  {
+	    char c = *i;
 
-	  if (c == end)
-	    {
-	      break;
-	    }
+	    if (c == end)
+	      {
+		break;
+	      }
       
-	  if (c == '\\')
-	    {
-	      i++;
-	      if (i == in.end ())
-		{
-		  throw exception::syntax ("Malformed string");
-		}
+	    if (c == '\\')
+	      {
+		i++;
+		if (i == in.end ())
+		  {
+		    throw exception::syntax ("Malformed string");
+		  }
 
-	      char c = *i;
+		char c = *i;
 	  
-	      switch (c)
-		{
-		case 'n':
-		  out += '\n';
-		  break;
+		switch (c)
+		  {
+		  case 'n':
+		    out += '\n';
+		    break;
 	      
-		case 'r':
-		  out += '\r';
-		  break;
+		  case 'r':
+		    out += '\r';
+		    break;
 	      
-		case 'f':
-		  out += '\f';
-		  break;
+		  case 'f':
+		    out += '\f';
+		    break;
 	      
-		case 'v':
-		  out += '\v';
-		  break;
+		  case 'v':
+		    out += '\v';
+		    break;
 	      
-		case 'b':
-		  out += '\b';
-		  break;
+		  case 'b':
+		    out += '\b';
+		    break;
 	      
-		case 'e':
-		  out += '\e';
-		  break;
+		  case 'e':
+		    out += '\e';
+		    break;
 	      
-		case 'a':
-		  out += '\a';
-		  break;
+		  case 'a':
+		    out += '\a';
+		    break;
 	      
-		case 't':
-		  out += '\t';
-		  break;
+		  case 't':
+		    out += '\t';
+		    break;
 
-		default:
-		  out += c;
+		  default:
+		    out += c;
 	      
-		}
-	    }
-	  else
-	    {
-	      out += c;
-	    }
+		  }
+	      }
+	    else
+	      {
+		out += c;
+	      }
 
-	  i++;
-	}
+	    i++;
+	  }
 
-      i++;
+	i++;
 
-      if (i != in.end () )
-	{
-	  throw exception::syntax ("Malformed string");
-	}
+	if (i != in.end () )
+	  {
+	    throw exception::syntax ("Malformed string");
+	  }
 
-      return out;
-    }
+	return out;
+      }
 
-    /**
-       Make an identifier name a valid under oracle
-    */
-    static string identifier_escape (const string &in)
-    { 
-      string out = "";
-      string::const_iterator i;
+      /**
+	 Make an identifier name a valid under oracle
+      */
+      static string identifier_escape (const string &in)
+      { 
+	string out = "";
+	string::const_iterator i;
   
-      for (i=in.begin (); i < in.end (); i++)
-	{
-	  switch (*i)
-	    {
-	    case '_':
-	      out += *i;
-	      if ((i+1) == in.end ())
-		out += "_";
-	      break;
+	for (i=in.begin (); i < in.end (); i++)
+	  {
+	    switch (*i)
+	      {
+	      case '_':
+		out += *i;
+		if ((i+1) == in.end ())
+		  out += "_";
+		break;
 
-	    default:
-	      out += *i;
-	      break;
-	    }
-	}
+	      default:
+		out += *i;
+		break;
+	      }
+	  }
 
-      return out;
+	return out;
+      }
+
     }
 
     void text::

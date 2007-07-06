@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "transform.hh"
+#include "util.hh"
 
 namespace shield
 {
@@ -8,10 +9,12 @@ namespace shield
   namespace transform
   {
 
+    using namespace util;
+
     const char sep = '\0';
 
-    logger::logger warning ("shield: warning");
-    logger::logger debug ("shield: debug");
+    logger::logger warning ("shield: transform warning");
+    logger::logger debug ("shield: transform debug");
 
     bool is_reserved (const string &in)
     {

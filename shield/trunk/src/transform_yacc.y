@@ -34,6 +34,9 @@ implement, luckily Joomla does not seem to use them.
 #include <string>
 
 #include "transform.hh"
+#include "exception.hh"
+#include "catalyst.hh"
+#include "util.hh"
 
   /**
      This is the text contents of the last element parsed by the lexer. We need to be _very_ careful when we use this, since the parser sometimes needs to perform lookahead, in which case yytext points to the contents of the element _after_ the current one. For this reason, yytext should only ever be used on tokens which 
@@ -43,8 +46,10 @@ extern char *yytext;
 namespace shield
 {
 
-namespace transform
-{
+  namespace transform
+  {
+
+    using namespace util;
 
     /**
        Ugly hack - inject symbols from transform_yacc.hh into the
@@ -854,19 +859,18 @@ query:
           { 
 	    if ($1)
 	    {
-	      validation_catalyst v;
+	      shield::catalyst::validation v;
 	      $1 = $1->transform (v);
 
-	      debug << "Validation catalyst pass 1 done";
+	      shield::catalyst::debug << "Validation catalyst pass 1 done";
 	      
-	      internal_catalyst i;
+	      shield::catalyst::internal i;
 	      $1 = $1->transform (i);	      
-	      debug << "Internal catalyst done";
+	      shield::catalyst::debug << "Internal catalyst done";
 	      
 	      $1 = $1->transform (v);
 
-	      debug << "Validation catalyst pass 2 done";
-
+	      shield::catalyst::debug << "Validation catalyst pass 2 done";
 
 	      cout << *$1;
 	    }
@@ -3843,8 +3847,9 @@ normal_join:
 table_factor:
         table_ident opt_table_alias opt_key_definition
 	{
-	  if (!$3)
+	  if ($3)
 	    throw exception::unsupported (__FILE__, __LINE__);
+
 	  $$ = new printable_alias ($1, $2);
 	}
 	| '{' ident table_ref LEFT OUTER JOIN_SYM table_ref

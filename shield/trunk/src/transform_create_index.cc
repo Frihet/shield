@@ -1,5 +1,5 @@
-#include <assert.h>
 #include "transform.hh"
+#include "exception.hh"
 
 namespace shield
 {
@@ -28,9 +28,11 @@ namespace shield
     chain *
     create_index::get_filtered_key_list(chain *field_list)
     {
+      printable *uncasted_key_list = _get_child (__KEY_LIST);
       chain *original_key_list = dynamic_cast<chain *> (_get_child (__KEY_LIST));
 
-      assert (original_key_list);
+      if (!original_key_list)
+	throw exception::not_found ("");
 
       chain *key_list = new chain ();
       key_list->set_separator (",");
@@ -69,7 +71,8 @@ namespace shield
       return key_list;
     }
 
-    static bool key_list_match (chain *key_list1, chain *key_list2)
+    
+    bool key_list_match (chain *key_list1, chain *key_list2)
     {
       chain::const_iterator i,j;
 

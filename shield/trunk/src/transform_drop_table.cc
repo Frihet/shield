@@ -1,5 +1,6 @@
 #include "transform.hh"
 #include "introspection.hh"
+#include "exception.hh"
 
 namespace shield
 {

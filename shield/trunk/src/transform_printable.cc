@@ -1,5 +1,10 @@
 
+#include <sstream>
+
 #include "transform.hh"
+#include "catalyst.hh"
+#include "exception.hh"
+#include "util.hh"
 
 namespace shield
 {
@@ -7,7 +12,10 @@ namespace shield
   namespace transform
   {
 
-    static vector<printable *>all_printable;
+    namespace
+    {
+      vector<printable *>all_printable;
+    }
 
     void printable_delete()
     {
@@ -80,7 +88,7 @@ namespace shield
     }
 
     printable *printable::
-    transform (catalyst &catalyst)
+    transform (catalyst::catalyst &catalyst)
     {
       
       map<int, printable *>::iterator i;
@@ -98,6 +106,15 @@ namespace shield
 	}
       
       return catalyst (this);
+    }
+
+    string printable::
+    str (void)
+    {
+      std::ostringstream out;
+      if (!(out << *this))
+	throw shield::exception::syntax ("stringify called on invalid type");
+      return util::trim (out.str());
     }
     
   }

@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <assert.h>
 
 #include "database.hh"
 #include "exception.hh"
@@ -12,17 +11,67 @@ namespace shield
     using namespace oracle::occi;
     using namespace shield;
 
-    static string username="", password="", host="";
-    static bool is_init=false, is_connect=false;
+    namespace
+    {
+      string username="", password="", host="";
+      bool is_init=false, is_connect=false;
 
-    static Environment *env;
-    static Connection *conn;
+      Environment *env;
+      Connection *conn;
 
-    static result_set last_rs (0, 0, "");
+      result_set last_rs (0, 0, "");
 
-    static void destroy ();
+      void destroy ();
 
-    void init (string u, string p, string h)
+      void connect ()
+      {
+	if (is_connect)
+	  {
+	    return;
+	  }
+
+	if (!is_init)
+	  {
+	    throw exception::syntax ("Tried to use database without supplying login information");
+	  }
+
+	try
+	  {
+	    env = Environment::createEnvironment ();
+	    conn = env->createConnection (username, password, host);
+	  }
+	catch (std::exception &e)
+	  {
+	  }
+
+	if (!conn)
+	  throw shield::exception::database ("Could not create database connection. Wrong username/password?");
+	
+	atexit (&destroy);
+      
+      }
+
+      void destroy ()
+      {
+	last_rs.close ();
+
+	/*
+	  FIXME:
+	
+	  These are commented out because they cause the app to
+	  crash on exit. According to
+	  http://forums.oracle.com/forums/thread.jspa?threadID=400555&tstart=-1
+	  this may be a known Oracle bug. Will have to investigate more later.
+	*/
+	//env->terminateConnection (conn);
+	//Environment::terminateEnvironment (env);
+      }
+
+
+    }
+
+
+    void init (string u, string p, string h) throw (exception::database)
     {
       username = u;
       password=p;
@@ -30,49 +79,13 @@ namespace shield
       is_init = true;
     }
 
-    static void connect ()
-    {
-      if (is_connect)
-	{
-	  return;
-	}
-
-      if (!is_init)
-	{
-	  throw exception::syntax ("Tried to use database without supplying login information");
-	}
-
-      env = Environment::createEnvironment ();
-      conn = env->createConnection (username, password, host);
-
-      assert (conn);
-
-      atexit (&destroy);
-      
-    }
-
-    static void destroy ()
-    {
-      last_rs.close ();
-
-      /*
-	FIXME:
-	
-	These are commented out because they cause the app to
-	crash on exit. According to
-	http://forums.oracle.com/forums/thread.jspa?threadID=400555&tstart=-1
-	this may be a known Oracle bug. Will have to investigate more later.
-      */
-      //env->terminateConnection (conn);
-      //Environment::terminateEnvironment (env);
-    }
-
-    result_set &query (string q)
+    result_set &query (string q) throw (exception::database)
     {
       connect ();
 
       Statement *stmt = conn->createStatement ();
-      assert (stmt);
+      if (!stmt)
+	throw shield::exception::database ("Could not create database statement. Connection timeout?");
 
       last_rs.close ();
       last_rs = result_set (conn, stmt, q);

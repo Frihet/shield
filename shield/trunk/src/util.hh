@@ -24,7 +24,7 @@ namespace util
 
   using namespace std;
 
-#define contains( str,... ) contains_str( str, __VA_ARGS__, (void *)0 )
+#define contains( str,... ) util::contains_str( str, __VA_ARGS__, (void *)0 )
 
   /**
      Make the specified item into a string. Warning - this function does
