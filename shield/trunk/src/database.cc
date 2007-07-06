@@ -4,14 +4,14 @@
 #include "database.hh"
 #include "exception.hh"
 
-using namespace oracle::occi;
-using namespace shield;
-
 namespace shield
 {
 
   namespace database
   {
+    using namespace oracle::occi;
+    using namespace shield;
+
     static string username="", password="", host="";
     static bool is_init=false, is_connect=false;
 

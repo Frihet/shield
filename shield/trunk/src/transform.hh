@@ -11,7 +11,88 @@
    modify it under the terms of the GNU General Public License
    as published by the Free Software Foundation; version 2 or later.
 
+
 */
+
+/**
+   @mainpage Shield API documentation
+
+   @section Introduction
+
+   Shield, or SQL Helper Interfacce Enabling Legacy Databases, is a
+   wrapper program, that is intended to make it possible to use the
+   Oracle database program with program that where written for the
+   MySQL database.
+
+   @section tech Technical description
+   
+   At it's heart, Shield is a compiler. Shield translates from one
+   language, MySQL SQL, into another language which may seem similar
+   but only on the surface, namely Oracle SQL. This translation is
+   divided into three distinct phases, parsing, transformation and
+   output.
+
+   @subsection parsing Parsing
+
+   This first pass has the goal of creating a tree structure representing the query to 
+   translate. This tree is called the Abstract Syntax Tree or AST. Parsing is performed by two 
+   modules. 
+
+   - The first is the lexer, also called the tokenizer. This module divides the input into logical tokens and classifies them. The lexer is written in the flex language, and is defined in transform_lex.y. Flex files consist of a list of regular expressions, and an action associated with each expression. The longest matching regular expression will isrepeatedly chosen and its action is run.
+
+   - The second is the actual parser. This module actually constructs the AST from the tokens. The lexer is written as a bison grammar and is defined in transform_yacc.y. A bison grammar consists of a series of rules. Each rule tells how the compiler how to transform a set of zero or more nodes into a single node. When parsing a file, these rules are repeatedly applied on the input until only a singe node remains.
+
+   For more information about flex and bison, see the respective
+   manuals.
+
+   @subsection transformation Transformation
+
+   This consists of various transformations of the AST. It is
+   implemented using the transform method and functors deriving from
+   the catalyst base class. The catalyst base class defines a functor
+   that takes a AST node as argument and returns a node to replace it
+   with. 
+
+   @subsection output Output
+
+   The AST is written into a output stream. Each node has a _print
+   method that prints that specific node and all its children. The
+   _print method is overloaded by most nodes to perform node type
+   specific formating. 
+
+   Some nodes, like the cast node, which is used to convert an
+   expression to a specific type, do all their actual work at print
+   time.
+
+   @subsection memory-management Memory managment
+
+   The non-parser part of shield is written using a simple modern C++
+   memory managment style where memory managment is handled implicityl
+   and very few objects are dynamically allocated. Unfortunatly, bison
+   requires all AST nodes to be inserted into a union, and C++ does
+   not permit putting classes in union, so this is not possible in the
+   parser. Instead, Shield has an extremly simply allocation strategy:
+   The entire AST is allocated using a non-oveloaded new operator, and
+   each node is inserted into a vector. Once the tree has been
+   written, every element of the vector is deleted. This has a few
+   drawbacks:
+
+   - Multiple inheritance is not allowed
+
+   - Multithreading in the parser is not allowed without some clever coding. In order to have multithreading, one would need to use Thread Local Storage for the allocation vector.
+
+   The benefit of this memory model is that memory leaks in the parser
+   are extremely rare. The above limitations are not a serious
+   limitations, and both can be worked around with some work.
+   
+   @subsection style Coding style
+
+   Shield relies heavily on dynamic casting to perform its task. Most
+   catalysts only work on one specific type of nodes, and test each
+   node using dynamic casting.
+
+*/
+
 
 #ifndef TRANSFORM_HH
 #define TRANSFORM_HH
@@ -27,27 +108,15 @@
 #include "util.hh"
 #include "logger.hh"
 
-using namespace std;
-using namespace util;
-
-/**
-   @mainpage Shield API documentation
-
-   @section Introduction
-
-   Shield, or SQL Helper Interfacce Enabling Legacy Databases, is a
-   wrapper program, that is intended to make it possible to use the
-   Oracle database program with program that where written for the
-   MySQL database.
-
-*/
-
 
 namespace shield
 {
 
   namespace transform
   {
+
+    using namespace std;
+    using namespace util;
 
     extern const char sep;
 
@@ -70,14 +139,17 @@ namespace shield
 	   should not be transformed
 	*/
 	EXACT, 
+	
 	/**
 	   The text node is an identifier, and reserved names should be avoided.
 	*/
 	IDENTIFIER,
+	
 	/**
 	   The text node is a quoted identifier, the quotes should be stripped.
 	*/
 	IDENTIFIER_QUOTED,
+	
 	/**
 	   The text node is a string literal, and should be converted to
 	   an oracle style string literal
@@ -124,26 +196,32 @@ namespace shield
 	   Unknown context.
 	*/
 	CONTEXT_UNDEFINED,
+
 	/**
 	   Any lob context, like lob, clob, blob
 	*/
 	CONTEXT_LOB,
+
 	/**
 	   Any numeric context
 	*/
 	CONTEXT_NUMBER, 
+
 	/**
 	   Any string context, like char, varchar, etc.
 	*/
 	CONTEXT_STRING,
+
 	/**
 	   Any type that can be sorted, compared, etc. I.e. _not_ lob.
 	*/
 	CONTEXT_SORTABLE,
+
 	/**
 	   A date type
 	*/
 	CONTEXT_DATE,
+
 	/**
 	   A datetime object
 	*/
@@ -169,7 +247,7 @@ namespace shield
     /**
        Delete all existing printables and subclasses, e.g. all existing nodes.
     */
-    void printable_delete();
+    void printable_delete(void);
 
     /*
       This function emits the PL/SQL code needed to check if an item
@@ -216,7 +294,7 @@ namespace shield
 	 delete on a derived class to delete memory allocated in the
 	 base. Oh C++, how I love thee.
       */
-      virtual ~printable()
+      virtual ~printable(void)
       {
       }
 
@@ -225,7 +303,7 @@ namespace shield
 	 printable. This is done by using the << operator and then
 	 calling trim on the resulting string result.
       */
-      string str ()
+      string str (void)
       {
 	std::ostringstream out;
 	if (!(out << *this))
@@ -247,7 +325,7 @@ namespace shield
       /**
 	 Returns the \c context of this printable. 
       */
-      virtual context get_context ()
+      virtual context get_context (void)
       {
 	return __context;
       }
@@ -265,7 +343,7 @@ namespace shield
 	 Return true if the whitespace before this printable should be
 	 skipped.	 
       */
-      bool get_skip_space () const
+      bool get_skip_space (void) const
       {
 	return __skip_space;
       }
@@ -279,7 +357,7 @@ namespace shield
       /**
 	 Return this nodes parent, or null if this is the root.
       */
-      printable *get_parent ()
+      printable *get_parent (void)
       {
 	return __parent;
       }
@@ -292,7 +370,7 @@ namespace shield
       /**
 	 Return the query that this node is a part of
       */
-      virtual query *get_query ();
+      virtual query *get_query (void);
 
       /**
 	 This method is called for every node by the \c
@@ -301,7 +379,7 @@ namespace shield
 	 subclasses of the printable node overload this method to
 	 perform node specific transformations.
       */
-      virtual printable *internal_transform ()
+      virtual printable *internal_transform (void)
       {
 	return this;
       }
@@ -319,7 +397,7 @@ namespace shield
 	 Returns true of this node should be pushed to the front of
 	 its parent if its parent is a chain.
       */
-      bool get_push_front ()
+      bool get_push_front (void)
       {
 	return __push_front;
       }
@@ -330,7 +408,7 @@ namespace shield
 	 The constructor. It is protected to make sure that only
 	 subclasses are instantiated.
       */
-      printable();
+      printable(void);
       
       /**
 	 Print the query to the specified stream. This is only a
@@ -402,7 +480,7 @@ namespace shield
     {
 
     public:
-      query ();
+      query (void);
 
       /**
 	 This is a lookup method that returns the table that the
@@ -419,7 +497,7 @@ namespace shield
       /**
 	 Returns this node
       */
-      virtual query *get_query ();
+      virtual query *get_query (void);
 
     protected:
 
@@ -427,7 +505,7 @@ namespace shield
 	 Returns a chain object whare each child is a table. The
 	 tables may be aliased.
       */
-      virtual chain *_get_condensed_table_list ();
+      virtual chain *_get_condensed_table_list (void);
       
     private:
 
@@ -494,7 +572,7 @@ namespace shield
 	 Returns the raw (unformated) length of this item. Use str
 	 ().size () to determine the formated length.
       */
-      size_t length () const
+      size_t length (void) const
       {
 	return __val.length ();
       }
@@ -502,7 +580,7 @@ namespace shield
       /**
 	 Returns the type of text
       */
-      text_type get_type () const
+      text_type get_type (void) const
       {
 	return __type;
       }
@@ -536,7 +614,13 @@ namespace shield
       : public printable
     {
     public:
+      /**
+	 Typedef for the const_iterator type, defined to fir in with stl.
+      */
       typedef vector<printable *>::const_iterator const_iterator;
+      /**
+	 Typedef for the iterator type, defined to fir in with stl.
+      */
       typedef vector<printable *>::iterator iterator;
 
       /**
@@ -575,7 +659,7 @@ namespace shield
       /**
 	 Returns true of this chain is empty
       */
-      bool empty () const
+      bool empty (void) const
       {
 	return __chain.empty ();
       }
@@ -583,12 +667,12 @@ namespace shield
       /**
 	 Returns an iterator for this chain
       */
-      const_iterator begin () const
+      const_iterator begin (void) const
       {
 	return __chain.begin ();
       }
 
-      const_iterator end () const 
+      const_iterator end (void) const 
       {
 	return __chain.end ();
       }
@@ -596,12 +680,12 @@ namespace shield
       /**
 	 Returns an iterator for this chain
       */
-      iterator begin () 
+      iterator begin (void) 
       {
 	return __chain.begin ();
       }
 
-      iterator end ()  
+      iterator end (void)  
       {
 	return __chain.end ();
       }
@@ -617,7 +701,7 @@ namespace shield
       /**
 	 Returns the number of elements in this chain
       */
-      size_t size () const
+      size_t size (void) const
       {
 	return __chain.size ();
       }
@@ -702,20 +786,20 @@ namespace shield
     ;
 
     /**
-       A printable representing a select query.
+       A printable representing a select query. Capable of lots and lots of transformations.
     */
     class select
       : public query
     {
     public:
-      select();
+      select(void);
   
       void set_item_list( chain *list )
       {
 	_set_child (__ITEM_LIST, list);
       }
 
-      chain *get_item_list ()
+      chain *get_item_list (void)
       {
 	return dynamic_cast<chain *> (_get_child (__ITEM_LIST));
       }
@@ -726,7 +810,7 @@ namespace shield
 	_set_child (__TABLE_LIST, list);
       }
 
-      chain *get_table_list ()
+      chain *get_table_list (void)
       {
 	return dynamic_cast<chain *> (_get_child (__TABLE_LIST));
       }
@@ -736,7 +820,7 @@ namespace shield
 	_set_child (__WHERE_CLAUSE, clause);
       }
 
-      printable *get_where_clause ()
+      printable *get_where_clause (void)
       {
 	return _get_child (__WHERE_CLAUSE);
       }
@@ -746,7 +830,7 @@ namespace shield
 	_set_child (__GROUP_CLAUSE, clause);
       }
 
-      chain *get_group_clause ()
+      chain *get_group_clause (void)
       {
 	return dynamic_cast<chain *> (_get_child (__GROUP_CLAUSE));
       }
@@ -756,7 +840,7 @@ namespace shield
 	_set_child (__HAVING_CLAUSE, clause);
       }
 
-      printable *get_having_clause ()
+      printable *get_having_clause (void)
       {
 	return _get_child (__HAVING_CLAUSE);
       }
@@ -766,7 +850,7 @@ namespace shield
 	_set_child (__HAVING_CLAUSE, clause);
       }
 
-      printable *get_order_clause ()
+      printable *get_order_clause (void)
       {
 	return _get_child (__ORDER_CLAUSE);
       }
@@ -776,7 +860,7 @@ namespace shield
 	_set_child (__LIMIT_CLAUSE, clause);
       }
 
-      limit *get_limit_clause ()
+      limit *get_limit_clause (void)
       {
 	return dynamic_cast<limit *> (_get_child (__LIMIT_CLAUSE));
       }
@@ -786,7 +870,7 @@ namespace shield
 	_set_child (__PROCEDURE_CLAUSE, clause);
       }
 
-      printable *get_procedure_clause ()
+      printable *get_procedure_clause (void)
       {
 	return _get_child (__PROCEDURE_CLAUSE);
       }
@@ -796,7 +880,7 @@ namespace shield
 	_set_child (__INTO_CLAUSE, clause);
       }
 
-      printable *get_into ()
+      printable *get_into (void)
       {
 	return _get_child (__INTO_CLAUSE);
       }
@@ -806,20 +890,32 @@ namespace shield
 	_set_child (__OPTION_CLAUSE, clause);
       }
 
-      printable *get_option_clause ()
+      printable *get_option_clause (void)
       {
 	return _get_child (__OPTION_CLAUSE);
       }
 
+      /**
+	 Return the true name of a possibly aliased table. If the name
+	 is not an alias, the original name is returned.
+      */
       virtual text *unalias_table (text *alias);
 
-      virtual printable *internal_transform ();
+      /**
+	 Use the identity_catalyst.
+      */
+      virtual printable *internal_transform (void);
 
     protected:
     
       virtual void _print (ostream &stream);
 
-      virtual chain *_get_condensed_table_list ();
+      /**
+	 Create a list of all tables that this query reads from. Table
+	 names may be aliased. This list includes tables in
+	 subqueries.
+      */
+      virtual chain *_get_condensed_table_list (void);
 
     private:
       /**
@@ -841,6 +937,10 @@ namespace shield
     };
 
 
+    /**
+       A node representing a list enclosed in parenthesis. Works just
+       like a regular chain, except for the parenthesis.
+    */
     class paran 
       : public chain
     {
@@ -892,8 +992,8 @@ namespace shield
 	  __post_render->set_parent (this);
 
       }
-  
-      printable *get_post_render ()
+
+      printable *get_post_render (void)
       {
 	return __post_render;
       }
@@ -934,8 +1034,6 @@ namespace shield
 	of non-indexable type (i.e. clob) and return the result.
       */
       chain *get_filtered_key_list (chain *field_list);
-      
-      virtual printable *transform (catalyst &catalyst);
 
     protected:
       
@@ -943,11 +1041,15 @@ namespace shield
       
     private:
       
-      printable *__name;
-
-      chain *__key_list;
+      enum
+	{
+	  __NAME,
+	  __KEY_LIST
+	}
+      ;
 
       key_type __type;
+
     }
     ;
 
@@ -976,21 +1078,16 @@ namespace shield
     public:
 
       identity (text *ns=0, text *table=0, text *field=0)
-	: __namespace (ns), __table (table), __field (field)
       {
-	if (ns)
-	  ns->set_parent (this);
-	if (table)
-	  table->set_parent (this);
-	if (field)
-	  field->set_parent (this);
+	_set_child (__NAMESPACE, ns);
+	_set_child (__TABLE, table);
+	_set_child (__FIELD, field);
       }
 
       text *get_namespace ();
       text *get_table ();
       text *get_field ();
 
-      virtual printable *transform (catalyst &catalyst);
       virtual context get_context ();
 
     protected:
@@ -998,11 +1095,14 @@ namespace shield
       virtual void _print (ostream &stream);
 
     private:
-
-      text *__namespace;
-      text *__table;
-      text *__field;
-
+      
+      enum
+	{
+	  __NAMESPACE,
+	  __TABLE,
+	  __FIELD
+	}
+      ;
     }
     ;
 
@@ -1011,7 +1111,7 @@ namespace shield
     {
     public:
 
-      create_table();
+      create_table(void);
     
       void set_field_list (chain *l);
       void set_key_list (chain *l);
@@ -1023,22 +1123,22 @@ namespace shield
       void set_check_existance (bool check);
   
       printable *transform (catalyst &catalyst);
-  
-      printable *get_name ()
+      
+      printable *get_name (void)
       {
 	return __name;
       }
-
-      chain *get_prev_index_list ()
+      
+      chain *get_prev_index_list (void)
       {
 	__prev_index_list;
       }
-
-      chain *get_field_list ()
+      
+      chain *get_field_list (void)
       {
 	return __field_list;
       }
-
+      
     protected:
       virtual void _print (ostream &stream);
   
@@ -1054,6 +1154,7 @@ namespace shield
       bool __check;
       
       void post_render (ostream &stream, attribute *attr);
+
     }
     ;
     
@@ -1063,8 +1164,7 @@ namespace shield
     {
     public:
 
-      insert();
-      
+      insert(void);
       
       void set_ignore (bool i);
       void set_field_list (printable *l);
@@ -1072,16 +1172,24 @@ namespace shield
       void set_insert_update (printable *l);
       void set_name (printable *l);
       void set_eq_list (chain *l);
+      printable *get_field_list ();
+      chain *get_value_list ();
+      printable *get_insert_update ();
+      printable *get_name ();
       
     protected:
       virtual void _print (ostream &stream);
-      virtual chain *_get_condensed_table_list ();
+      virtual chain *_get_condensed_table_list (void);
       
     private:
-      printable *__field_list;
-      chain *__value_list;
-      printable *__insert_update;
-      printable *__name;
+      enum
+	{
+	  __FIELD_LIST,
+	  __VALUE_LIST,
+	  __INSERT_UPDATE,
+	  __NAME
+	}
+      ;
       bool __ignore;
     }
     ;
@@ -1099,9 +1207,12 @@ namespace shield
       
     private:
       
-      printable *__name;
       bool __if_exists;
-
+      enum 
+	{
+	  __NAME
+	}
+      ;
     }
     ;
 
@@ -1129,13 +1240,14 @@ namespace shield
     {
     public:
       interval (interval_type type, printable *expr=0)
-	: __type (type), __expr(expr)
+	: __type (type)
       {
+	_set_child (__EXPR, expr);
       }
 
       void set_expr (printable *expr)
       {
-	__expr = expr;
+	_set_child (__EXPR, expr);
       }
 
     protected:
@@ -1144,7 +1256,12 @@ namespace shield
     private:
 
       interval_type __type;
-      printable *__expr;
+    
+      enum
+	{
+	  __EXPR
+	}
+      ;
     }
     ;
 
@@ -1165,7 +1282,7 @@ namespace shield
       {
       }
 
-      bool get_indexable ()
+      bool get_indexable (void)
       {
 	return __indexable;
       }
@@ -1175,7 +1292,7 @@ namespace shield
 	__indexable = i;
       }
 
-      string get_name ()
+      string get_name (void)
       {
 	return (*this)[0]->str ();
       }
@@ -1197,17 +1314,17 @@ namespace shield
 	__name->set_skip_space (true);
       }
 
-      type *get_type ()
+      type *get_type (void)
       {
 	return __type;
       }
 
-      printable *get_attribute ()
+      printable *get_attribute (void)
       {
 	return __attrib;
       }
 
-      printable *get_name ()
+      printable *get_name (void)
       {
 	return __name;
       }
@@ -1238,26 +1355,31 @@ namespace shield
     public:
       printable_alias (printable *item=0, text *alias=0)
       {
-	_set_child (ITEM, item);
-	_set_child (ALIAS, alias);
+	_set_child (__ITEM, item);
+	_set_child (__ALIAS, alias);
       }
 
-      printable *get_item ()
+      void set_item (text *item)
+      {
+	_set_child (__ITEM, item);
+      }
+
+      printable *get_item (void)
       { 
-	return _get_child (ITEM);
+	return _get_child (__ITEM);
       }
 
       void set_alias (text *alias)
       {
-	_set_child (ALIAS, alias);
+	_set_child (__ALIAS, alias);
       }
 
-      text *get_alias ()
+      text *get_alias (void)
       {
-	return dynamic_cast<text *> (_get_child (ALIAS));
+	return dynamic_cast<text *> (_get_child (__ALIAS));
       }
 
-      bool has_alias ()
+      bool has_alias (void)
       {
 	return get_alias () != 0;
       }
@@ -1280,8 +1402,8 @@ namespace shield
     private:
       enum
 	{
-	  ITEM,
-	  ALIAS
+	  __ITEM,
+	  __ALIAS
 	}
       ;
 
@@ -1294,34 +1416,34 @@ namespace shield
     {
     public:
       select_item_wild (text *ns=0, text *table=0)
-	: printable_alias (0, 0), __namespace (ns), __table (table)
+	: printable_alias (0, 0)
       {
+	_set_child (__NAMESPACE, ns);
+	_set_child (__TABLE, table);
       }
 
-      text *get_namespace ()
+      text *get_namespace (void)
       {
-	return __namespace;
+	return dynamic_cast<text *> (_get_child (__NAMESPACE));
       }
 
-      text *get_table ()
+      text *get_table (void)
       {
-	return __table;
+	return dynamic_cast<text *> (_get_child (__TABLE));
       }
-
-  
 
     protected:
       virtual void _print (ostream &stream)
       {
 	stream << " ";
 
-	if (__namespace && __namespace->length ())
+	if (get_namespace () && get_namespace ()->length ())
 	  {
-	    stream << *__namespace << ".";
+	    stream << *get_namespace () << ".";
 	  }
-	if (__table && __table->length ())
+	if (get_table () && get_table ()->length ())
 	  {
-	    stream << *__table << ".";
+	    stream << *get_table () << ".";
 	  }
 	stream << "*";
 
@@ -1330,8 +1452,12 @@ namespace shield
 
     private:
 
-      text *__namespace;
-      text *__table;
+      enum
+	{
+	  __NAMESPACE,
+	  __TABLE
+	}
+      ;
 
     };
 
@@ -1389,7 +1515,7 @@ namespace shield
       : public catalyst
     {
     public:
-
+      
       virtual printable *operator () (printable *node);
     }
     ;
@@ -1449,7 +1575,7 @@ namespace shield
       /**
 	 Return the accumulated list of tables
       */
-      chain *get_table_list ()
+      chain *get_table_list (void)
       {
 	return __res;
       }
@@ -1479,9 +1605,9 @@ namespace shield
 	 Enum for all child node identifiers
       */
       enum {
-	OP,
-	ARG1,
-	ARG2
+	__OP,
+	__ARG1,
+	__ARG2
       }
       ;
 
@@ -1515,40 +1641,20 @@ namespace shield
       : public query
     {
     public:
-
       /**
 	 Constructor. 
 
 	 No validation possible - acepts any argument.
       */
       fake_query (printable *p)
-	: __transform_identity (false)
       {
-	_set_child (0, p);
+	_set_child (__INNER, p);
       } 
 
-      virtual printable *internal_transform ()
-      {
-	if (!__transform_identity)
-	  return this;
-	identity_catalyst i (this);
-	return this->transform (i);
-      }
-
-      /**
-	 This function can be called to set whether the
-	 identity_catalyst transformation should be performed. The
-	 default is false (no).
-      */
-      void set_transform_identity (bool v)
-      {
-	__transform_identity = v;
-      }
-      
     protected:
       virtual void _print (ostream &stream)
       {
-	printable *inner = _get_child (0);
+	printable *inner = _get_child (__INNER);
 
 	if (!inner)
 	  throw shield::exception::syntax ("Tried to print null fake_query node");
@@ -1557,12 +1663,12 @@ namespace shield
       }
 
     private:
+      enum
+	{
+	  __INNER
+	}
+      ;
 
-      /**
-	 Whether identity transformation should be performed
-      */
-      bool __transform_identity;
-      
     }
     ;
 
@@ -1586,7 +1692,7 @@ namespace shield
       /**
 	 Getter for the table list
       */
-      chain *get_table_list ()
+      chain *get_table_list (void)
       {
 	return dynamic_cast<chain *> (_get_child (__NAME));
       }
@@ -1602,7 +1708,7 @@ namespace shield
       /**
 	 Getter for the update list
       */
-      printable *get_update_list ()
+      printable *get_update_list (void)
       {
 	return _get_child (__UPDATE_LIST);
       }
@@ -1618,7 +1724,7 @@ namespace shield
       /**
 	 Getter for the where clause
       */
-      printable *get_where_clause ()
+      printable *get_where_clause (void)
       {
 	return _get_child (__WHERE_CLAUSE);
       }
@@ -1634,7 +1740,7 @@ namespace shield
       /**
 	 Getter for the order clause
       */
-      printable *get_order_clause ()
+      printable *get_order_clause (void)
       {
 	return _get_child (__ORDER_CLAUSE);
       }
@@ -1650,7 +1756,7 @@ namespace shield
       /**
 	 Getter for the delete limit clause
       */
-      printable *get_delete_limit_clause ()
+      printable *get_delete_limit_clause (void)
       {
 	return _get_child (__DELETE_LIMIT_CLAUSE);
       }
@@ -1658,7 +1764,7 @@ namespace shield
       /**
 	 Perform identity catalyst transform
       */
-      virtual printable *internal_transform ()
+      virtual printable *internal_transform (void)
       {
 	identity_catalyst i (this);
 	return this->transform (i);
@@ -1667,7 +1773,7 @@ namespace shield
     protected:
       virtual void _print (ostream &stream);
 
-      virtual chain *_get_condensed_table_list ()
+      virtual chain *_get_condensed_table_list (void)
       {
 	find_table_catalyst c (this);
 	transform (c);
@@ -1693,20 +1799,20 @@ namespace shield
     ;
 
     /**
-       Error callback for yyparse. Prints the specified error message.
+       Error callback for yyparse and yylex. Prints the specified error message.
     */
     void yyerror (char const *s);
 
     /**
-       PArse the whole syntax tree, transform it and write it out to
-       standard out
+       Parse the whole syntax tree, transform it and write it out to
+       standard output.
     */
-    int yyparse ();
+    int yyparse (void);
     
     /**
-       Print the shield package definition
+       Print the shield package definition. This is the contents of the file shield.package.sql.
     */
-    void print_package ();
+    void print_package (void);
 
     /**
        Set which string the lexer should tokenize
@@ -1716,6 +1822,12 @@ namespace shield
   }
 
 }
-int yylex ();
+
+/**
+   The lexer (tokenizer). This function can't be a part of any
+   namespace without some pretty ugly hacks, since it is automatically
+   generated.
+*/
+int yylex (void);
 
 #endif

@@ -11,15 +11,9 @@ namespace shield
 
     unsupported::unsupported( const string &file, int line )
     {
-      __str = "Unsupported feature.\nFile: " + file+ ", line: " + util::stringify (line);
+      _set_what ("Unsupported feature. File: " + file+ ", line: " + util::stringify (line));
     }
 
-    const char *unsupported::
-    what () const throw ()
-    {
-      return __str.c_str ();
-    }
-    
 }
 
 }

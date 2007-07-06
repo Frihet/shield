@@ -18,6 +18,11 @@ namespace shield
 
   namespace transform
   {
+    /**
+       Ugly hack - inject symbols from transform_yacc.hh into the
+       shield::transform namespace. This is a plain C file, and we
+       don't want to pollute the global namespace...
+    */
 #include "transform_yacc.hh"
   }
 
@@ -149,6 +154,8 @@ main (int argc, char **argv)
   shield::transform::debug.enable ();
   logger::logger error ("shield: error");
 
+  error.enable ();
+
   int err = 0;
   while( true )
     {
@@ -164,7 +171,6 @@ main (int argc, char **argv)
 	{
 	  try
 	    {
-	      
 	      if (str != "")
 		{
 		  shield::transform::lex_set_string (str);

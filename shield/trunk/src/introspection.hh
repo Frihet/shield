@@ -19,13 +19,14 @@ as published by the Free Software Foundation; version 2 or later.
 #include <vector>
 #include <map>
 
-using namespace std;
 
 namespace shield
 {
 
   namespace introspection
   {
+
+    using namespace std;
 
     /**
        An incomplete list of types. These are the types currently used

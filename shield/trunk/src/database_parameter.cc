@@ -2,13 +2,13 @@
 #include "database.hh"
 #include "util.hh"
 
-using namespace util;
-
 namespace shield
 {
   
   namespace database
   {
+
+    using namespace util;
 
     parameter::
     parameter (const string &s)

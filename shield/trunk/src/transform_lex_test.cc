@@ -3,7 +3,6 @@
 */
 
 #include <iostream>
-using namespace std;
 
 #include "transform.hh"
 
@@ -11,7 +10,11 @@ namespace shield
 {
   namespace transform
   {
-
+    /**
+       Ugly hack - inject symbols from transform_yacc.hh into the
+       shield::transform namespace. This is a plain C file, and we
+       don't want to pollute the global namespace...
+    */
 #include "transform_yacc.hh"
 
   }
@@ -20,6 +23,8 @@ namespace shield
 int
 main (void)
 {
+  using namespace std;
+
   int err=0;
 
   /*

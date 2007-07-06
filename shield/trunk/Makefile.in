@@ -20,6 +20,7 @@ LDFLAGS := @LDFLAGS@ -ll -locci -lclntsh -lpthread -lnnz10
 #
 # Various build directories. Do not build in source directory.
 #
+BIN_DIR := bin
 OBJ_DIR := obj
 SRC_DIR := src
 
@@ -28,12 +29,8 @@ SRC_DIR := src
 #
 INTROSPECTION_OBJS := $(OBJ_DIR)/introspection_table.o $(OBJ_DIR)/introspection.o	\
 $(OBJ_DIR)/introspection_column.o $(OBJ_DIR)/introspection_column_type.o
-
-EXCEPTION_OBJS := $(OBJ_DIR)/exception_not_found.o $(OBJ_DIR)/exception_unsupported.o	\
-$(OBJ_DIR)/exception_syntax.o
-
+EXCEPTION_OBJS := $(OBJ_DIR)/exception_unsupported.o
 DATABASE_OBJS := $(OBJ_DIR)/database.o $(OBJ_DIR)/database_result_set.o $(OBJ_DIR)/database_parameter.o
-
 TRANSFORM_OBJS := $(OBJ_DIR)/transform_common.o $(OBJ_DIR)/transform_yacc.o			\
 $(OBJ_DIR)/transform_lex_wrapper.o $(OBJ_DIR)/transform_printable.o $(OBJ_DIR)/transform_select.o	\
 $(OBJ_DIR)/transform_identity.o $(OBJ_DIR)/transform_text.o $(OBJ_DIR)/transform_create_table.o		\
@@ -67,7 +64,7 @@ ALL_DEPS := $(ALL_OBJS:.o=.d)
 #
 # Listing of all programs that this Makefile can build
 #
-PROGRAMS := shield transform_lex_test shield_make_package_string database_test introspection_test
+PROGRAMS := $(BIN_DIR)/shield $(BIN_DIR)/transform_lex_test $(BIN_DIR)/shield_make_package_string $(BIN_DIR)/database_test $(BIN_DIR)/introspection_test
 
 #
 # Default action
@@ -77,41 +74,41 @@ all: $(PROGRAMS)
 #
 # How to build all the programs
 #
-shield: $(SHIELD_OBJS)
+$(BIN_DIR)/shield: $(SHIELD_OBJS)
 	$(CXX) $(SHIELD_OBJS) -o $@ $(LDFLAGS)
 
-shield_make_package_string: src/shield_make_package_string.cc
-	$(CXX) src/shield_make_package_string.cc -o $@
+$(BIN_DIR)/shield_make_package_string: $(SRC_DIR)/shield_make_package_string.cc
+	$(CXX) $(SRC_DIR)/shield_make_package_string.cc -o $@
 
-transform_lex_test: $(TRANSFORM_LEX_TEST_OBJS)
+$(BIN_DIR)/transform_lex_test: $(TRANSFORM_LEX_TEST_OBJS)
 	$(CXX) $(TRANSFORM_LEX_TEST_OBJS) -o $@ $(LDFLAGS)
 
-introspection_test: $(INTROSPECTION_TEST_OBJS)
+$(BIN_DIR)/introspection_test: $(INTROSPECTION_TEST_OBJS)
 	$(CXX) $(INTROSPECTION_TEST_OBJS) -o $@ $(LDFLAGS)
 
-database_test: $(DATABASE_TEST_OBJS)
+$(BIN_DIR)/database_test: $(DATABASE_TEST_OBJS)
 	$(CXX) $(DATABASE_TEST_OBJS) -o $@ $(LDFLAGS)
 
 #
 # How to generate the lexer/parser c sources
 #
-src/transform_lex.cc: src/transform_lex.y
-	flex -i -osrc/transform_lex.cc src/transform_lex.y 
+$(SRC_DIR)/transform_lex.cc: $(SRC_DIR)/transform_lex.y
+	flex -i -o$(SRC_DIR)/transform_lex.cc $(SRC_DIR)/transform_lex.y 
 
-src/transform_yacc.cc: src/transform_yacc.y
-	bison -d src/transform_yacc.y -o src/transform_yacc.cc 
+$(SRC_DIR)/transform_yacc.cc: $(SRC_DIR)/transform_yacc.y
+	bison -d $(SRC_DIR)/transform_yacc.y -o $(SRC_DIR)/transform_yacc.cc 
 
-src/transform_yacc.hh: src/transform_yacc.cc
+$(SRC_DIR)/transform_yacc.hh: $(SRC_DIR)/transform_yacc.cc
 
 #
 # How to convert the package definition into C++ code
 #
-src/transform_print_package.cc: shield_make_package_string shield_package.sql
+$(SRC_DIR)/transform_print_package.cc: $(BIN_DIR)/shield_make_package_string shield_package.sql
 	echo "#include \"transform.hh\"" >$@.tmp
 	echo "void shield::transform::print_package ()" >>$@.tmp
 	echo "{" >>$@.tmp
 	echo -n "	cout << " >>$@.tmp
-	./shield_make_package_string < shield_package.sql >>$@.tmp
+	./$(BIN_DIR)/shield_make_package_string < shield_package.sql >>$@.tmp
 	echo ";" >>$@.tmp
 	echo "}" >>$@.tmp
 	mv $@.tmp $@
@@ -131,8 +128,8 @@ Makefile: Makefile.in configure
 #
 # Update dependencies
 #
-depend: src/transform_yacc.hh src/transform_lex.cc
-	makedepend -fMakefile.depend -Y src/*.cc
+depend: $(SRC_DIR)/transform_yacc.hh $(SRC_DIR)/transform_lex.cc
+	makedepend -fMakefile.depend -Y $(SRC_DIR)/*.cc
 .PHONY: depend
 
 #
@@ -143,10 +140,10 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
 
 $(OBJ_DIR)/%.d: $(SRC_DIR)/%.cc
 	@if test ! -f $(SRC_DIR)/transform_lex.hh; then \
-		flex -i -osrc/transform_lex.cc src/transform_lex.y; \
+		flex -i -o$(SRC_DIR)/transform_lex.cc $(SRC_DIR)/transform_lex.y; \
 	fi;\
 	if test ! -f $(SRC_DIR)/transform_yacc.hh; then \
-		bison -d src/transform_yacc.y -o src/transform_yacc.cc; \
+		bison -d $(SRC_DIR)/transform_yacc.y -o $(SRC_DIR)/transform_yacc.cc; \
 	fi
 	$(CXX) -MM -MG $(SRC_DIR)/$*.cc $(CPPFLAGS) | sed -e 's@^\(.*\)\.o:@'$(OBJ_DIR)'/\1.d '$(OBJ_DIR)'/\1.o:@' >$@
 
@@ -157,9 +154,9 @@ $(OBJ_DIR)/%.d: $(SRC_DIR)/%.cc
 clean:
 	rm -f $(OBJ_DIR)/*.o 
 	rm -f $(OBJ_DIR)/*.d 
-	rm -f src/transform_yacc.cc src/transform_yacc.hh 
-	rm -f src/transform_lex.cc src/transform_lex.hh
+	rm -f $(SRC_DIR)/transform_yacc.cc $(SRC_DIR)/transform_yacc.hh 
+	rm -f $(SRC_DIR)/transform_lex.cc $(SRC_DIR)/transform_lex.hh
 	rm -f $(PROGRAMS)
-	rm -f src/transform_print_package.cc
+	rm -f $(SRC_DIR)/transform_print_package.cc
 
 include $(ALL_DEPS)

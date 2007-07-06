@@ -1,14 +1,14 @@
 #include "introspection.hh"
 #include "util.hh"
 
-using namespace util;
-
 namespace shield
 {
   
   namespace introspection
   {
     
+    using namespace util;
+
     column_type::
     column_type (string t)
     {

@@ -32,10 +32,12 @@ implement, luckily Joomla does not seem to use them.
 
 #include <vector>
 #include <string>
-#include <assert.h>
 
 #include "transform.hh"
 
+  /**
+     This is the text contents of the last element parsed by the lexer. We need to be _very_ careful when we use this, since the parser sometimes needs to perform lookahead, in which case yytext points to the contents of the element _after_ the current one. For this reason, yytext should only ever be used on tokens which 
+  */
 extern char *yytext;
 
 namespace shield
@@ -44,6 +46,11 @@ namespace shield
 namespace transform
 {
 
+    /**
+       Ugly hack - inject symbols from transform_yacc.hh into the
+       shield::transform namespace. This is a plain C file, and we
+       don't want to pollute the global namespace...
+    */
 #include "transform_yacc.hh"
 
 %}
@@ -851,11 +858,11 @@ query:
 	      $1 = $1->transform (v);
 
 	      debug << "Validation catalyst pass 1 done";
-
+	      
 	      internal_catalyst i;
 	      $1 = $1->transform (i);	      
 	      debug << "Internal catalyst done";
-
+	      
 	      $1 = $1->transform (v);
 
 	      debug << "Validation catalyst pass 2 done";
@@ -3836,10 +3843,8 @@ normal_join:
 table_factor:
         table_ident opt_table_alias opt_key_definition
 	{
-	  assert (!$3);
-	  
-	  //	  cerr << "parser: alias " << $2->str () << " -> " << $1->str () << endl;
-	  
+	  if (!$3)
+	    throw exception::unsupported (__FILE__, __LINE__);
 	  $$ = new printable_alias ($1, $2);
 	}
 	| '{' ident table_ref LEFT OUTER JOIN_SYM table_ref
@@ -3849,12 +3854,14 @@ table_factor:
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| select_derived_init get_select_lex select_derived2
           {
-	    assert ($3);
+	    if (!$3)
+	      throw exception::unsupported (__FILE__, __LINE__);
 	    $$ = new printable_alias ($3);
 	  }	  
 	| '(' get_select_lex select_derived union_opt ')' opt_table_alias
 	{ 
-	  assert ($3);
+	  if (!$3)
+	    throw exception::unsupported (__FILE__, __LINE__);
 	  $$ = new printable_alias (new paran ($2, $3, $4), $6);
 	}
         ;
@@ -4505,14 +4512,6 @@ update:
 	  
 	  $$ = upd;
 
-	  /*	    
-	  text *up = new text ("update", EXACT, false);
-	  text *set = new text ("set");
-	  text *end = new text ("\n\n", EXACT, false);
-	  text *where = $7 ? new text ("\nwhere", EXACT, false) : 0;
-	  fake_query *f = new fake_query (new chain(up, $2, $3, $4, set, $6, where, $7, $8, $9, end));
-	  f->set_transform_identity (true);
-	  $$ = f;*/
 	}
 	;
 

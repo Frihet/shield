@@ -7,6 +7,11 @@ namespace shield
   namespace transform
   {
 
+    /**
+       Ugly hack - inject symbols from transform_yacc.hh into the
+       shield::transform namespace. This is a plain C file, and we
+       don't want to pollute the global namespace...
+    */
 #include "transform_yacc.hh"
 
   }

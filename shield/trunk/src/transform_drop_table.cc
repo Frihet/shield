@@ -8,27 +8,31 @@ namespace shield
   {
     
     drop_table::drop_table( printable *name, bool if_exists)
-      : __name (name), __if_exists (if_exists)
+      : __if_exists (if_exists)
     {
-      __name->set_parent (this);
-
-      assert (__name->get_parent ());
+      _set_child (__NAME, name);
     }
 
     void drop_table::
     _print (ostream &stream)
     {
+      printable *name = _get_child (__NAME);
+
+      if (!name)
+	{
+	  throw shield::exception::syntax ("Can not drop unnamed table");
+	}
 
       if (__if_exists)
 	{
-	  introspection::table &t = introspection::get_table (__name->str ());
+	  introspection::table &t = introspection::get_table (name->str ());
 	  if (!t.exists ())
 	    {
 	      return;
 	    }
 	}
   
-      stream << "drop table" << *__name << endl << endl;
+      stream << "drop table" << *name << endl << endl;
     }
 
     

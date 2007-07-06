@@ -10,17 +10,17 @@ namespace shield
     comparison::
     comparison (printable *op, printable *arg1, printable *arg2)
     {
-      _set_child (OP, op);
-      _set_child (ARG1, arg1);
-      _set_child (ARG2, arg2);
+      _set_child (__OP, op);
+      _set_child (__ARG1, arg1);
+      _set_child (__ARG2, arg2);
     }
 
     void comparison::
     _print (ostream &stream)
     {
-      printable *arg1 = _get_child (ARG1);
-      printable *arg2 = _get_child (ARG2);
-      printable *op = _get_child (OP);
+      printable *arg1 = _get_child (__ARG1);
+      printable *arg2 = _get_child (__ARG2);
+      printable *op = _get_child (__OP);
 
       if (!arg1 || !arg2 || !op)
 	throw shield::exception::syntax ("Comparison node with null children");

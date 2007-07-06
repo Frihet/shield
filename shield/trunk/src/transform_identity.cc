@@ -17,73 +17,57 @@ namespace shield
 
       if (get_skip_space ())
 	{
-	  if (__namespace && __namespace->length ())
-	    __namespace->set_skip_space (true);
-	  else if (__table && __table->length ())
-	    __table->set_skip_space (true);
-	  if (__field && __field->length ())
-	    __field->set_skip_space (true);
+	  if (get_namespace () && get_namespace ()->length ())
+	    get_namespace ()->set_skip_space (true);
+	  else if (get_table () && get_table ()->length ())
+	    get_table ()->set_skip_space (true);
+	  if (get_field () && get_field ()->length ())
+	    get_field ()->set_skip_space (true);
 	}
 
-      if (__namespace && __namespace->length ())
+      if (get_namespace () && get_namespace ()->length ())
 	{
-	  stream << *__namespace;
+	  stream << *get_namespace ();
 	  printed = true;
 	}
 
-      if (__table && __table->length ())
+      if (get_table () && get_table ()->length ())
 	{
 	  if (printed)
 	    {
 	      stream << ".";
-	      __table->set_skip_space (true);
+	      get_table ()->set_skip_space (true);
 	    }
 	  printed = true;
-	  stream << *__table;	
+	  stream << *get_table ();	
 	}
     
-      if (__field && __field->length ())
+      if (get_field () && get_field ()->length ())
 	{
 	  if (printed)
 	    {
 	      stream << ".";
-	      __field->set_skip_space (true);
+	      get_field ()->set_skip_space (true);
 	    }
 
-	  stream << *__field;	
+	  stream << *get_field ();	
 	}
 
     }
 
     text *identity::get_namespace ()
     {
-      return __namespace;
+      return dynamic_cast<text *> (_get_child (__NAMESPACE));
     }
 
     text *identity::get_table ()
     {
-      return __table;
+      return dynamic_cast<text *> (_get_child (__TABLE));
     }
 
     text *identity::get_field ()
     {
-      return __field;
-    }
-
-    printable *identity::
-    transform (catalyst &catalyst)
-    {
-      
-      if (__namespace)
-	__namespace = dynamic_cast<text *> (__namespace->transform (catalyst));
-
-      if (__table)
-	__table = dynamic_cast<text *> (__table->transform (catalyst));
-
-      if (__field)
-	__field = dynamic_cast<text *> (__field->transform (catalyst));
-
-      return catalyst (this);
+      return dynamic_cast<text *> (_get_child (__FIELD));
     }
 
     context identity::
@@ -93,22 +77,22 @@ namespace shield
 
       query *q = get_query ();
 
-      text *table = __table;
+      text *table = get_table ();
 
       if (!table)
 	{
-	  table = q->get_table (__field);
+	  table = q->get_table (get_field ());
 	}
 
       assert (table);
 
       text *real_table = q->unalias_table (table);
  
-      //      cerr << "Table " << __table->str () << " unaliased to " << real_table->str () << endl;
+      //      cerr << "Table " << get_table ()->str () << " unaliased to " << real_table->str () << endl;
      
       //      cerr << "before introspection of table " << real_table->str ()<< endl;
       introspection::table &itbl = introspection::get_table (real_table->str ());
-      const introspection::column &ic = itbl.get_column (__field->str ());
+      const introspection::column &ic = itbl.get_column (get_field ()->str ());
       const introspection::column_type &tp = ic.get_type ();
       //      cerr << "after introspection" << endl;
 

@@ -7,41 +7,37 @@ namespace shield
   namespace transform
   {
     
-      void create_index::
-      set_key_type (key_type type)
-      {
-	__type = type;
-      }
+    void create_index::
+    set_key_type (key_type type)
+    {
+      __type = type;
+    }
 
-      void create_index::
-      set_name (printable *name)
-      {
-	__name = name;
-	if (__name)
-	  __name->set_parent (this);
-      }
+    void create_index::
+    set_name (printable *name)
+    {
+      _set_child (__NAME, name);
+    }
 
-      void create_index::
-      set_key_list (chain *key_list)
-      {
-	__key_list = key_list;
-	
-	if (__key_list)
-	  __key_list->set_parent (this);
-      }
-
+    void create_index::
+    set_key_list (chain *key_list)
+    {
+      _set_child (__KEY_LIST, key_list);
+    }
 
     chain *
     create_index::get_filtered_key_list(chain *field_list)
     {
-      assert (__key_list);
+      chain *original_key_list = dynamic_cast<chain *> (_get_child (__KEY_LIST));
+
+      assert (original_key_list);
 
       chain *key_list = new chain ();
       key_list->set_separator (",");
 
       chain::const_iterator i, j;
 
-      for (i=__key_list->begin (); i < __key_list->end (); i++ )
+      for (i=original_key_list->begin (); i < original_key_list->end (); i++ )
 	{
 	  bool ok = true;
 
@@ -108,10 +104,13 @@ namespace shield
     _print (ostream &stream)
     {
 
-      assert (__key_list);      
+      if (!_get_child (__KEY_LIST))
+	throw shield::exception::not_found ("create_index node with no key list");
 
       create_table *table_query = dynamic_cast<create_table *> (get_query ());
-      assert (table_query);
+
+      if (!table_query)
+	throw shield::exception::not_found ("create_index called with no parent create_table node");
 
       chain *field_list = table_query->get_field_list ();
 
@@ -147,7 +146,7 @@ namespace shield
       if (__type == PRIMARY_KEY)
 	{
 
-	  if (__name)
+	  if (_get_child (__NAME))
 	    {
 	      throw exception::syntax ("Named primary keys are not supported!");
 	    }
@@ -157,14 +156,14 @@ namespace shield
 	}
       else
 	{
-
-	  if (!__name)
+	  
+	  if (!_get_child (__NAME))
 	    {
 	      throw exception::syntax ("Unnamed non-primary keys are not supported!");
 	    }
       
 	  string t_name = table_name->str ();
-	  string f_name = __name->str ();
+	  string f_name = _get_child (__NAME)->str ();
 	  string name = t_name + "_" + f_name;
       
 	  if (name.length () > 30)
@@ -188,17 +187,6 @@ namespace shield
 
     }
 
-    printable *create_index::
-    transform (catalyst &catalyst)
-    {
-      if (__name)
-	__name = __name->transform (catalyst);
-
-      if (__key_list)
-	__key_list = dynamic_cast<chain *> (__key_list->transform (catalyst));
-
-      return catalyst (this);
-    }
 
   }
 

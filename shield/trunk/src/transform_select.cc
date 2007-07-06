@@ -1,5 +1,5 @@
 /**
-   \file transform_select.cc
+   @file transform_select.cc
 
    This is the file for writing out Oracle style sql code for a select
    query. It is probably the single most complicated query, since
@@ -44,7 +44,9 @@ namespace shield
 
     /**
        This function uses introspection to find out what type a table
-       column is of, and
+       column is of, and use the correct version of the arbitrary
+       aggregation functions defined toghether with the shield
+       package.
     */
     static printable *
     aggregate (text *field, 
@@ -166,7 +168,9 @@ namespace shield
 	{
 	  printable *pr = *i;
 	  printable_alias *it = dynamic_cast<printable_alias *> (pr);
-	  assert (it);
+	  if (!it)
+	    throw shield::exception::invalid_type ("Select query item list", "printable_alias");
+
       
 	  if (dynamic_cast<select_item_wild *> (it))
 	    {
@@ -191,8 +195,11 @@ namespace shield
 
 	      chain *ch = dynamic_cast<chain *> (pr);
 	  
-	      assert (ch);
-	      assert (ch->size ()>=1);
+	      if (!ch)
+		throw shield::exception::invalid_type ("Select query group by-item", "chain");
+
+	      if (!ch->size ())
+		throw shield::exception::not_found ("Select query group by-item");
 
 	      string id = (*ch)[0]->str ();
 	      group_field.insert (id);
@@ -438,7 +445,9 @@ namespace shield
 	    {
 	      printable *pr = *i;
 	      printable_alias *it = dynamic_cast<printable_alias *> (pr);
-	      assert (it);
+	      if (!it)
+		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
+	      
 
 	      select_item_wild * wi = dynamic_cast<select_item_wild *> (it);
 	      
@@ -516,7 +525,9 @@ namespace shield
 	      txt = id->get_table ();
 	    }
 
-	  assert (txt);
+	  if (!id)
+	    throw shield::exception::invalid_type ("Unaliased table name", "text");
+
 	  return txt;
 	}
       return alias;

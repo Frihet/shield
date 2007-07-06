@@ -14,11 +14,7 @@ namespace shield
 
     insert::
     insert()
-      : __field_list (0), 
-	__value_list (0), 
-	__insert_update (0),
-	__ignore (false),
-	__name (0)
+      : __ignore (false)
     {
     }
 
@@ -31,33 +27,25 @@ namespace shield
     void 
     insert::set_field_list (printable *l)
     {
-      __field_list = l;
-      if (l)
-	l->set_parent (this);
+      _set_child (__FIELD_LIST, l);
     }
 
     void 
     insert::set_value_list (chain *l)
     {
-      __value_list = l;
-      if (l)
-	l->set_parent (this);
+      _set_child (__VALUE_LIST, l);
     }
 
     void 
     insert::set_name (printable *l)
     {
-      __name = l;
-      if (l)
-	l->set_parent (this);
+      _set_child (__NAME, l);
     }
 
     void 
     insert::set_insert_update (printable *l)
     {
-      __insert_update = l;
-      if (l)
-	l->set_parent (this);
+      _set_child (__INSERT_UPDATE, l);
     }
 
     /**
@@ -87,11 +75,35 @@ namespace shield
       set_value_list (new chain (val));
     }
 
+    printable *insert::
+    get_field_list ()
+    {
+      return _get_child (__FIELD_LIST);
+    }
+
+    chain *insert::
+    get_value_list ()
+    {
+      return dynamic_cast<chain *> (_get_child (__VALUE_LIST));
+    }
+
+    printable *insert::
+    get_insert_update ()
+    {
+      return _get_child (__INSERT_UPDATE);
+    }
+
+    printable *insert::
+    get_name ()
+    {
+      return _get_child (__NAME);
+    }
+
     void insert::
     _print (ostream &stream)
     {
-      assert (__name);
-      assert (__value_list);
+      assert (get_name ());
+      assert (get_value_list ());
 
       /*
 	This code fills out the field list if not given. For a while,
@@ -100,14 +112,14 @@ namespace shield
 	since it may be useful in the future.
       */
       /*
-      if (!__field_list)
+      if (!get_field_list ())
 	{
 	  chain *fl = new chain ();
 	  fl->set_separator (",");
 
 	  using namespace introspection;
 	  
-	  table &t = introspection::get_table (__name->str ());
+	  table &t = introspection::get_table (get_name ()->str ());
 	  table::column_const_iterator i;
 	  for (i=t.column_begin (); i<t.column_end (); i++)
 	    {
@@ -117,23 +129,23 @@ namespace shield
 	      fl->push (id);
 	    }
 	  
-	  __field_list = fl;
-	}
+	    set_field_list (fl);
+	  }
       */
 
       chain::const_iterator i;  
 
-      for (i=__value_list->begin (); i<__value_list->end (); i++)
+      for (i=get_value_list ()->begin (); i<get_value_list ()->end (); i++)
 	{
 
-	  if (i!=__value_list->begin ())
+	  if (i!=get_value_list ()->begin ())
 	    stream << sep;
 
-	  stream << "insert into" << *__name << endl;
-	  if (__field_list)
+	  stream << "insert into" << *get_name () << endl;
+	  if (get_field_list ())
 	    {
-	      __field_list->set_skip_space (true);
-	      stream << "(" << *__field_list << ")" << endl;
+	      get_field_list ()->set_skip_space (true);
+	      stream << "(" << *get_field_list () << ")" << endl;
 	    }
 
 	  (*i)->set_skip_space (true);
@@ -146,7 +158,7 @@ namespace shield
     chain *insert::
     _get_condensed_table_list ()
     {
-      return new chain (__name);
+      return new chain (get_name ());
     }
 
   }

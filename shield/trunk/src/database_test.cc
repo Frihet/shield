@@ -20,7 +20,7 @@ int main (int argc, char **argv)
   try
     {
       while (rs.next ())
-	cout << "yo " << rs.get_string ("t") << endl;
+	cout << "line: " << rs.get_string ("t") << endl;
     }
   catch (std::exception &e)
     {

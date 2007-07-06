@@ -24,14 +24,14 @@
 
 #include "exception.hh"
 
-using namespace std;
-
 namespace shield
 {
   
   namespace database
   {
     
+    using namespace std;
+
     /**
        A wrapper class used to give parameters to an sql query. Used
        together with a result_set as given from the query function and

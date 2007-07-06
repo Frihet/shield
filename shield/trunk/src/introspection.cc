@@ -1,28 +1,28 @@
-
 #include "introspection.hh"
 #include "transform.hh"
-
-using namespace shield::introspection;
 
 namespace shield
 {
   namespace introspection
   {
   
-  static map<string, table> table_map;
-  
-  table &get_table (string table_name)
-  {
-    if (table_map.find (table_name) == table_map.end ())
-      {
-	//	table_map[table_name] = table (table_name);
-	table_map.insert (std::make_pair (table_name, table (table_name)));
-      }
+    using namespace shield::introspection;
+
+    /*
+      Map containing all previously introspected tables
+    */
+    static map<string, table> table_map;
     
-    return (*table_map.find (table_name)).second;
+    table &get_table (string table_name)
+    {
+      if (table_map.find (table_name) == table_map.end ())
+	{
+	  table_map.insert (std::make_pair (table_name, table (table_name)));
+	}
+      
+      return (*table_map.find (table_name)).second;
+    }
     
   }
-
-}
 
 }

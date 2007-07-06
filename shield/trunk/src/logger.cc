@@ -35,6 +35,11 @@ namespace logger
 	return string (buff);
       }
 
+    /*
+      Return empty string on error - it's much more important to get
+      the log message out than having correct formating, even though
+      the latter is also very important.
+    */
     return "";
   }
   

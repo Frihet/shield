@@ -19,10 +19,10 @@ as published by the Free Software Foundation; version 2 or later.
 
 #include "exception.hh"
 
-using namespace std;
-
 namespace util
 {
+
+  using namespace std;
 
 #define contains( str,... ) contains_str( str, __VA_ARGS__, (void *)0 )
 

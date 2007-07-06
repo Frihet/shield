@@ -1,16 +1,17 @@
-
 #include "introspection.hh"
 #include "transform.hh"
 #include "exception.hh"
 #include "database.hh"
-
-using namespace shield::database;
+#include "util.hh"
 
 namespace shield
 {
 
   namespace introspection
   {
+
+    using namespace shield::database;
+    using namespace util;
 
     table::
     table (string name)
@@ -21,6 +22,7 @@ namespace shield
     void table::
     load_column ()
     {
+     
       if (__is_col_init)
 	return;
       
