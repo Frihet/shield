@@ -40,13 +40,15 @@ namespace shield
     void printable::
     _print (ostream &stream)
     {
-      throw exception::syntax ("Tried to print object of type printable");
+      throw exception::syntax ("Tried to print node with no _print method");
     }
 
     void printable::
     set_parent (printable *parent)
     {
-      assert (parent);
+      if (!parent)
+	throw exception::invalid_state ("Tried to reparent a node to a null pointer");
+
       __parent = parent;
     }
 
@@ -66,7 +68,7 @@ namespace shield
     }
 
     void printable::
-    _set_child (int id, printable *value)
+    _set_child (child_type id, printable *value)
     {
       __children[id] = value;
       if (value)
@@ -74,7 +76,7 @@ namespace shield
     }
     
     printable *printable::
-    _get_child (int id)
+    _get_child (child_type id)
     {
 
       map<int, printable *>::const_iterator i;
@@ -116,6 +118,12 @@ namespace shield
 	throw shield::exception::syntax ("stringify called on invalid type");
       return util::trim (out.str());
     }
+
+    void printable::invalid_type (const string &what, const string &type)
+    {
+      throw exception::invalid_type (what, type);
+    }
+
     
   }
 

@@ -22,12 +22,12 @@ namespace shield
     bool result_set::
     is_null (string col)
     {
-      int idx = get_col_index (col);
+      int idx = __get_col_index (col);
       return __rs->isNull (idx);
     }
 
     void result_set::
-    metadata_init ()
+    __metadata_init ()
     {
       vector<MetaData> cmd;
 
@@ -48,10 +48,10 @@ namespace shield
     }
 
     int result_set::
-      get_col_index (string col)
+    __get_col_index (string col)
     {
       
-      metadata_init ();
+      __metadata_init ();
       
       map<string,int>::const_iterator p = __col_lookup.find (to_lower (col));
       if (p == __col_lookup.end ())
@@ -66,7 +66,7 @@ namespace shield
     string result_set::
     get_string (string col)
     {
-      int idx = get_col_index (col);
+      int idx = __get_col_index (col);
 
       try
 	{
@@ -81,7 +81,7 @@ namespace shield
     bool result_set::
     next ()
     {
-      execute ();
+      __execute ();
       return __rs->next () != ResultSet::END_OF_FETCH;
     }
     
@@ -108,14 +108,14 @@ namespace shield
     }
 
     void result_set::
-    set_parameter (const parameter &p)
+    __set_parameter (const parameter &p)
     {
       __param.push_back (p);
     }
 
 
     void result_set::
-    execute ()
+    __execute ()
     {
       string q2;
       bool quoted = false;
@@ -164,7 +164,7 @@ namespace shield
 
     result_set &operator << (result_set &r, const parameter &p)
     {
-      r.set_parameter (p);
+      r.__set_parameter (p);
       return r;
     }
     

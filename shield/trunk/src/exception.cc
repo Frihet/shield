@@ -3,9 +3,8 @@
 #include <execinfo.h>
 #include <signal.h>
 
-#include "demangle.h"
-
 #include "exception.hh"
+#include "util.hh"
 
 namespace shield
 {
@@ -44,11 +43,7 @@ namespace shield
 		  if (found_paran)
 		    {
 		      string sub (begin, it);
-		      char *foo = cplus_demangle (sub.c_str (), 0);
-		      if (foo)
-			__stack_trace += foo;
-		      else
-			__stack_trace += sub;
+		      __stack_trace += util::cxx_demangle (sub.c_str ());
 		      
 		      begin = it;
 		      break;

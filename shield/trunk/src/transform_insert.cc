@@ -27,25 +27,25 @@ namespace shield
     void 
     insert::set_field_list (printable *l)
     {
-      _set_child (__FIELD_LIST, l);
+      _set_child (CHILD_FIELD_LIST, l);
     }
 
     void 
     insert::set_value_list (chain *l)
     {
-      _set_child (__VALUE_LIST, l);
+      _set_child (CHILD_VALUE_LIST, l);
     }
 
     void 
     insert::set_name (printable *l)
     {
-      _set_child (__NAME, l);
+      _set_child (CHILD_NAME, l);
     }
 
     void 
     insert::set_insert_update (printable *l)
     {
-      _set_child (__INSERT_UPDATE, l);
+      _set_child (CHILD_INSERT_UPDATE, l);
     }
 
     /**
@@ -78,25 +78,25 @@ namespace shield
     printable *insert::
     get_field_list ()
     {
-      return _get_child (__FIELD_LIST);
+      return _get_child (CHILD_FIELD_LIST);
     }
 
     chain *insert::
     get_value_list ()
     {
-      return dynamic_cast<chain *> (_get_child (__VALUE_LIST));
+      return _get_child<chain> (CHILD_VALUE_LIST);
     }
 
     printable *insert::
     get_insert_update ()
     {
-      return _get_child (__INSERT_UPDATE);
+      return _get_child (CHILD_INSERT_UPDATE);
     }
 
     printable *insert::
     get_name ()
     {
-      return _get_child (__NAME);
+      return _get_child (CHILD_NAME);
     }
 
     void insert::

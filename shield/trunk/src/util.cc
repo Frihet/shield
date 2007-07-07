@@ -2,6 +2,8 @@
 #include <stdarg.h>
 
 #include "util.hh"
+#include "demangle.h"
+
 
 namespace util
 {
@@ -148,6 +150,15 @@ namespace util
       return out;
     }
 
+  string cxx_demangle (const string &in)
+  {
+    
+    char *foo = cplus_demangle (in.c_str (), 0);
 
+    if (foo)
+      return foo;
+
+    return in;
+  }
 
 }

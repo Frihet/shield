@@ -10,7 +10,7 @@ namespace shield
   {
     
     logger::logger warning ("shield: catalyst warning");
-    extern logger::logger debug ("shield: catalyst debug");
+    logger::logger debug ("shield: catalyst debug");
 
 
   }

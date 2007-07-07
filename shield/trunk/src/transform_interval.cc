@@ -37,7 +37,7 @@ namespace shield
     void interval::
     _print (ostream &stream)
     {
-      stream << " interval" << *_get_child (__EXPR) << " " << type_string (__type);
+      stream << " interval" << *_get_child (CHILD_EXPR) << " " << type_string (__type);
     }
 
   }

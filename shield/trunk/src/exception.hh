@@ -57,18 +57,18 @@ namespace shield
 	 Also, it would be very nice to get line numbers, but there
 	 does not seem to be any method of obtaining that.
       */
-      exception ();
+      exception (void);
 
       /**
 	 Returns the string specified using \c _set_what ().
       */
-      virtual const char *what () const throw ()
+      virtual const char *what (void) const throw ()
       {
 	string res = __what + "\n" + __stack_trace;
 	return res.c_str ();
       }
 
-      virtual ~exception () throw ()
+      virtual ~exception (void) throw ()
       {
       }
 
@@ -191,5 +191,5 @@ namespace shield
 
 }
 
-#endif
+#endif //#ifndef EXCEPTION_HH
 

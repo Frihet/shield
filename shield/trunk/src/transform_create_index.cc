@@ -16,20 +16,19 @@ namespace shield
     void create_index::
     set_name (printable *name)
     {
-      _set_child (__NAME, name);
+      _set_child (CHILD_NAME, name);
     }
 
     void create_index::
     set_key_list (chain *key_list)
     {
-      _set_child (__KEY_LIST, key_list);
+      _set_child (CHILD_KEY_LIST, key_list);
     }
 
     chain *
     create_index::get_filtered_key_list(chain *field_list)
     {
-      printable *uncasted_key_list = _get_child (__KEY_LIST);
-      chain *original_key_list = dynamic_cast<chain *> (_get_child (__KEY_LIST));
+      chain *original_key_list = _get_child<chain> (CHILD_KEY_LIST);
 
       if (!original_key_list)
 	throw exception::not_found ("");
@@ -107,7 +106,7 @@ namespace shield
     _print (ostream &stream)
     {
 
-      if (!_get_child (__KEY_LIST))
+      if (!_get_child (CHILD_KEY_LIST))
 	throw shield::exception::not_found ("create_index node with no key list");
 
       create_table *table_query = dynamic_cast<create_table *> (get_query ());
@@ -149,7 +148,7 @@ namespace shield
       if (__type == PRIMARY_KEY)
 	{
 
-	  if (_get_child (__NAME))
+	  if (_get_child (CHILD_NAME))
 	    {
 	      throw exception::syntax ("Named primary keys are not supported!");
 	    }
@@ -160,13 +159,13 @@ namespace shield
       else
 	{
 	  
-	  if (!_get_child (__NAME))
+	  if (!_get_child (CHILD_NAME))
 	    {
 	      throw exception::syntax ("Unnamed non-primary keys are not supported!");
 	    }
       
 	  string t_name = table_name->str ();
-	  string f_name = _get_child (__NAME)->str ();
+	  string f_name = _get_child (CHILD_NAME)->str ();
 	  string name = t_name + "_" + f_name;
       
 	  if (name.length () > 30)

@@ -21,14 +21,16 @@ namespace shield
 
       result_set last_rs (0, 0, "");
 
-      void destroy ();
+      void destroy (void);
 
-      void connect ()
+      void connect (void)
       {
 	if (is_connect)
 	  {
 	    return;
 	  }
+
+	is_connect = true;
 
 	if (!is_init)
 	  {
@@ -51,22 +53,15 @@ namespace shield
       
       }
 
-      void destroy ()
+      void destroy (void)
       {
+	cerr.flush ();
+
 	last_rs.close ();
 
-	/*
-	  FIXME:
-	
-	  These are commented out because they cause the app to
-	  crash on exit. According to
-	  http://forums.oracle.com/forums/thread.jspa?threadID=400555&tstart=-1
-	  this may be a known Oracle bug. Will have to investigate more later.
-	*/
-	//env->terminateConnection (conn);
-	//Environment::terminateEnvironment (env);
+	env->terminateConnection (conn);
+	Environment::terminateEnvironment (env);
       }
-
 
     }
 

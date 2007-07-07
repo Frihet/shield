@@ -1,18 +1,22 @@
 /**
-@file catalyst.hh
+   @file catalyst.hh
 
-Headers for all catalysts. Catalysts are functors used to transform the AST. 
+   Headers for all catalysts. Catalysts are functors used to transform the AST. 
+
+   @package shield
+   @author Axel Liljencrantz
+
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; version 2 or later.
+
 
 */
 #ifndef CATALYST_HH
 #define CATALYST_HH
 
 #include <string>
-//#include <iostream>
-#include <vector>
 #include <map>
-//#include <stdarg.h>
-//#include <assert.h>
 
 #include "logger.hh"
 
@@ -99,11 +103,11 @@ namespace shield
        This catalyst transforms any identifiers that are represented
        by a text node into one represented by an identity node.
     */
-    class identity
+    class create_identity
       : public catalyst
     {
     public:
-      identity (transform::query *q)
+      create_identity (transform::query *q)
 	: __query (q)
       {
       }

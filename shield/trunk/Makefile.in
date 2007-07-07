@@ -50,32 +50,36 @@ $(OBJ_DIR)/transform_chain.o $(OBJ_DIR)/transform_comparison.o		\
 $(OBJ_DIR)/transform_attribute.o $(OBJ_DIR)/transform_cast.o		\
 $(OBJ_DIR)/transform_update.o $(OBJ_DIR)/transform_fake_query.o
 
-CATALYST_OBJS := $(OBJ_DIR)/catalyst.o	$(OBJ_DIR)/catalyst_identity.o	\
-$(OBJ_DIR)/catalyst_find_table.o			\
-$(OBJ_DIR)/catalyst_internal.o			\
-$(OBJ_DIR)/catalyst_replace_identifier.o			\
+CATALYST_OBJS := $(OBJ_DIR)/catalyst.o					\
+$(OBJ_DIR)/catalyst_create_identity.o $(OBJ_DIR)/catalyst_find_table.o	\
+$(OBJ_DIR)/catalyst_internal.o						\
+$(OBJ_DIR)/catalyst_replace_identifier.o				\
 $(OBJ_DIR)/catalyst_validation.o
 
 #
 # Listings of which object files are needed by which programs
 #
-SHIELD_OBJS := $(OBJ_DIR)/shield.o $(TRANSFORM_OBJS) $(INTROSPECTION_OBJS)	\
-$(DATABASE_OBJS) $(OBJ_DIR)/util.o $(EXCEPTION_OBJS) $(CATALYST_OBJS) $(OBJ_DIR)/logger.o
+SHIELD_OBJS := $(OBJ_DIR)/shield.o $(TRANSFORM_OBJS)		\
+$(INTROSPECTION_OBJS) $(DATABASE_OBJS) $(OBJ_DIR)/util.o	\
+$(EXCEPTION_OBJS) $(CATALYST_OBJS) $(OBJ_DIR)/logger.o
 
-TRANSFORM_LEX_TEST_OBJS := $(OBJ_DIR)/transform_lex_test.o $(OBJ_DIR)/transform_lex_wrapper.o
+TRANSFORM_LEX_TEST_OBJS := $(OBJ_DIR)/transform_lex_test.o	\
+$(OBJ_DIR)/transform_lex_wrapper.o
 
 INTROSPECTION_TEST_OBJS := $(OBJ_DIR)/introspection_test.o	\
-$(INTROSPECTION_OBJS) $(DATABASE_OBJS) $(OBJ_DIR)/util.o $(EXCEPTION_OBJS)
-
-DATABASE_TEST_OBJS := $(OBJ_DIR)/database_test.o $(DATABASE_OBJS) $(OBJ_DIR)/util.o	\
+$(INTROSPECTION_OBJS) $(DATABASE_OBJS) $(OBJ_DIR)/util.o	\
 $(EXCEPTION_OBJS)
 
+DATABASE_TEST_OBJS := $(OBJ_DIR)/database_test.o $(DATABASE_OBJS)	\
+$(OBJ_DIR)/util.o $(EXCEPTION_OBJS)
+
 ALL_OBJS := $(TRANSFORM_OBJS) $(INTROSPECTION_OBJS) $(DATABASE_OBJS)	\
-$(EXCEPTION_OBJS) $(OBJ_DIR)/shield.o $(OBJ_DIR)/util.o $(OBJ_DIR)/transform_lex_test.o $(OBJ_DIR)/introspection_test.o $(OBJ_DIR)/database_test.o
+$(EXCEPTION_OBJS) $(EXCEPTION_OBJS) $(CATALYST_OBJS)			\
+$(OBJ_DIR)/shield.o $(OBJ_DIR)/util.o $(OBJ_DIR)/transform_lex_test.o	\
+$(OBJ_DIR)/introspection_test.o $(OBJ_DIR)/database_test.o
 
 ALL_SRCS := $(subst $(OBJ_DIR)/,$(SRC_DIR)/,$(ALL_OBJS:.o=.cc))
-ALL_DEPS1 := $(ALL_OBJS:.o=.d)
-
+ALL_DEPS := $(ALL_OBJS:.o=.d)
 
 #
 # Listing of all programs that this Makefile can build
@@ -168,6 +172,9 @@ $(OBJ_DIR)/%.d: $(SRC_DIR)/%.cc
 		bison -d $(SRC_DIR)/transform_yacc.y -o $(SRC_DIR)/transform_yacc.cc; \
 	fi
 	$(CXX) -MM -MG $(SRC_DIR)/$*.cc $(CPPFLAGS) | sed -e 's@^\(.*\)\.o:@'$(OBJ_DIR)'/\1.d '$(OBJ_DIR)'/\1.o:@' >$@
+
+$(OBJ_DIR)/%.d: $(SRC_DIR)/%.c
+	$(CC) -MM -MG $(SRC_DIR)/$*.cc $(CPPFLAGS) | sed -e 's@^\(.*\)\.o:@'$(OBJ_DIR)'/\1.d '$(OBJ_DIR)'/\1.o:@' >$@
 
 #
 # Include automatically generated dependencies (see depend target)

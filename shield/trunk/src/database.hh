@@ -48,7 +48,7 @@ namespace shield
       parameter (int i);
       parameter (const parameter &p);
 
-      string str () const;
+      string str (void) const;
       
     private:
       string __val;
@@ -73,18 +73,25 @@ namespace shield
       bool is_null (string col);      
       int get_int (string col);
       string get_string (string col);
-      bool next ();
-      void close ();
+      bool next (void);
+      void close (void);
       
     private:
       
+      friend result_set &operator << (result_set &r, const parameter &p);
+      friend result_set &query (string q) throw (exception::database);
+
       result_set (const result_set &rs)
       {
 	throw shield::exception::syntax ("Can't copy result sets");
       }
 
-      friend result_set &operator << (result_set &r, const parameter &p);
-      friend result_set &query (string q) throw (exception::database);
+      int __get_col_index (string col);
+      void __metadata_init (void);
+      void __set_parameter (const parameter &p);
+      void __execute (void);
+
+    private:
       
       bool __is_metadata_init;
       bool __is_executed;
@@ -107,10 +114,6 @@ namespace shield
       oracle::occi::ResultSet *__rs;
       oracle::occi::Connection *__conn;
       
-      int get_col_index (string col);
-      void metadata_init ();
-      void set_parameter (const parameter &p);
-      void execute ();
     }
     ;
     
@@ -131,4 +134,5 @@ namespace shield
   
 }
 
-#endif
+#endif //#ifndef DATABASE_HH
+

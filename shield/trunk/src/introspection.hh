@@ -200,4 +200,5 @@ namespace shield
 
 }
 
-#endif
+#endif //#ifndef INTROSPECTION_HH
+

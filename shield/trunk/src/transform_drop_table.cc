@@ -11,13 +11,13 @@ namespace shield
     drop_table::drop_table( printable *name, bool if_exists)
       : __if_exists (if_exists)
     {
-      _set_child (__NAME, name);
+      _set_child (CHILD_NAME, name);
     }
 
     void drop_table::
     _print (ostream &stream)
     {
-      printable *name = _get_child (__NAME);
+      printable *name = _get_child (CHILD_NAME);
 
       if (!name)
 	{

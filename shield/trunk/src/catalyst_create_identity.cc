@@ -9,7 +9,7 @@ namespace shield
   namespace catalyst
   {
 
-    transform::printable *identity::
+    transform::printable *create_identity::
     operator () (transform::printable *p)
     {
       
@@ -28,7 +28,7 @@ namespace shield
 
 
       transform::printable *parent = t->get_parent ();
-      bool parent_is_id = dynamic_cast<identity *> (parent) != 0;
+      bool parent_is_id = dynamic_cast<transform::identity *> (parent) != 0;
 
       if (parent_is_id)
 	{
@@ -42,8 +42,7 @@ namespace shield
 
       if (!table)
 	{
-	  debug << ("Could not find corresponding table for identity " + p->str () + "!!");
-	  return p;
+	  throw exception::invalid_state ("Could not find corresponding table for identity '" + p->str () + "'");
 	}
       
       transform::identity *res = new transform::identity (0, 0, t);

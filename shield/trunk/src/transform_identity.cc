@@ -57,17 +57,17 @@ namespace shield
 
     text *identity::get_namespace ()
     {
-      return dynamic_cast<text *> (_get_child (__NAMESPACE));
+      return _get_child<text> (CHILD_NAMESPACE);
     }
 
     text *identity::get_table ()
     {
-      return dynamic_cast<text *> (_get_child (__TABLE));
+      return _get_child<text> (CHILD_TABLE);
     }
 
     text *identity::get_field ()
     {
-      return dynamic_cast<text *> (_get_child (__FIELD));
+      return _get_child<text> (CHILD_FIELD);
     }
 
     context identity::

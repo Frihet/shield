@@ -177,7 +177,7 @@ namespace shield
     ;
 
     /**
-       Different interval lengths
+       Different interval lengths of the interval type. 
     */
     enum interval_type
       {
@@ -190,6 +190,51 @@ namespace shield
       }
     ;
 
+    /**
+       List of all node child types. This list has to be shared
+       between all node types to avoid clashes when one node type
+       inherits from its child.
+    */
+    enum child_type
+      {
+	CHILD_ITEM_LIST,
+	CHILD_TABLE_LIST,
+	CHILD_WHERE_CLAUSE,
+	CHILD_GROUP_CLAUSE,
+	CHILD_HAVING_CLAUSE,
+	CHILD_ORDER_CLAUSE,
+	CHILD_LIMIT_CLAUSE,
+	CHILD_PROCEDURE_CLAUSE,
+	CHILD_INTO_CLAUSE,
+	CHILD_OPTION_CLAUSE,
+	CHILD_RENDER,
+	CHILD_POST_RENDER,
+	CHILD_NAME,
+	CHILD_KEY_LIST,
+	CHILD_NAMESPACE,
+	CHILD_TABLE,
+	CHILD_FIELD,
+	CHILD_FIELD_LIST,
+	CHILD_VALUE_LIST,
+	CHILD_INSERT_UPDATE,
+	CHILD_EXPR,
+	CHILD_ITEM,
+	CHILD_ALIAS,
+	CHILD_OP,
+	CHILD_ARG1,
+	CHILD_ARG2,
+	CHILD_INNER,
+	CHILD_UPDATE_LIST,
+	CHILD_DELETE_LIMIT_CLAUSE,
+	CHILD_TYPE,
+	CHILD_ATTRIBUTE,
+	CHILD_CRATE_OPTIONS,
+	CHILD_TABLE_OPTIONS,
+	CHILD_CREATE_OPTIONS,
+	CHILD_INITIAL_DATA,
+	CHILD_LIKE_CLAUSE,
+      }
+    ;
     
     /**
        The various possible contexts for a printable to be in
@@ -200,32 +245,32 @@ namespace shield
 	   Unknown context.
 	*/
 	CONTEXT_UNDEFINED,
-
+	
 	/**
 	   Any lob context, like lob, clob, blob
 	*/
 	CONTEXT_LOB,
-
+	
 	/**
 	   Any numeric context
 	*/
 	CONTEXT_NUMBER, 
-
+	
 	/**
 	   Any string context, like char, varchar, etc.
 	*/
 	CONTEXT_STRING,
-
+	
 	/**
 	   Any type that can be sorted, compared, etc. I.e. _not_ lob.
 	*/
 	CONTEXT_SORTABLE,
-
+	
 	/**
 	   A date type
 	*/
 	CONTEXT_DATE,
-
+	
 	/**
 	   A datetime object
 	*/
@@ -343,11 +388,14 @@ namespace shield
       
       /**
 	 Reparent this node.
+
+	 @param the new parent. May not be null, or an invalid_state
+	 exception is thrown.
       */
       void set_parent (printable *parent);
 
       /**
-	 Return the query that this node is a part of
+	 Return the query that this node is a part of.
       */
       virtual query *get_query (void);
 
@@ -404,14 +452,40 @@ namespace shield
 	 @param id the integer to identify the child by
 	 @param value the child. If value is null, then the specified child is erased.
       */
-      void _set_child (int id, printable *value);
+      void _set_child (child_type id, printable *value);
 
       /**
 	 Return the child with the specified id, or null if no child
 	 with that id exists.
       */
-      printable *_get_child (int id);
 
+      printable *_get_child (child_type id);
+
+      template <class T>
+      T *_get_child (child_type id)
+      {
+	printable *res = _get_child (id);
+	T *res_cast = dynamic_cast<T *> (res);
+	if (res && !res_cast)
+	  {
+	    invalid_type ("child node", typeid(T).name ());
+	  }
+	return res_cast;
+      }
+
+
+    private:
+
+      /**
+	 This function handles the case of a child node having an
+	 invalid type by throwing an invalid_type exception. It
+	 exists because _get_child<> is a template function and thus
+	 needs to be defined in this header, but no header-defined
+	 function may throw an exception.  The reason for this is that
+	 it is desirable to not include the exception.hh file fromt
+	 his main header to avoid excessive dependencies.
+      */
+      void invalid_type (const string &what, const string &type);
 
     private:
 
@@ -770,103 +844,103 @@ namespace shield
   
       void set_item_list( chain *list )
       {
-	_set_child (__ITEM_LIST, list);
+	_set_child (CHILD_ITEM_LIST, list);
       }
 
       chain *get_item_list (void)
       {
-	return dynamic_cast<chain *> (_get_child (__ITEM_LIST));
+	return _get_child<chain> (CHILD_ITEM_LIST);
       }
 
       void set_table_list( chain *list )
       {
 	assert (list);
-	_set_child (__TABLE_LIST, list);
+	_set_child (CHILD_TABLE_LIST, list);
       }
 
       chain *get_table_list (void)
       {
-	return dynamic_cast<chain *> (_get_child (__TABLE_LIST));
+	return _get_child<chain> (CHILD_TABLE_LIST);
       }
 
       void set_where_clause( printable *clause )
       {
-	_set_child (__WHERE_CLAUSE, clause);
+	_set_child (CHILD_WHERE_CLAUSE, clause);
       }
 
       printable *get_where_clause (void)
       {
-	return _get_child (__WHERE_CLAUSE);
+	return _get_child (CHILD_WHERE_CLAUSE);
       }
 
       void set_group_clause( chain *clause )
       {
-	_set_child (__GROUP_CLAUSE, clause);
+	_set_child (CHILD_GROUP_CLAUSE, clause);
       }
 
       chain *get_group_clause (void)
       {
-	return dynamic_cast<chain *> (_get_child (__GROUP_CLAUSE));
+	return _get_child<chain> (CHILD_GROUP_CLAUSE);
       }
 
       void set_having_clause( printable *clause )
       {
-	_set_child (__HAVING_CLAUSE, clause);
+	_set_child (CHILD_HAVING_CLAUSE, clause);
       }
 
       printable *get_having_clause (void)
       {
-	return _get_child (__HAVING_CLAUSE);
+	return _get_child (CHILD_HAVING_CLAUSE);
       }
 
       void set_order_clause( printable *clause )
       {
-	_set_child (__HAVING_CLAUSE, clause);
+	_set_child (CHILD_HAVING_CLAUSE, clause);
       }
 
       printable *get_order_clause (void)
       {
-	return _get_child (__ORDER_CLAUSE);
+	return _get_child (CHILD_ORDER_CLAUSE);
       }
 
       void set_limit_clause( limit *clause )
       {
-	_set_child (__LIMIT_CLAUSE, clause);
+	_set_child (CHILD_LIMIT_CLAUSE, clause);
       }
 
       limit *get_limit_clause (void)
       {
-	return dynamic_cast<limit *> (_get_child (__LIMIT_CLAUSE));
+	return _get_child<limit> (CHILD_LIMIT_CLAUSE);
       }
 
       void set_procedure_clause( printable *clause )
       {
-	_set_child (__PROCEDURE_CLAUSE, clause);
+	_set_child (CHILD_PROCEDURE_CLAUSE, clause);
       }
 
       printable *get_procedure_clause (void)
       {
-	return _get_child (__PROCEDURE_CLAUSE);
+	return _get_child (CHILD_PROCEDURE_CLAUSE);
       }
 
       void set_into_clause( printable *clause )
       {
-	_set_child (__INTO_CLAUSE, clause);
+	_set_child (CHILD_INTO_CLAUSE, clause);
       }
 
       printable *get_into (void)
       {
-	return _get_child (__INTO_CLAUSE);
+	return _get_child (CHILD_INTO_CLAUSE);
       }
 
       void set_option_clause( printable *clause )
       {
-	_set_child (__OPTION_CLAUSE, clause);
+	_set_child (CHILD_OPTION_CLAUSE, clause);
       }
 
       printable *get_option_clause (void)
       {
-	return _get_child (__OPTION_CLAUSE);
+	return _get_child (CHILD_OPTION_CLAUSE);
       }
 
       /**
@@ -891,23 +965,6 @@ namespace shield
       */
       virtual chain *_get_condensed_table_list (void);
 
-    private:
-      /**
-	 Enum for all child node identifiers
-      */
-      enum 
-	{
-	  __ITEM_LIST,
-	  __TABLE_LIST,
-	  __WHERE_CLAUSE,
-	  __GROUP_CLAUSE,
-	  __HAVING_CLAUSE,
-	  __ORDER_CLAUSE,
-	  __LIMIT_CLAUSE,
-	  __PROCEDURE_CLAUSE,
-	  __INTO_CLAUSE,
-	  __OPTION_CLAUSE
-	};
     };
 
 
@@ -957,30 +1014,23 @@ namespace shield
     public:
       attribute (printable *render=0, printable *post_render=0)
       {
-	_set_child (__RENDER, render);
-	_set_child (__POST_RENDER, post_render);
+	_set_child (CHILD_RENDER, render);
+	_set_child (CHILD_POST_RENDER, post_render);
       }
 
       printable *get_post_render (void)
       {
-	return _get_child (__POST_RENDER);
+	return _get_child (CHILD_POST_RENDER);
       }
 
       printable *get_render (void)
       {
-	return _get_child (__RENDER);
+	return _get_child (CHILD_RENDER);
       }
 
     protected:
       virtual void _print (ostream &stream);
 
-    private:
-      enum
-	{
-	  __RENDER,
-	  __POST_RENDER
-	}
-      ;
     }
     ;
 
@@ -1007,14 +1057,6 @@ namespace shield
       virtual void _print (ostream &stream);
       
     private:
-      
-      enum
-	{
-	  __NAME,
-	  __KEY_LIST
-	}
-      ;
-
       key_type __type;
 
     }
@@ -1046,9 +1088,9 @@ namespace shield
 
       identity (text *ns=0, text *table=0, text *field=0)
       {
-	_set_child (__NAMESPACE, ns);
-	_set_child (__TABLE, table);
-	_set_child (__FIELD, field);
+	_set_child (CHILD_NAMESPACE, ns);
+	_set_child (CHILD_TABLE, table);
+	_set_child (CHILD_FIELD, field);
       }
 
       text *get_namespace ();
@@ -1063,13 +1105,6 @@ namespace shield
 
     private:
       
-      enum
-	{
-	  __NAMESPACE,
-	  __TABLE,
-	  __FIELD
-	}
-      ;
     }
     ;
 
@@ -1080,47 +1115,93 @@ namespace shield
 
       create_table(void);
     
-      void set_field_list (chain *l);
-      void set_key_list (chain *l);
-      void set_create_options (printable *l);
-      void set_table_options (printable *l);
-      void set_initial_data (printable *l);
-      void set_name (printable *l);
-      void set_like_clause (printable *l);
-      void set_check_existance (bool check);
-  
-      printable *transform (catalyst::catalyst &catalyst);
-      
-      printable *get_name (void)
+      void set_field_list (chain *l)
       {
-	return __name;
+	_set_child (CHILD_FIELD_LIST, l);
       }
-      
-      chain *get_prev_index_list (void)
-      {
-	__prev_index_list;
-      }
-      
+
       chain *get_field_list (void)
       {
-	return __field_list;
+	return _get_child<chain> (CHILD_FIELD_LIST);
+      }
+
+      void set_key_list (chain *l)
+      {
+	_set_child (CHILD_KEY_LIST, l);
+      }
+
+      chain *get_key_list (void)
+      {
+	return _get_child<chain> (CHILD_KEY_LIST);
+      }
+
+      void set_create_options (printable *l)
+      {
+	_set_child (CHILD_CREATE_OPTIONS, l);
+      }
+
+      printable *get_create_options (void)
+      {
+	return _get_child (CHILD_CREATE_OPTIONS);
+      }
+
+      void set_table_options (printable *l)
+      {
+	_set_child (CHILD_TABLE_OPTIONS, l);
+      }
+
+      printable *get_table_options (void)
+      {
+	return _get_child (CHILD_TABLE_OPTIONS);
+      }
+
+      void set_initial_data (printable *l)
+      {
+	_set_child (CHILD_INITIAL_DATA, l);
+      }
+
+      printable *get_initial_date (void)
+      {
+	return _get_child (CHILD_INITIAL_DATA);
+      }
+
+      void set_name (printable *l)
+      {
+	_set_child (CHILD_NAME, l);
+      }
+
+      printable *get_name (void)
+      {
+	return _get_child (CHILD_NAME);
+      }
+
+      void set_like_clause (printable *l)
+      {
+	_set_child (CHILD_LIKE_CLAUSE, l);
+      }
+
+      printable *get_like_clause (void)
+      {
+	return _get_child (CHILD_LIKE_CLAUSE);
+      }
+
+      void set_check_existance (bool check);
+  
+      chain *get_prev_index_list (void)
+      {
+	return __prev_index_list;
       }
       
     protected:
       virtual void _print (ostream &stream);
   
     private:
-      chain *__field_list;
-      chain *__key_list;
-      printable *__create_options;
-      printable *__table_options;
-      printable *__initial_data;
-      printable *__name;
-      printable *__like_clause;
-      chain *__prev_index_list;
-      bool __check;
-      
       void post_render (ostream &stream, attribute *attr);
+
+    private:
+
+      bool __check;
+      chain *__prev_index_list;
 
     }
     ;
@@ -1149,14 +1230,6 @@ namespace shield
       virtual chain *_get_condensed_table_list (void);
       
     private:
-      enum
-	{
-	  __FIELD_LIST,
-	  __VALUE_LIST,
-	  __INSERT_UPDATE,
-	  __NAME
-	}
-      ;
       bool __ignore;
     }
     ;
@@ -1175,11 +1248,6 @@ namespace shield
     private:
       
       bool __if_exists;
-      enum 
-	{
-	  __NAME
-	}
-      ;
     }
     ;
 
@@ -1209,12 +1277,12 @@ namespace shield
       interval (interval_type type, printable *expr=0)
 	: __type (type)
       {
-	_set_child (__EXPR, expr);
+	_set_child (CHILD_EXPR, expr);
       }
 
       void set_expr (printable *expr)
       {
-	_set_child (__EXPR, expr);
+	_set_child (CHILD_EXPR, expr);
       }
 
     protected:
@@ -1224,11 +1292,6 @@ namespace shield
 
       interval_type __type;
     
-      enum
-	{
-	  __EXPR
-	}
-      ;
     }
     ;
 
@@ -1278,22 +1341,25 @@ namespace shield
       field_spec (printable *name, type *type, printable *attribute)
 	: __name (name), __type (type), __attrib (attribute)
       {
+	_set_child (CHILD_NAME, name);
+	_set_child (CHILD_TYPE, type);
+	_set_child (CHILD_ATTRIBUTE, attribute);
 	__name->set_skip_space (true);
       }
 
       type *get_type (void)
       {
-	return __type;
+	return _get_child<type> (CHILD_TYPE);
       }
 
       printable *get_attribute (void)
       {
-	return __attrib;
+	return _get_child (CHILD_ATTRIBUTE);
       }
 
       printable *get_name (void)
       {
-	return __name;
+	return _get_child (CHILD_NAME);
       }
 
     protected:
@@ -1322,28 +1388,28 @@ namespace shield
     public:
       printable_alias (printable *item=0, text *alias=0)
       {
-	_set_child (__ITEM, item);
-	_set_child (__ALIAS, alias);
+	_set_child (CHILD_ITEM, item);
+	_set_child (CHILD_ALIAS, alias);
       }
 
       void set_item (text *item)
       {
-	_set_child (__ITEM, item);
+	_set_child (CHILD_ITEM, item);
       }
 
       printable *get_item (void)
       { 
-	return _get_child (__ITEM);
+	return _get_child (CHILD_ITEM);
       }
 
       void set_alias (text *alias)
       {
-	_set_child (__ALIAS, alias);
+	_set_child (CHILD_ALIAS, alias);
       }
 
       text *get_alias (void)
       {
-	return dynamic_cast<text *> (_get_child (__ALIAS));
+	return _get_child<text> (CHILD_ALIAS);
       }
 
       bool has_alias (void)
@@ -1366,14 +1432,6 @@ namespace shield
 	  stream << *alias;
       }
 
-    private:
-      enum
-	{
-	  __ITEM,
-	  __ALIAS
-	}
-      ;
-
     }
     ;
 
@@ -1385,18 +1443,18 @@ namespace shield
       select_item_wild (text *ns=0, text *table=0)
 	: printable_alias (0, 0)
       {
-	_set_child (__NAMESPACE, ns);
-	_set_child (__TABLE, table);
+	_set_child (CHILD_NAMESPACE, ns);
+	_set_child (CHILD_TABLE, table);
       }
 
       text *get_namespace (void)
       {
-	return dynamic_cast<text *> (_get_child (__NAMESPACE));
+	return _get_child<text> (CHILD_NAMESPACE);
       }
 
       text *get_table (void)
       {
-	return dynamic_cast<text *> (_get_child (__TABLE));
+	return _get_child<text> (CHILD_TABLE);
       }
 
     protected:
@@ -1417,15 +1475,6 @@ namespace shield
 	print_alias (stream);
       }
 
-    private:
-
-      enum
-	{
-	  __NAMESPACE,
-	  __TABLE
-	}
-      ;
-
     };
 
 
@@ -1442,17 +1491,6 @@ namespace shield
 
     protected:
       virtual void _print (ostream &stream);
-
-    private:
-      /**
-	 Enum for all child node identifiers
-      */
-      enum {
-	__OP,
-	__ARG1,
-	__ARG2
-      }
-      ;
 
     }
     ;
@@ -1491,18 +1529,11 @@ namespace shield
       */
       fake_query (printable *p)
       {
-	_set_child (__INNER, p);
+	_set_child (CHILD_INNER, p);
       } 
 
     protected:
       virtual void _print (ostream &stream);
-
-    private:
-      enum
-	{
-	  __INNER
-	}
-      ;
 
     }
     ;
@@ -1521,7 +1552,7 @@ namespace shield
       */
       void set_table_list (chain *name)
       {
-	_set_child (__NAME, name);
+	_set_child (CHILD_NAME, name);
       }
 
       /**
@@ -1529,7 +1560,7 @@ namespace shield
       */
       chain *get_table_list (void)
       {
-	return dynamic_cast<chain *> (_get_child (__NAME));
+	return _get_child<chain> (CHILD_NAME);
       }
 
       /**
@@ -1537,7 +1568,7 @@ namespace shield
       */
       void set_update_list (printable *name)
       {
-	_set_child (__UPDATE_LIST, name);
+	_set_child (CHILD_UPDATE_LIST, name);
       }
 
       /**
@@ -1545,7 +1576,7 @@ namespace shield
       */
       printable *get_update_list (void)
       {
-	return _get_child (__UPDATE_LIST);
+	return _get_child (CHILD_UPDATE_LIST);
       }
 
       /**
@@ -1553,7 +1584,7 @@ namespace shield
       */
       void set_where_clause (printable *name)
       {
-	_set_child (__WHERE_CLAUSE, name);
+	_set_child (CHILD_WHERE_CLAUSE, name);
       }
 
       /**
@@ -1561,7 +1592,7 @@ namespace shield
       */
       printable *get_where_clause (void)
       {
-	return _get_child (__WHERE_CLAUSE);
+	return _get_child (CHILD_WHERE_CLAUSE);
       }
 
       /**
@@ -1569,7 +1600,7 @@ namespace shield
       */
       void set_order_clause (printable *name)
       {
-	_set_child (__ORDER_CLAUSE, name);
+	_set_child (CHILD_ORDER_CLAUSE, name);
       }
 
       /**
@@ -1577,7 +1608,7 @@ namespace shield
       */
       printable *get_order_clause (void)
       {
-	return _get_child (__ORDER_CLAUSE);
+	return _get_child (CHILD_ORDER_CLAUSE);
       }
 
       /**
@@ -1585,7 +1616,7 @@ namespace shield
       */
       void set_delete_limit_clause (printable *name)
       {
-	_set_child (__DELETE_LIMIT_CLAUSE, name);
+	_set_child (CHILD_DELETE_LIMIT_CLAUSE, name);
       }
 
       /**
@@ -1593,7 +1624,7 @@ namespace shield
       */
       printable *get_delete_limit_clause (void)
       {
-	return _get_child (__DELETE_LIMIT_CLAUSE);
+	return _get_child (CHILD_DELETE_LIMIT_CLAUSE);
       }
 
       /**
@@ -1605,21 +1636,6 @@ namespace shield
       virtual void _print (ostream &stream);
       virtual chain *_get_condensed_table_list (void);
 
-
-    private:
-
-      /**
-	 Enum for all child node identifiers
-      */
-      enum 
-	{
-	  __NAME,
-	  __UPDATE_LIST,
-	  __WHERE_CLAUSE,
-	  __ORDER_CLAUSE,
-	  __DELETE_LIMIT_CLAUSE
-	}
-      ;
     }
     ;
 

@@ -550,7 +550,7 @@ namespace shield
     printable *select::
     internal_transform ()
     {
-      catalyst::identity id_catalyst (this);
+      catalyst::create_identity id_catalyst (this);
       return this->transform (id_catalyst);
     }
 

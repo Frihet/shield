@@ -79,7 +79,7 @@ namespace
 	      }
 	      ,
 	      {   
-		"warn", required_argument, 0, 'w'
+		"warning", required_argument, 0, 'w'
 	      }
 	      ,
 	      {   
@@ -105,6 +105,7 @@ namespace
 
 	  switch( opt )
 	    {   
+	      
 	    case 0:
 	      break;
 	    
@@ -130,10 +131,14 @@ namespace
 
 	    case 'w':
 	      if (contains(optarg, "transform", "all"))
-		shield::transform::warning.enable ();
+		{
+		  shield::transform::warning.enable ();
+		}
 
 	      if (contains(optarg, "catalyst", "all"))
-		shield::catalyst::warning.enable ();
+		{
+		  shield::catalyst::warning.enable ();
+		}
 	      break;
 
 	    case 'd':
@@ -183,7 +188,6 @@ main (int argc, char **argv)
 
   logger::logger error ("shield: error");
   error.enable ();
-  
 
   int err = 0;
   while( true )
@@ -209,10 +213,17 @@ main (int argc, char **argv)
 	      str="";
 	      
 	    }
-	  catch (std::exception &e)
+	  catch (shield::exception::exception &e)
 	    {
 	      err ++;
 	      error << e.what ();
+	      
+	      break;
+	    }
+	  catch (std::exception &e)
+	    {
+	      err ++;
+	      error << string("BUG! Unexpected exception thrown: ")+e.what ();
 	      
 	      break;
 	    }

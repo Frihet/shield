@@ -30,7 +30,7 @@ namespace shield
     printable *update::
     internal_transform (void)
     {
-      catalyst::identity ident (this);
+      catalyst::create_identity ident (this);
       return this->transform (ident);
     }
 

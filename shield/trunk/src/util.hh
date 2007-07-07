@@ -56,16 +56,18 @@ namespace util
   */
   string to_upper (const string &in);
 
-    /**
-       Escape strings in an oracle compatible fashion.
-
-       Non-printables use the chr function, and long lines are
-       automatically broken into multiple lines to avoid the hardcoded
-       maximum line lengths in oracle.
-    */
-    string oracle_escape (const string &in);
-
+  /**
+     Escape strings in an oracle compatible fashion.
+     
+     Non-printables use the chr function, and long lines are
+     automatically broken into multiple lines to avoid the hardcoded
+     maximum line lengths in oracle.
+  */
+  string oracle_escape (const string &in);
+  
+  string cxx_demangle (const string &in);
 
 }
 
-#endif
+#endif //#ifndef UTIL_HH
+

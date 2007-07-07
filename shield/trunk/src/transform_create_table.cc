@@ -3,6 +3,8 @@
 
 #include "transform.hh"
 #include "catalyst.hh"
+#include "exception.hh"
+#include "introspection.hh"
 
 namespace shield
 {
@@ -11,79 +13,10 @@ namespace shield
   {
 
     create_table::create_table()
-      : __field_list (0), 
-	__create_options (0),
-	__table_options (0),
-	__initial_data (0), 
-	__name (0),
-	__check (false),
-	__like_clause (0)
+      : __check (false)
     {
       __prev_index_list = new chain ();
     }
-
-    void 
-    create_table::set_field_list (chain *l)
-    {
-      l->set_line_break (1);
-      __field_list = l;
-      if (l)
-	l->set_parent (this);
-    }
-
-    void 
-    create_table::set_key_list (chain *l)
-    {
-      l->set_line_break (1);
-      __key_list = l;
-      if (l)
-	l->set_parent (this);
-    }
-
-
-    void 
-    create_table::set_create_options (printable *l)
-    {
-      __create_options = l;
-      if (l)
-	l->set_parent (this);
-    }
-
-    void 
-    create_table::set_table_options (printable *l)
-    {
-      __table_options = l;
-      if (l)
-	l->set_parent (this);
-    }
-
-
-    void 
-    create_table::set_initial_data (printable *l)
-    {
-      __initial_data = l;
-      if (l)
-	l->set_parent (this);
-    }
-
-
-    void 
-    create_table::set_name (printable *l)
-    {
-      __name = l;
-      if (l)
-	l->set_parent (this);
-    }
-
-
-    void 
-    create_table::set_like_clause (printable *l)
-    {
-      __like_clause = l;
-      if (l)
-	l->set_parent (this);
-    }
-
 
     void 
     create_table::set_check_existance (bool check)
@@ -111,32 +44,39 @@ namespace shield
     void create_table::
     _print (ostream &stream)
     {
-      assert (__name);
-      assert (__field_list || __like_clause);
+      if (!get_name () || (!get_field_list () && !get_like_clause ()))
+	throw exception::invalid_state ("Required child nodes unset in create table node");
   
-      stream << "create table" << *__name << endl;
-
-      if (__like_clause)
+      if (__check)
 	{
-	  stream << "like" << *__like_clause;
+	  introspection::table &t = introspection::get_table (get_name ()->str ());
+	  if (t.exists ())
+	    return;
+	}
+
+      stream << "create table" << *get_name () << endl;
+
+      if (get_like_clause ())
+	{
+	  stream << "like" << *get_like_clause ();
 	}
       else
 	{
-	  stream << "(" << *__field_list << " )" ;
+	  stream << "(" << *get_field_list () << " )" ;
 	}
 
       stream << endl << endl;
 
-      if (__field_list)
+      if (get_field_list ())
 	{
 	  /*
 	    Search through the field list for auto_increment columns.
 	  */
 	  map<string, printable *>prop;
-	  prop["table_name"] = __name;
+	  prop["table_name"] = get_name ();
 
 	  chain::const_iterator i;
-	  for (i=__field_list->begin (); i<__field_list->end (); i++ )
+	  for (i=get_field_list ()->begin (); i<get_field_list ()->end (); i++ )
 	    {
 	      field_spec *fs = dynamic_cast<field_spec *> (*i);
 	      assert (fs);
@@ -161,18 +101,18 @@ namespace shield
 	    }
 	}
 
-      if (__key_list)
+      if (get_key_list ())
 	{
 	  /*
 	    Search through the key list for auto_increment columns.
 	  */
 	  map<string, printable *>prop;
-	  prop["table_name"] = __name;
-	  prop["field_list"] = __field_list;
+	  prop["table_name"] = get_name ();
+	  prop["field_list"] = get_field_list ();
 
 	  chain::const_iterator i;
 
-	  for (i=__key_list->begin (); i<__key_list->end (); i++ )
+	  for (i=get_key_list ()->begin (); i<get_key_list ()->end (); i++ )
 	    {
 	      attribute *attr = dynamic_cast<attribute *> (*i);
 	      stream << sep;
@@ -181,38 +121,6 @@ namespace shield
 	    }
 	}
     }
-
-
-    printable *create_table::
-    transform (catalyst::catalyst &catalyst)
-    {
-
-      if (__field_list)
-	__field_list = dynamic_cast<chain *> (__field_list->transform (catalyst));
-
-      if (__key_list)
-	__key_list = dynamic_cast<chain *> (__key_list->transform (catalyst));
-
-      if (__create_options)
-	__create_options = __create_options->transform (catalyst);
-
-      if (__table_options)
-	__table_options = __table_options->transform (catalyst);
-
-      if (__initial_data)
-	__initial_data = __initial_data->transform (catalyst);
-
-      if (__name)
-	__name = __name->transform (catalyst);
-
-      if (__like_clause)
-	__like_clause = __like_clause->transform (catalyst);
-
-      return catalyst (this);
-    }
-
-
-
 
   }
 

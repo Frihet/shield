@@ -705,10 +705,12 @@ namespace shield
 
 %type <type_val> type 
 
+%type <bool_val> opt_if_not_exists
+
 %type <printable_val>
 	real_type order_dir lock_option
 	udf_type opt_local opt_table_options table_options
-        table_option opt_if_not_exists opt_no_write_to_binlog
+        table_option opt_no_write_to_binlog
         delete_option opt_temporary all_or_any opt_distinct
         opt_ignore_leaves fulltext_options spatial_type union_option
         start_transaction_opts opt_chain opt_release
@@ -1062,8 +1064,7 @@ create:
 	CREATE opt_table_options TABLE_SYM opt_if_not_exists table_ident create2
 	  {
 	    $6 -> set_name ($5);
-	    if ($4)
-	      $6 -> set_check_existance (true);
+	    $6 -> set_check_existance ($4);
 	    $6 -> set_table_options ($2);
 	    $$ = $6;
 	  }
@@ -1589,8 +1590,8 @@ table_option:
 	TEMPORARY	{ throw exception::unsupported (__FILE__, __LINE__); };
 
 opt_if_not_exists:
-	/* empty */	 { $$ = 0; }
-	| IF not EXISTS	 { throw exception::unsupported (__FILE__, __LINE__); };
+	/* empty */	 { $$ = false; }
+	| IF not EXISTS	 { $$=true; }
 
 opt_create_table_options:
 	/* empty */
