@@ -19,10 +19,16 @@ as published by the Free Software Foundation; version 2 or later.
 #include <vector>
 #include <map>
 
+#include "shield.hh"
 
 namespace shield
 {
 
+  /**
+     @namespace shield::introspection
+
+     Shield introspection classes.
+  */
   namespace introspection
   {
 
@@ -34,16 +40,6 @@ namespace shield
        types. Remember that when adding more types here, the
        column_type class also needs modification.
     */
-    enum column_type_enum
-      {
-	CHAR,
-	VARCHAR,
-	VARCHAR2,
-	NUMBER,
-	FLOAT,
-	CLOB
-      }
-    ;
 
     /**
        A class representing a data type.
@@ -75,15 +71,15 @@ namespace shield
       bool is_lob () const;
   
       /**
-	 Returns the column_type_enum representing this type
+	 Returns the data_type representing this type
       */
-      column_type_enum get_type () const;
+      data_type get_type () const;
 
     private:
       /**
 	 The type of this column
       */
-      column_type_enum __type;
+      data_type __type;
     }
     ;
 

@@ -479,11 +479,11 @@ namespace shield
 		    {
 		      catalyst::find_table cat (this);
 		      get_table_list ()->transform (cat);
-		      if (!cat.get_table_list ()->size ())
+		      if (!cat.get_table_list ().size ())
 			{
 			  throw shield::exception::not_found ("Select query table");
 			}
-		      le = (*cat.get_table_list ()->begin ())->str ();
+		      le = (*cat.get_table_list ().begin ())->str ();
 		    }
 
 		  introspection::table &t = introspection::get_table (le);
@@ -513,12 +513,13 @@ namespace shield
   
     }
 
-    chain *select::
-    _get_condensed_table_list ()
+    void select::
+    _make_condensed_table_list ()
     {
-      catalyst::find_table cat (this);
+      _condensed_table_list.clear ();
+      catalyst::find_table cat (this);      
       get_table_list ()->transform (cat);
-      return cat.get_table_list ();
+      _condensed_table_list = cat.get_table_list ();
     }
 
     text *select::

@@ -29,10 +29,13 @@ SRC_DIR := src
 #
 # All the different object files that need to be generated
 #
-INTROSPECTION_OBJS := $(OBJ_DIR)/introspection_table.o $(OBJ_DIR)/introspection.o	\
-$(OBJ_DIR)/introspection_column.o $(OBJ_DIR)/introspection_column_type.o
+INTROSPECTION_OBJS := $(OBJ_DIR)/introspection_table.o		\
+$(OBJ_DIR)/introspection.o $(OBJ_DIR)/introspection_column.o	\
+$(OBJ_DIR)/introspection_column_type.o
 
-EXCEPTION_OBJS := $(OBJ_DIR)/exception_unsupported.o $(OBJ_DIR)/exception.o $(OBJ_DIR)/cplus-dem.o $(OBJ_DIR)/cp-demangle.o $(OBJ_DIR)/dyn-string.o
+EXCEPTION_OBJS := $(OBJ_DIR)/exception_unsupported.o			\
+$(OBJ_DIR)/exception.o $(OBJ_DIR)/cplus-dem.o $(OBJ_DIR)/cp-demangle.o	\
+$(OBJ_DIR)/dyn-string.o
 
 DATABASE_OBJS := $(OBJ_DIR)/database.o					\
 $(OBJ_DIR)/database_result_set.o $(OBJ_DIR)/database_parameter.o
@@ -44,11 +47,11 @@ $(OBJ_DIR)/transform_identity.o $(OBJ_DIR)/transform_text.o		\
 $(OBJ_DIR)/transform_create_table.o $(OBJ_DIR)/transform_insert.o	\
 $(OBJ_DIR)/transform_auto_increment.o					\
 $(OBJ_DIR)/transform_create_index.o $(OBJ_DIR)/transform_drop_table.o	\
-$(OBJ_DIR)/transform_date_function.o $(OBJ_DIR)/transform_interval.o	\
+$(OBJ_DIR)/transform_function.o $(OBJ_DIR)/transform_interval.o		\
 $(OBJ_DIR)/transform_query.o $(OBJ_DIR)/transform_print_package.o	\
 $(OBJ_DIR)/transform_chain.o $(OBJ_DIR)/transform_comparison.o		\
-$(OBJ_DIR)/transform_attribute.o $(OBJ_DIR)/transform_cast.o		\
-$(OBJ_DIR)/transform_update.o $(OBJ_DIR)/transform_fake_query.o
+$(OBJ_DIR)/transform_cast.o $(OBJ_DIR)/transform_update.o		\
+$(OBJ_DIR)/transform_fake_query.o $(OBJ_DIR)/transform_type.o
 
 CATALYST_OBJS := $(OBJ_DIR)/catalyst.o					\
 $(OBJ_DIR)/catalyst_create_identity.o $(OBJ_DIR)/catalyst_find_table.o	\
@@ -61,7 +64,7 @@ $(OBJ_DIR)/catalyst_validation.o
 #
 SHIELD_OBJS := $(OBJ_DIR)/shield.o $(TRANSFORM_OBJS)		\
 $(INTROSPECTION_OBJS) $(DATABASE_OBJS) $(OBJ_DIR)/util.o	\
-$(EXCEPTION_OBJS) $(CATALYST_OBJS) $(OBJ_DIR)/logger.o
+$(EXCEPTION_OBJS) $(CATALYST_OBJS) $(OBJ_DIR)/logger.o $(OBJ_DIR)/enum_char.o
 
 TRANSFORM_LEX_TEST_OBJS := $(OBJ_DIR)/transform_lex_test.o	\
 $(OBJ_DIR)/transform_lex_wrapper.o
@@ -84,7 +87,9 @@ ALL_DEPS := $(ALL_OBJS:.o=.d)
 #
 # Listing of all programs that this Makefile can build
 #
-PROGRAMS := $(BIN_DIR)/shield $(BIN_DIR)/transform_lex_test $(BIN_DIR)/shield_make_package_string $(BIN_DIR)/database_test $(BIN_DIR)/introspection_test
+PROGRAMS := $(BIN_DIR)/shield $(BIN_DIR)/transform_lex_test	\
+$(BIN_DIR)/shield_make_package_string $(BIN_DIR)/database_test	\
+$(BIN_DIR)/introspection_test
 
 #
 # Default action

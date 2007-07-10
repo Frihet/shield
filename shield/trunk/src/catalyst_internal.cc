@@ -10,7 +10,7 @@ namespace shield
   {
     
     transform::printable *internal::
-    operator () (transform::printable *node)
+    catalyze (transform::printable *node)
     {
       return node->internal_transform ();
     }

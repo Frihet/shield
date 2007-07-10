@@ -143,10 +143,14 @@ namespace
 
 	    case 'd':
 	      if (contains(optarg, "transform", "all"))
-		shield::transform::debug.enable ();
+		{
+		  shield::transform::debug.enable ();
+		}
 
 	      if (contains(optarg, "catalyst", "all"))
-		shield::catalyst::debug.enable ();
+		{
+		  shield::catalyst::debug.enable ();
+		}
 	      break;
 
 	    case '?':
@@ -213,17 +217,17 @@ main (int argc, char **argv)
 	      str="";
 	      
 	    }
-	  catch (shield::exception::exception &e)
+	  catch (const shield::exception::exception &e)
 	    {
 	      err ++;
 	      error << e.what ();
 	      
 	      break;
 	    }
-	  catch (std::exception &e)
+	  catch (const std::exception &e)
 	    {
 	      err ++;
-	      error << string("BUG! Unexpected exception thrown: ")+e.what ();
+	      error << string("Non-shield exception thrown: ")+e.what ();
 	      
 	      break;
 	    }

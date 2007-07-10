@@ -1,7 +1,8 @@
 /**
 @file logger.hh
 
-A logger class. The logger does not contain any concept of
+A simple, generic logger class making it easy to selectively log very
+specific log event types. The logger does not contain any concept of
 loglevels. Instead, the idea is to create lots and lots of logger
 objects. That way, it becomes easy to enable logging of a specific
 type of event, thus avoiding being drowned in unrelated log messages
@@ -21,6 +22,12 @@ as published by the Free Software Foundation; version 2 or later.
 #include <string>
 #include <iostream>
 #include <set>
+/**
+@namespace logger
+
+Logger namespace. Defined in the logger.hh file. Provides the logger class. For performing logging. 
+
+*/
 
 namespace logger
 {

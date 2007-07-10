@@ -9,7 +9,8 @@
 
    The functions in this function may throw the exception::database exception
 
-   @package Shield
+   @remark package: shield
+
    @author Axel Liljencrantz
 
    This file is free software; you can redistribute it and/or
@@ -29,6 +30,12 @@
 namespace shield
 {
   
+  /**
+     @namespace shield::database
+
+     All database querying functions and classes.
+  */
+
   namespace database
   {
     

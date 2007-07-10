@@ -152,13 +152,68 @@ namespace util
 
   string cxx_demangle (const string &in)
   {
+    string res = in;
+
+    /*
+      Start by trying to do a plain demangle
+    */
+    char *demangled = cplus_demangle (in.c_str (), DMGL_PARAMS | DMGL_ANSI);
+    char *begin = demangled;
+    char *end;
+
+    if (!demangled)
+      {
+	/*
+	  Ok, that didn't work. The argument might not be a complete
+	  function call, but in fact only a mangled class name. If so,
+	  we need prepend '_ZN1aE' to the mangled text, which should
+	  hopefully mean a call to the function 'a' with the class as
+	  the parameter. 
+
+	  This is _obviously_ completely dependant on the mangling
+	  scheme, but we don't really have that much to lose, since if
+	  this isn't valid, we'll just return the mangeld string. Keep
+	  in mind that the above function call is able to
+	  automatically classify the mangling scheme of the mangled
+	  name - it shouldn't be able to missclassify a 'mixed'
+	  scheme and return something invalid.
+	*/
+	demangled = cplus_demangle ((string ("_ZN1aE")+in).c_str (), DMGL_PARAMS | DMGL_ANSI);
+	if (demangled)
+	  {
+	    /*
+	      We did it! Victory dance!
+
+	      Yes! Yes! Yay! Yay! 
+	      
+	      Yes! Yes! Yay! Yay! 
+	      
+	      Yes! Yes! Yay! Yay! 
+	      
+	      All we have to do now is strip away the 'a' function
+	      call to get only the class definition.
+	    */
+	    begin = strchr( demangled, '(');
+	    if (!begin)
+	      begin = demangled;
+	    else
+	      begin++;
+	    
+	    end = strrchr (demangled, ')');
+	    if (end)
+	      *end = 0;
+	  }
+      }
     
-    char *foo = cplus_demangle (in.c_str (), 0);
+    //    cerr << in << " -> " << (foo?foo:in) << endl;
 
-    if (foo)
-      return foo;
+    if (demangled)
+      {
+	res = begin;
+	free (demangled);
+      }
 
-    return in;
+    return res;
   }
 
 }

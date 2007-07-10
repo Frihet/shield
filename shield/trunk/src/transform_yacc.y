@@ -69,7 +69,6 @@ namespace shield
   printable *printable_val;
   select *select_val;
   text *text_val;
-  attribute *attribute_val;
   type *type_val;
   key_type key_type_val;
   unsigned long long ull_val;
@@ -659,7 +658,7 @@ namespace shield
 
 %type <key_type_val> key_type constraint_key_type opt_key_or_index
 
-%type <attribute_val> attribute
+%type <printable_val> attribute
 
 %type <printable_val> opt_create_table_options create3 create_table_options create_table_option default_charset char select_option
 
@@ -805,7 +804,7 @@ namespace shield
 
 %type <printable_val> comp_op
 
-%type <chain_val> select_item_list derived_table_list join_table_list opt_insert_update field_list table_list
+%type <chain_val> select_item_list derived_table_list join_table_list opt_insert_update field_list table_list fields 
 
 %type <printable_val> query change select do drop replace 
 	update delete truncate rename
@@ -815,7 +814,7 @@ namespace shield
 	repair restore backup analyze check start checksum
 	field_list_item field_spec kill column_def key_def
 	keycache_list assign_to_keycache preload_list preload_keys
-	no_braces delete_limit_clause fields 
+	no_braces delete_limit_clause 
 	procedure_list procedure_list2 procedure_item handler
 	opt_ignore opt_column opt_restrict
 	grant revoke set lock unlock string_list field_options field_option
@@ -861,20 +860,25 @@ query:
           { 
 	    if ($1)
 	    {
+	      chain *query_list = new chain ();
+	      printable *root = new fake_query (query_list);
+	      query_list->push ($1);
 	      shield::catalyst::validation v;
-	      $1 = $1->transform (v);
+	      root = root->transform (v);
 
 	      shield::catalyst::debug << "Validation catalyst pass 1 done";
 	      
 	      shield::catalyst::internal i;
-	      $1 = $1->transform (i);	      
+	      root = root->transform (i);	      
 	      shield::catalyst::debug << "Internal catalyst done";
 	      
-	      $1 = $1->transform (v);
+	      root = root->transform (v);
 
 	      shield::catalyst::debug << "Validation catalyst pass 2 done";
 
-	      cout << *$1;
+	      shield::transform::debug << ("final tree:\n" + root->get_tree ());
+
+	      cout << *root;
 	    }
 	    printable_delete();
 	  }
@@ -1518,15 +1522,7 @@ create2a:
 
 	    for( i=$1 -> begin (); i<$1 -> end (); i++ )
 	      {
-		attribute *attr = dynamic_cast<attribute *> (*i);
-		if (attr)
-		  {
-		    key->push (*i);
-		  }
-		else
-		  {
-		    field->push (*i);
-		  }
+		field->push (*i);
 	      }
 
 	    $$ -> set_field_list (field);
@@ -1745,7 +1741,7 @@ key_def:
 	    key -> set_key_type ($1);
 	    key -> set_name ($2);
 	    key -> set_key_list ($5);
-	    $$ = new attribute (0, key);
+	    $$ = key;
 	  }
 	| opt_constraint constraint_key_type opt_ident key_alg '(' key_list ')'
 	  { 
@@ -1753,7 +1749,7 @@ key_def:
 	    key -> set_key_type ($2);
 	    key -> set_name ($3);
 	    key -> set_key_list ($6);
-	    $$ = new attribute (0, key);
+	    $$ = key;
 	  }
 	| opt_constraint FOREIGN KEY_SYM opt_ident '(' key_list ')' references
 	  { throw exception::unsupported (__FILE__, __LINE__); }
@@ -1788,7 +1784,7 @@ constraint:
 field_spec:
 	field_ident type opt_attribute
 	  {
-	    if ($3)
+	    /*	    if ($3)
 	      {
 		chain::const_iterator i;
 		for (i=$3->begin (); i<$3->end (); i++)
@@ -1801,7 +1797,7 @@ field_spec:
 		  }
 		    
 	      }
-
+	    */
 	    $$ = new field_spec ($1, $2, $3);
 	  }
 	;
@@ -1809,15 +1805,15 @@ field_spec:
 type:
 	int_type opt_len field_options	
 	  { 
-	      $$ = new type ( new text ("number"), $2, $3);
+	      $$ = new type ( DATA_TYPE_NUMBER, $2, $3);
 	  }
 	| real_type field_options 
 	  {
-	    $$ = new type (new text ("double"), $2);
+	    $$ = new type (DATA_TYPE_FLOAT, $2);
 	  }
 	| real_type '(' num ',' num ')' field_options 
 	  {
-	    $$ = new type (new text ("double"), new paran (new text ($3), new text ($5)), $7);
+	    $$ = new type (DATA_TYPE_FLOAT, new paran (new text ($3), new text ($5)), $7);
 	  }
 	| FLOAT_SYM float_options field_options { throw exception::unsupported (__FILE__, __LINE__); }
 	| BIT_SYM			{ throw exception::unsupported (__FILE__, __LINE__); }
@@ -1826,11 +1822,11 @@ type:
 	| BOOLEAN_SYM			{ throw exception::unsupported (__FILE__, __LINE__); }
 	| char '(' num ')' opt_binary
 	  {
-	    $$ = new type (new text ("char"), new paran (new text ($3)), $5);
+	    $$ = new type (DATA_TYPE_CHAR, new paran (new text ($3)), $5);
 	  }
-	| char opt_binary		
+	| char opt_binary
 	  { 
-	    $$ = new type ($1, $2);
+	    $$ = new type (DATA_TYPE_CHAR, $2);
 	  }
 	| nchar '(' num ')' opt_bin_mod	{ throw exception::unsupported (__FILE__, __LINE__); }
 	| nchar opt_bin_mod		{ throw exception::unsupported (__FILE__, __LINE__); }
@@ -1839,32 +1835,30 @@ type:
 	| varchar '(' num ')' opt_binary 
 	  {
 	    if( $3 < 4000 )
-	      $$ = new type ( new text ("varchar2"), new paran ( new text (stringify ($3))), $5 );
+	      $$ = new type ( DATA_TYPE_VARCHAR, new paran ( new text (stringify ($3))), $5 );
 	    else
 	      {
-		$$ = new type ( new text ("clob"), $5 );
-		$$ -> set_indexable (false);
+		$$ = new type ( DATA_TYPE_CLOB, $5 );
 	      }
 	  }
 	| nvarchar '(' num ')' opt_bin_mod
 	  {
 	    if( $3 < 4000 )
-	      $$ = new type ( new text ("varchar2"), new paran ( new text (stringify ($3))), $5 );
+	      $$ = new type ( DATA_TYPE_VARCHAR, new paran ( new text (stringify ($3))), $5 );
 	    else
 	      {
-		$$ = new type ( new text ("clob"), $5 );
-		$$ -> set_indexable (false);
+		$$ = new type ( DATA_TYPE_CLOB, $5 );
 	      }
 	  }
 	| VARBINARY '(' NUM ')' 	{ throw exception::unsupported (__FILE__, __LINE__); }
 	| YEAR_SYM opt_len field_options { throw exception::unsupported (__FILE__, __LINE__); }
 	| DATE_SYM			
 	{
-	  $$ = new type (new text ("date"));
+	  $$ = new type (DATA_TYPE_DATE);
 	}
 	| TIME_SYM
 	{
-	  $$ = new type (new text ("date"));
+	  $$ = new type (DATA_TYPE_DATE);
 	}
 	| TIMESTAMP opt_len
 	  {
@@ -1872,7 +1866,7 @@ type:
 	  }
 	| DATETIME			
 	{
-	  $$ = new type (new text ("datetime"));
+	  $$ = new type (DATA_TYPE_DATETIME);
 	}
 	| TINYBLOB			{ throw exception::unsupported (__FILE__, __LINE__); }
 	| BLOB_SYM opt_len		{ throw exception::unsupported (__FILE__, __LINE__); }
@@ -1884,23 +1878,19 @@ type:
 	| LONG_SYM varchar opt_binary	{ throw exception::unsupported (__FILE__, __LINE__); }
 	| TINYTEXT opt_binary	
 	  {
-	    $$ = new type ( new text ("clob"), $2 );
-	    $$ -> set_indexable (false);
+	    $$ = new type ( DATA_TYPE_CLOB, $2 );
 	  }
 	| TEXT_SYM opt_len opt_binary
 	  {
-	    $$ = new type ( new text ("clob"), $3 );
-	    $$ -> set_indexable (false);
+	    $$ = new type ( DATA_TYPE_CLOB, $3 );
 	  }
 	| MEDIUMTEXT opt_binary
 	  {
-	    $$ = new type ( new text ("clob"), $2 );
-	    $$ -> set_indexable (false);
+	    $$ = new type ( DATA_TYPE_CLOB, $2 );
 	  }
 	| LONGTEXT opt_binary	      
 	  {
-	    $$ = new type ( new text ("clob"), $2 );
-	    $$ -> set_indexable (false);
+	    $$ = new type ( DATA_TYPE_CLOB, $2 );
 	  }
 	| DECIMAL_SYM float_options field_options
                                         { throw exception::unsupported (__FILE__, __LINE__); }
@@ -2019,34 +2009,34 @@ opt_attribute_list:
 	;
 
 attribute:
-	NULL_SYM	  { $$ = new attribute (new text ("null")); }
+	NULL_SYM	  { $$ = new text ("null"); }
 	| not NULL_SYM	  
 	  {
-	    $$ = new attribute (new chain( new text ("not"), new text ("null"))); 
+	    $$ = new chain( new text ("not"), new text ("null")); 
 	  }
 	| DEFAULT now_or_signed_literal
 	  {
-	    $$ = new attribute (new chain( new text ("default"), $2)); 
+	    $$ = new chain( new text ("default"), $2); 
 	    $$ -> set_push_front (true);
 	  }
 	| ON UPDATE_SYM NOW_SYM optional_braces 
           { throw exception::unsupported (__FILE__, __LINE__); }
 	| AUTO_INC	  
 	{
-	  $$ = new attribute (0, new auto_increment ()); 
+	  $$ = new auto_increment (); 
 	}
 	| SERIAL_SYM DEFAULT VALUE_SYM
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| opt_primary KEY_SYM 
 	  {
 	    if ($1) 
-	      $$ = new attribute (new chain ($1, new text ("key")));
+	      $$ = new chain ($1, new text ("key"));
 	    else
 	      throw exception::unsupported (__FILE__, __LINE__); 
 	  }
 	| UNIQUE_SYM	  
        	  {
-	    $$ = new attribute (new text ("unique")); 
+	    $$ = new text ("unique"); 
 	  }
 	| UNIQUE_SYM KEY_SYM 
 	  { throw exception::unsupported (__FILE__, __LINE__); }
@@ -2891,7 +2881,7 @@ predicate:
           { throw exception::unsupported (__FILE__, __LINE__); }
         | bit_expr IN_SYM '(' ')'
           { 
-	    $$ = new text( "0 < 0");
+	    $$ = new text( "(0 < 0)");
 	  }
         | bit_expr IN_SYM '(' expr ')'
           { 
@@ -2958,19 +2948,19 @@ bit_factor:
 
 value_expr:
 	value_expr '+' term	{ 
-	  $$ = new chain (new cast ($1, CONTEXT_NUMBER), new text("+"), new cast ($3, CONTEXT_NUMBER)); 
+	  $$ = new chain (new cast ($1, DATA_TYPE_NUMBER), new text("+"), new cast ($3, DATA_TYPE_NUMBER)); 
 	}
 	| value_expr '-' term	
 	{
-	  $$ = new chain (new cast ($1, CONTEXT_NUMBER), new text("-"), new cast ($3, CONTEXT_NUMBER)); 
+	  $$ = new chain (new cast ($1, DATA_TYPE_NUMBER), new text("-"), new cast ($3, DATA_TYPE_NUMBER)); 
 	}
 	| value_expr '+' interval_expr
 	{
-	  $$ = new chain (new text ("shield.date_char"), new paran (new text ("shield.date_parse"), new paran ($1), new text ("+"), $3));
+	  $$ = new chain (new cast ($1, DATA_TYPE_DATE | DATA_TYPE_DATETIME), new text ("+"), $3);
 	}
 	| value_expr '-' interval_expr
 	{
-	  $$ = new chain (new text ("shield.date_char"), new paran (new text ("shield.date_parse"), new paran ($1), new text ("-"), $3));
+	  $$ = new chain (new cast ($1, DATA_TYPE_DATE | DATA_TYPE_DATETIME), new text ("-"), $3);
 	}
 	| term ;
 
@@ -2984,7 +2974,7 @@ term_operator: '*' { $$ = new text( "*" ); }
 term:
 	term term_operator factor		
 	{
-	  $$ = new chain( new cast ($1, CONTEXT_NUMBER), $2, new cast ($3, CONTEXT_NUMBER)); 
+	  $$ = new chain( new cast ($1, DATA_TYPE_NUMBER), $2, new cast ($3, DATA_TYPE_NUMBER)); 
 	}
 	| factor ;
 
@@ -3120,7 +3110,7 @@ simple_expr:
 	| DATABASE '(' ')'
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| DATE_SYM '(' expr ')'
-	  { $$ = new date_function (new chain (new text ("shield.date"), new paran ($3))); }
+	  { $$ = new function (new text ("shield.date"), DATA_TYPE_DATE, $3); }
 	| DAY_SYM '(' expr ')'
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| ELT_FUNC '(' expr ',' expr_list ')'
@@ -3303,12 +3293,12 @@ simple_expr:
 			    res -> push (new text ("||"));
 			  }
 
-			res -> push (new paran (new cast (*i, CONTEXT_STRING)));
+			res -> push (new paran (new cast (*i, DATA_TYPE_CHAR)));
 			
 			i++;
 		      }
 		    $$ = new paran (res);
-		    $$ -> set_context (CONTEXT_STRING);
+		    $$ -> set_context (DATA_TYPE_CHAR);
 		  }
 	      }
 	    else if (func_name == "concat_ws")
@@ -3327,7 +3317,7 @@ simple_expr:
 		    chain *res = new chain ();
 		    i=$3 -> begin (); 
 
-		    printable *sep = new cast (*i, CONTEXT_STRING);
+		    printable *sep = new cast (*i, DATA_TYPE_CHAR);
 		    
 		    i++;
 		    
@@ -3340,12 +3330,12 @@ simple_expr:
 			    res -> push (new text ("||"));			
 			  }
 
-			res -> push (new paran (new cast (*i, CONTEXT_STRING)));
+			res -> push (new paran (new cast (*i, DATA_TYPE_CHAR)));
 			
 			i++;
 		      }
 		    $$ = new paran (res);
-		    $$ -> set_context (CONTEXT_STRING);
+		    $$ -> set_context (DATA_TYPE_CHAR);
 		  }
 	      }
 	    else if (contains (func_name.c_str (), "date_add", "date_sub"))
@@ -3361,94 +3351,38 @@ simple_expr:
 	      }
 	    else
 	      {
-		string ok[] = 
-		  {
-		    "count",
-		    "min",
-		    "max",
-		    "lower",
-		    "upper",
-		    "lpad"
-		  }
-		;
 
-		static map<string,string> func_translate;
-		static map<string,string> func_date;
-
-		static map<string,context> func_context;
+		static map<string,pair<string,data_type> > func_translate;
 
 		if (func_translate.size () == 0)
 		  {
-		    func_translate["char_length"] = "length";
-		    func_translate["length"] = "lengthb";
 		    /*
-		      This function returns a string, not a date, so
-		      it should not be a member of the func_date map,
-		      since that would cause incorrect behaviour when
-		      using addition.
+		      DATA_TYPE_UNDEFINED return type means same
+		      return type as input type of first argument.
 		    */
-		    func_translate["date_format"] = "shield.date_format";
+		    func_translate["char_length"] = make_pair ("length", DATA_TYPE_NUMBER);
+		    func_translate["length"] = make_pair ("lengthb", DATA_TYPE_NUMBER);
+		    func_translate["date_format"] = make_pair ("shield.date_format", DATA_TYPE_CHAR);
+		    func_translate["count"] = make_pair ("count", DATA_TYPE_NUMBER);
+		    func_translate["min"] = make_pair ("min", DATA_TYPE_UNDEFINED);
+		    func_translate["max"] = make_pair ("max", DATA_TYPE_UNDEFINED);
+		    func_translate["lower"] = make_pair ("lower", DATA_TYPE_CHAR);
+		    func_translate["upper"] = make_pair ("upper", DATA_TYPE_CHAR);
+		    func_translate["lpad"] = make_pair ("lpad", DATA_TYPE_CHAR);
+		    func_translate["date"] = make_pair ("shield.date", DATA_TYPE_DATE);
+		    func_translate["curdate"] = make_pair ("shield.curdate", DATA_TYPE_DATE);
+		    func_translate["now"] = make_pair ("shield.now", DATA_TYPE_DATETIME);
 		  }
 
-		if (func_context.size () == 0)
-		  {
-		    func_context["count"] = CONTEXT_NUMBER;
-		    func_context["lower"] = CONTEXT_STRING;
-		    func_context["upper"] = CONTEXT_STRING;
-		  }
+		map<string,pair<string,data_type> >::iterator i = func_translate.find (func_name);
 
-		if (func_date.size () == 0)
+		if (i != func_translate.end ())
 		  {
-		    func_date["curdate"] = "shield.curdate";
-		    func_date["current_date"] = "shield.curdate";
-		    func_date["now"] = "shield.now";
-		    func_date["date"] = "shield.date_";
-		  }
-
-		bool is_ok = false;
-		for (int i = 0; i<(sizeof (ok)/sizeof (string)); i++ )
-		  {
-		    if (func_name == ok[i])
-		      {
-			is_ok = true;
-		      }
-		  }
-
-		if (is_ok)
-		  {
-		    $$ = new chain ($1, new paran ($3)); 
+		    $$ = new function (new text (i->second.first), i->second.second, $3); 
 		  }
 		else
 		  {
-		    map<string,string>::iterator i = func_translate.find (func_name);
-		    if (i != func_translate.end ())
-		      {
-			$$ = new chain (new text ((*i).second), new paran ($3)); 
-
-		      }
-		    else
-		      {
-			map<string,string>::iterator j = func_date.find (func_name);
-			if (j != func_date.end ())
-			  {
-	    
-			    paran *param = 0;
-			    if ($3)
-			      param = new paran ($3);
-
-			    text *name = new text ((*j).second);
-			    $$ = new chain (name, param);
-	  
-			  }
-			else
-			  throw exception::syntax (string("Unknown function '") + func_name + "'");
-		      }
-		  }
-
-		map<string,context>::iterator i = func_context.find (func_name);
-		if (i != func_context.end ())
-		  {
-		    $$ -> set_context ((*i).second);
+		    throw exception::syntax (string("Unknown function '") + func_name + "'");
 		  }
 	      }
 	  }
@@ -4107,11 +4041,11 @@ order_list:
 	order_list ',' order_ident order_dir
 	{
 	  $$ = $1;
-	  $$ -> push (new chain( new cast ($3,CONTEXT_SORTABLE), $4)); 
+	  $$ -> push (new chain( new cast ($3,DATA_TYPE_SORTABLE), $4)); 
 	}
 	| order_ident order_dir
 	{
-	  $$ = new chain (new chain( new cast ($1,CONTEXT_SORTABLE), $2 )); 
+	  $$ = new chain (new chain( new cast ($1,DATA_TYPE_SORTABLE), $2 )); 
 	  $$ -> set_separator (",");
 	}
         ;
@@ -4401,8 +4335,15 @@ insert_field_spec:
 	;
 
 fields:
-	fields ',' insert_ident { $$ = new chain ($1, new text (","), $3); }
+	fields ',' insert_ident 
+	{ 
+	  $$->push ($3);
+	}
 	| insert_ident
+	{ 
+	  $$ = new chain ($1); 
+	  $$->set_separator (",");
+	}
 	;
 
 insert_values:
@@ -5148,12 +5089,12 @@ signed_literal:
 	| '+' NUM_literal 
 	{ 
 	  $$ = new chain (new text ("+"), $2);
-	  $$ -> set_context (CONTEXT_NUMBER);
+	  $$ -> set_context (DATA_TYPE_NUMBER);
 	}
 	| '-' NUM_literal
 	{ 
 	  $$ = new chain (new text ("-"), $2);
-	  $$ -> set_context (CONTEXT_NUMBER);
+	  $$ -> set_context (DATA_TYPE_NUMBER);
 	}
 	;
 
@@ -5178,27 +5119,27 @@ NUM_literal:
 	NUM 
 	{ 
 	  $$ = new text (yytext);
-	  $$ -> set_context (CONTEXT_NUMBER);
+	  $$ -> set_context (DATA_TYPE_NUMBER);
 	}
 	| LONG_NUM	
 	{ 
 	  $$ = new text (yytext);
-	  $$ -> set_context (CONTEXT_NUMBER);
+	  $$ -> set_context (DATA_TYPE_NUMBER);
 	}
 	| ULONGLONG_NUM	
 	{ 
 	  $$ = new text (yytext);
-	  $$ -> set_context (CONTEXT_NUMBER);
+	  $$ -> set_context (DATA_TYPE_NUMBER);
 	}
         | DECIMAL_NUM
 	{ 
 	  $$ = new text (yytext);
-	  $$ -> set_context (CONTEXT_NUMBER);
+	  $$ -> set_context (DATA_TYPE_NUMBER);
 	}
 	| FLOAT_NUM
 	{ 
 	  $$ = new text (yytext);
-	  $$ -> set_context (CONTEXT_NUMBER);
+	  $$ -> set_context (DATA_TYPE_NUMBER);
 	}
 	;
 

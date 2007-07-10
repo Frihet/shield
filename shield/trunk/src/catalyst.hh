@@ -3,7 +3,8 @@
 
    Headers for all catalysts. Catalysts are functors used to transform the AST. 
 
-   @package shield
+   @remark package: shield
+
    @author Axel Liljencrantz
 
    This file is free software; you can redistribute it and/or
@@ -17,6 +18,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 
 #include "logger.hh"
 
@@ -29,6 +31,13 @@ namespace shield
     class query;
     class chain;
   }
+
+  /**
+     
+  @namespace shield::catalyst
+  
+  Functors that traverse the AST and transform the nodes.
+  */
 
   namespace catalyst
   {
@@ -60,7 +69,16 @@ namespace shield
 	 
 	 @param node The node to transform
       */
-      virtual transform::printable *operator () (transform::printable *node) = 0;
+      transform::printable *operator () (transform::printable *node);
+      virtual transform::printable *catalyze (transform::printable *node)=0;
+    private:
+      
+      /**
+	 This set contains a listing of all transformed nodes. It is
+	 used to keep the same node from being transformed more than
+	 once.
+      */
+      set<transform::printable *>__done;
     };
 
 
@@ -80,7 +98,7 @@ namespace shield
       {
       }
 
-      virtual transform::printable *operator () (transform::printable *node);
+      virtual transform::printable *catalyze (transform::printable *node);
 
     private:
       map<string, transform::printable *> __mapping;
@@ -88,14 +106,16 @@ namespace shield
     ;
 
     /**
-       Simple class to validate that the tree is sane. Never changes any nodes.
+       Simple class to validate that the tree is sane. Never changes
+       any nodes. Detects null nodes, orphaned nodes, nodes who are
+       their own parents and query-less.
     */
     class validation
       : public catalyst
     {
     public:
       
-      virtual transform::printable *operator () (transform::printable *node);
+      virtual transform::printable *catalyze (transform::printable *node);
     }
     ;
 
@@ -112,18 +132,28 @@ namespace shield
       {
       }
 
-      virtual transform::printable *operator () (transform::printable *node);
+      virtual transform::printable *catalyze (transform::printable *node);
       
     private:
       transform::query *__query;
     }
     ;
 
+    /**
+       Perform all node-specific transforms.
+
+       Every AST node has the option of specifying a transform that
+       should be performed on that node. This is a simple method for
+       delaying the execution of some init code from parse time till
+       after the full tree has been parsed and can be safely
+       traversed. The \c internal catalyst traverses the entire tree
+       and calls all such internal transform methods.
+    */
     class internal 
       : public catalyst
     {
     public:
-      virtual transform::printable *operator () (transform::printable *node);
+      virtual transform::printable *catalyze (transform::printable *node);
     }
     ;
 
@@ -143,18 +173,18 @@ namespace shield
 	 The catalyst function. Detects printable_alias nodes and
 	 handles them.
       */
-      virtual transform::printable *operator () (transform::printable *node);
+      virtual transform::printable *catalyze (transform::printable *node);
 
       /**
 	 Return the accumulated list of tables
       */
-      transform::chain *get_table_list (void)
+      vector<transform::printable *> &get_table_list (void)
       {
 	return __res;
       }
       
     private:
-      transform::chain *__res;
+      vector<transform::printable *>__res;
       transform::query *__query;
     }
     ;

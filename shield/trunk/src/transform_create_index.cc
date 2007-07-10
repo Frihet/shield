@@ -6,6 +6,12 @@ namespace shield
 
   namespace transform
   {
+
+    create_index::
+    create_index ()
+      : __table_query (0), __type (PRIMARY_KEY)
+    {
+    }
     
     void create_index::
     set_key_type (key_type type)
@@ -29,15 +35,15 @@ namespace shield
     create_index::get_filtered_key_list(chain *field_list)
     {
       chain *original_key_list = _get_child<chain> (CHILD_KEY_LIST);
-
+      
       if (!original_key_list)
-	throw exception::not_found ("");
+	throw exception::not_found (get_node_name () + ": Could not locate original key list");
 
       chain *key_list = new chain ();
       key_list->set_separator (",");
-
+      
       chain::const_iterator i, j;
-
+      
       for (i=original_key_list->begin (); i < original_key_list->end (); i++ )
 	{
 	  bool ok = true;
@@ -47,21 +53,27 @@ namespace shield
 	  for (j=field_list->begin (); j < field_list->end (); j++ )
 	    {
 	      field_spec *s = dynamic_cast<field_spec *> (*j);
-	      assert (s);
-
+	      
+	      if (!s)
+		{
+		  throw exception::invalid_state ("Expected field list item of type field_spec *, got type " + (*j)->get_node_name () + "*");
+		}
+	      
 	      string field_name = s->get_name ()->str ();
-
-	      if (field_name == key_name && !s->get_type ()->get_indexable ())
+	      
+	      if ((field_name == key_name) && (!s->get_type ()->get_indexable ()))
 		{
 		  ok = false;
+		  break;
 		}
 
 	    }
 
 	  if (ok)
-	    key_list->push (*i);
+	    {
+	      key_list->push (*i);
+	    }
 	}
-  
       if (key_list->size () > 0)
 	{
 	  (*key_list)[0]->set_skip_space (true);
@@ -108,46 +120,43 @@ namespace shield
 
       if (!_get_child (CHILD_KEY_LIST))
 	throw shield::exception::not_found ("create_index node with no key list");
+      
+      if (!__table_query)
+	throw shield::exception::not_found ("create_index::_print called without first calling internal_transform ()");
 
-      create_table *table_query = dynamic_cast<create_table *> (get_query ());
-
-      if (!table_query)
-	throw shield::exception::not_found ("create_index called with no parent create_table node");
-
-      chain *field_list = table_query->get_field_list ();
-
-      printable *table_name = table_query->get_name ();
-      assert (table_name);
-
+      chain *field_list = __table_query->get_field_list ();
+      
+      printable *table_name = __table_query->get_name ();
+      if (!table_name)
+	throw exception::invalid_state (get_node_name () + ": table name not set");
+      
       chain *key_list = get_filtered_key_list (field_list);
-
-      if (key_list->size () == 0)
+      
+      if (!key_list->size ())
 	{
 	  /*
 	    No indexable columns in this index Return.
 	  */
 	  return;
 	}
-
-      chain *prev_index = table_query->get_prev_index_list ();
-
-      if (prev_index)
+      
+      vector<printable *> &prev_index = __table_query->get_prev_index_list ();
+      
+      vector<printable *>::const_iterator pii;
+      for (pii = prev_index.begin (); pii < prev_index.end (); pii++)
 	{
-	  chain::const_iterator pii;
-	  for (pii = prev_index->begin (); pii < prev_index->end (); pii++)
+	  create_index *other = dynamic_cast<create_index *> (*pii);
+	  chain *other_key_list = other->get_filtered_key_list (field_list);
+	  if (key_list_match (key_list, other_key_list))
 	    {
-	      create_index *other = dynamic_cast<create_index *> (*pii);
-	      chain *other_key_list = other->get_filtered_key_list (field_list);
-	      if (key_list_match (key_list, other_key_list))
-		{
-		  return;
-		}
+	      return;
 	    }
 	}
-
+	
+      
       if (__type == PRIMARY_KEY)
 	{
-
+	  
 	  if (_get_child (CHILD_NAME))
 	    {
 	      throw exception::syntax ("Named primary keys are not supported!");
@@ -189,6 +198,18 @@ namespace shield
 
     }
 
+
+    printable *create_index::
+    internal_transform (void)
+    {
+      __table_query = dynamic_cast<create_table *> (get_parent ()->get_query ());
+
+      if (!__table_query)
+	throw shield::exception::not_found ("create_index called with no parent create_table node");
+
+      _add_query (this);
+      return 0;
+    }
 
   }
 

@@ -1,10 +1,49 @@
 #include "transform.hh"
+#include "exception.hh"
 
 namespace shield
 {
 
   namespace transform
   {
+
+    /*
+      Reparent this node as a new query, but first find out a bit about the table, like what field we operate on
+    */
+    printable *auto_increment::
+    internal_transform (void)
+    {
+      printable *node;
+      field_spec *spec;
+      __table_query = dynamic_cast<create_table *> (get_parent ()->get_query ());
+
+      
+      if (!__table_query)
+	{
+	  throw exception::invalid_state ("auto_increment query found with non-create table-query");
+	}
+     
+      node = this;
+      while (true)
+	{
+	  
+	  if (!node)
+	    {
+	      throw exception::invalid_state ("Could not locate field for auto_increment column");
+	    }
+	  spec = dynamic_cast<field_spec *> (node);
+	  if (spec)
+	    break;
+
+	  node = node->get_parent ();
+	}
+
+      __field_name = spec->get_name ();
+
+      _add_query (this);
+
+      return 0;
+    }
 
     /**
        Print 
@@ -13,10 +52,13 @@ namespace shield
     _print (ostream &stream)
     {
 
-      create_table *table_query = dynamic_cast<create_table *> (get_query ());
-      assert (table_query);
+      if (!__table_query)
+	throw exception::invalid_state ("auto_increment column with no table information");
 
-      string t_name = table_query->get_name ()->str ();
+      if (!__field_name)
+	throw exception::invalid_state ("auto_increment column has no field name");
+      
+      string t_name = __table_query->get_name ()->str ();
       string f_name = __field_name->str ();
 
       string name = t_name + "_" + f_name;

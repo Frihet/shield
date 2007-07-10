@@ -70,12 +70,17 @@ namespace shield
       return _get_child<text> (CHILD_FIELD);
     }
 
-    context identity::
+    data_type identity::
     get_context ()
     {
-      //      cerr << "get_context on identity "<< str () << endl;
 
       query *q = get_query ();
+      
+      if (!q)
+	{
+	  cerr << "parent = " << get_parent ()->get_node_name () << endl;
+	  throw exception::invalid_state ("No parent query in identity node");
+	}
 
       text *table = get_table ();
 
@@ -84,28 +89,16 @@ namespace shield
 	  table = q->get_table (get_field ());
 	}
 
-      assert (table);
+      if (!table)
+	throw exception::invalid_state ("Could not introspect table in identity::get_context ()");
 
       text *real_table = q->unalias_table (table);
  
-      //      cerr << "Table " << get_table ()->str () << " unaliased to " << real_table->str () << endl;
-     
-      //      cerr << "before introspection of table " << real_table->str ()<< endl;
       introspection::table &itbl = introspection::get_table (real_table->str ());
       const introspection::column &ic = itbl.get_column (get_field ()->str ());
       const introspection::column_type &tp = ic.get_type ();
-      //      cerr << "after introspection" << endl;
-
-      if (tp.is_char ())
-	return CONTEXT_STRING;
-
-      if (tp.is_number ())
-	return CONTEXT_NUMBER;
-
-      if (tp.is_lob ())
-	return CONTEXT_LOB;
-
-      throw exception::syntax ("Unknown column type in column " + this->str ());
+      
+      return tp.get_type ();
       
     }
 

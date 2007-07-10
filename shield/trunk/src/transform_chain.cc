@@ -1,6 +1,7 @@
 
 #include "transform.hh"
 #include "catalyst.hh"
+#include "exception.hh"
 
 namespace shield
 {
@@ -37,27 +38,27 @@ namespace shield
 	push (l);
     }
 
-
     void chain::
     _print (ostream &stream)
     {
-      vector<printable *>::const_iterator i;
+      vector<printable *>::const_iterator it;
 
-      for( i = __chain.begin (); i < __chain.end (); i++ )
+      for( it = __chain.begin (); it != __chain.end (); ++it )
 	{
-	  if (i != __chain.begin () )
+	  if (it != __chain.begin () )
 	    {
 	      stream << __separator;
-	      if (__do_line_break && ((i-__chain.begin ()) %__do_line_break == 0))
+	      if (__do_line_break && ((it-__chain.begin ()) %__do_line_break == 0))
 		{
 		  stream << endl;
 		}
 	    }
 
-	  printable *it = *i;
+	  printable *item = *it;
 
-	  assert (it);
-	  stream << *it;
+	  if (!item)
+	    throw exception::invalid_state ("Null element in chain");
+	  stream << *item;
 
 	}
     }
@@ -66,12 +67,18 @@ namespace shield
     printable *chain::
     transform (catalyst::catalyst &catalyst)
     {
-
       for (int i=0; i<__chain.size (); i++)
 	{
 	  __chain[i] = __chain[i]->transform (catalyst);
-	  assert (__chain[i]);
-	  __chain[i]->set_parent (this);
+	  if (!__chain[i])
+	    {
+	      __chain.erase(begin ()+i, begin()+i+1);
+	      i--;
+	    }
+	  else
+	    {
+	      __chain[i]->set_parent (this);
+	    }
 	}
  
       return catalyst (this);
@@ -99,6 +106,30 @@ namespace shield
 	      __chain.push_back (p);
 	    }
 	}
+    }
+
+    string chain::
+    get_tree (int level)
+    {
+      string res(level*2, ' ');
+      res += get_node_name () + "\n";
+      const_iterator it;
+
+      for (it=__chain.begin (); it!=__chain.end (); ++it)
+	{
+	  res += (*it)->get_tree (level+1);
+	}
+
+      return res;
+    }
+    
+    data_type chain::
+    get_context (void)
+    {
+      if (!size ())
+	return DATA_TYPE_UNDEFINED;
+
+      return __chain[0]->get_context ();
     }
 
   }

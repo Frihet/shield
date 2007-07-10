@@ -31,7 +31,7 @@ namespace shield
 
     printable::
     printable()
-      :  __push_front (false), __context (CONTEXT_UNDEFINED), __skip_space (false), __parent (0)
+      :  __push_front (false), __context (DATA_TYPE_UNDEFINED), __skip_space (false), __parent (0)
     {
       all_printable.push_back (this);
     }
@@ -70,7 +70,9 @@ namespace shield
     void printable::
     _set_child (child_type id, printable *value)
     {
-      __children[id] = value;
+      //      if (!value)
+  //	throw exception::invalid_param ("Called set_child with null value");
+	__children[id] = value;
       if (value)
 	value->set_parent (this);
     }
@@ -102,7 +104,8 @@ namespace shield
 	  if (p)
 	    {	  
 	      p = p->transform (catalyst);
-	      p->set_parent (this);
+	      if (p)
+		p->set_parent (this);
 	      i->second = p;
 	    }
 	}
@@ -124,7 +127,83 @@ namespace shield
       throw exception::invalid_type (what, type);
     }
 
+    string printable::
+    get_node_name ()
+    {
+      string full = util::cxx_demangle (typeid(*this).name ());
+      int pos = full.rfind("::");
+      if (pos != full.npos)
+	{
+	  full = full.substr (pos+2);
+	}
+      return full;
+    }
+
+    string printable::
+    get_path (bool is_first)
+    {
+      string res;
+
+      if (get_parent ())
+	{
+	  res = get_parent ()->get_path(false);
+	}
+
+      res += get_node_name ();
+      if (!is_first)
+	res += "/";
+      return res;
+    }
+
+    string printable::
+    get_tree (int level)
+    {
+      string res(level*2, ' ');
+      res += get_node_name () + "\n";
+      map<int, printable *>::const_iterator it;
+
+      for (it=__children.begin (); it!=__children.end (); ++it)
+	{
+	  if (it->second)
+	    res += it->second->get_tree (level+1);
+	}
+
+      return res;
+    }
     
+    void printable::
+    _add_query (query *q)
+    {
+      chain *qchain;
+
+      printable *p = this;
+      while (p->get_parent ()->get_parent ())
+	p = p->get_parent ();
+
+      /*
+	The resulting node of the above loop should be the child of the root node. This should be a chain, since the base of the tree should always look like this:
+	
+	fake_query
+           |
+           \--chain
+                |
+                \--query1
+                |
+                \--query2
+                |
+                \--...
+      */
+
+      qchain = dynamic_cast<chain *> (p);
+      
+      if (!qchain)
+	throw exception::invalid_state ("Root query chain could not be found");
+
+      qchain->push (q);
+      q->set_parent (qchain);
+      
+    }
+
   }
 
 }

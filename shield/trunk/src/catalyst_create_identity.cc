@@ -10,7 +10,7 @@ namespace shield
   {
 
     transform::printable *create_identity::
-    operator () (transform::printable *p)
+    catalyze (transform::printable *p)
     {
       
       transform::text * t = dynamic_cast<transform::text *> (p);
@@ -25,7 +25,6 @@ namespace shield
 	{
 	  return p;
 	}
-
 
       transform::printable *parent = t->get_parent ();
       bool parent_is_id = dynamic_cast<transform::identity *> (parent) != 0;
@@ -44,7 +43,7 @@ namespace shield
 	{
 	  throw exception::invalid_state ("Could not find corresponding table for identity '" + p->str () + "'");
 	}
-      
+
       transform::identity *res = new transform::identity (0, 0, t);
       res->set_parent (parent);
       

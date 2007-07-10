@@ -32,7 +32,7 @@ namespace shield
 
 	  for (it=str.begin (); it!=str.end (); ++it)
 	    {
-	      if (*it=='#')
+	      if (*it=='(')
 		{
 		  begin = it+1;
 		  found_paran = true;
@@ -44,7 +44,6 @@ namespace shield
 		    {
 		      string sub (begin, it);
 		      __stack_trace += util::cxx_demangle (sub.c_str ());
-		      
 		      begin = it;
 		      break;
 		    }

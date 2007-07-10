@@ -19,6 +19,11 @@ as published by the Free Software Foundation; version 2 or later.
 
 #include "exception.hh"
 
+/**
+   @namespace util
+   
+   Common utility functions.
+*/
 namespace util
 {
 
@@ -64,7 +69,23 @@ namespace util
      maximum line lengths in oracle.
   */
   string oracle_escape (const string &in);
-  
+
+  /**
+     Attempt to demangle the supplied C++ class/function name. If this
+     fails, return the original string.
+
+     This function is just a wrapper aound the cplus_demangle function
+     from the libiberty library. The relevant c files have been
+     lightly modified to avoid having to include nerly the entire
+     libiberty library, but are otherwise unchanged.
+
+     Including the source code of a library directly in a project
+     instead of installing and linking to the library is ugly, silly
+     and a very bad idea, but unfortunatly, this is for some reason
+     the method of using libiberty that the developers themseves
+     recommend. This in combination with the fact that no modern
+     distributions package libiberty leavs fairly little choice. :-(
+  */
   string cxx_demangle (const string &in);
 
 }

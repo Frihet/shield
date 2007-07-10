@@ -1,7 +1,6 @@
 
-#include <assert.h>
-
 #include "transform.hh"
+#include "exception.hh"
 #include "introspection.hh"
 
 using namespace shield;
@@ -102,16 +101,15 @@ namespace shield
     void insert::
     _print (ostream &stream)
     {
-      assert (get_name ());
-      assert (get_value_list ());
+      if (!get_name () || !get_value_list ())
+	{
+	  throw exception::invalid_state (get_node_name () + ": name or value list not set when calling _print ()");
+	}
+      /*
+	This code fills out the field list if not given.
 
-      /*
-	This code fills out the field list if not given. For a while,
-	I though this might be needed for some types of inserts, but
-	it seems I was wrong. I have not removed the code though,
-	since it may be useful in the future.
+	Needed since we need to know what type every column has
       */
-      /*
       if (!get_field_list ())
 	{
 	  chain *fl = new chain ();
@@ -131,7 +129,7 @@ namespace shield
 	  
 	    set_field_list (fl);
 	  }
-      */
+      
 
       chain::const_iterator i;  
 
@@ -140,25 +138,44 @@ namespace shield
 
 	  if (i!=get_value_list ()->begin ())
 	    stream << sep;
-
+	  
 	  stream << "insert into" << *get_name () << endl;
-	  if (get_field_list ())
+	  get_field_list ()->set_skip_space (true);
+	  stream << "(" << *get_field_list () << ")" << endl;
+	  
+	  (*i)->set_skip_space (true);
+
+	  introspection::table &itable = introspection::get_table (get_name ()->str ());
+	  
+	  stream << "values (";
+
+	  chain *field_list = dynamic_cast<chain *> (get_field_list ());
+	  chain *value = dynamic_cast<chain *> (*i);
+	  chain::const_iterator j;
+	  for (int j=0; j<value->size (); j++)
 	    {
-	      get_field_list ()->set_skip_space (true);
-	      stream << "(" << *get_field_list () << ")" << endl;
+	      printable *column_name = (*field_list)[j];
+
+	      const introspection::column icolumn = itable.get_column (column_name->str ());
+
+	      if (j)
+		stream << ",";
+	      cast *c =new cast ((*value)[j], icolumn.get_type ().get_type ());
+	      c->set_parent (this);
+	      stream << *c;
 	    }
 
-	  (*i)->set_skip_space (true);
-	  stream << "values (" << *(*i) << ")";
+	  stream << ")";
 	  stream << endl << endl;
 	}
 
     }
 
-    chain *insert::
-    _get_condensed_table_list ()
+    void insert::
+    _make_condensed_table_list ()
     {
-      return new chain (get_name ());
+      _condensed_table_list.clear ();
+      _condensed_table_list.push_back (get_name ());
     }
 
   }

@@ -15,7 +15,7 @@ namespace shield
     text (unsigned long long val, text_type type, bool insert_whitespace)
       : __val (stringify (val)), __type (type)
     {
-      set_context (CONTEXT_NUMBER);
+      set_context (DATA_TYPE_NUMBER);
       set_skip_space (!insert_whitespace);
     }
 
@@ -228,6 +228,38 @@ namespace shield
 	  }
       
 	}
+
+    }
+    
+    string text::
+    get_node_name ()
+    {
+      string res = printable::get_node_name ();
+      string content = str ();
+      string suffix = "...";
+      res += ": ";
+      
+      
+      for (int i=0; i<20; i++)
+	{
+	  if (i == content.size ())
+	    {
+	      suffix = "";
+	      break;
+	    }
+
+	  if (content[i]<32)
+	    {
+	      res += " ";
+	    }
+	  else
+	    {
+	      res += content[i];
+	    }
+	}
+      
+      res += suffix;
+      return res;
     }
 
   }

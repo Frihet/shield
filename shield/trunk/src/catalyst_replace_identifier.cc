@@ -10,7 +10,7 @@ namespace shield
   {
 
     transform::printable *replace_identifier::
-    operator () (transform::printable *node)
+    catalyze (transform::printable *node)
     {
       transform::text *t = dynamic_cast<transform::text *> (node);
       if (!t)

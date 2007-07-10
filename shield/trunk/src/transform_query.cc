@@ -31,29 +31,33 @@ namespace shield
     text *query::
     get_table (text *field)
     {
-      chain *list = _get_condensed_table_list ();
+      _make_condensed_table_list ();
+      
 
-      //cerr << "Looking for table for field " << field->str () << endl;
-
-      chain::const_iterator i;
-      for (i=list->begin (); i<list->end (); i++)
+      vector<printable *> list = _condensed_table_list;
+      
+      vector<printable *>::const_iterator i;
+      for (i=list.begin (); i<list.end (); i++)
 	{
-
+	  
+	  if (!*i)
+	    throw exception::invalid_state ("Null item in _condensed_table_list");
+	  
 	  text *t = dynamic_cast<text *> (*i);
 	  identity *id = dynamic_cast<identity *> (*i);
-
+	  
 	  if (id)
 	    {
 	      t = id->get_table ();
 	    }
 
-	  assert (t);
+	  if (!t)
+	    throw exception::invalid_state (string ("Item of unknown type in _condensed_table_list: ") + (*i)->get_node_name ());
 
 	  text *unaliased = unalias_table (t);
-
-	  assert (unaliased);
-
-	  //cerr << "Looking in table " << unaliased->str () << endl;
+	  
+	  if (!unaliased)
+	    throw exception::invalid_state ( string ("Could not unalias item ") + t->str ());
 
 	  introspection::table &table = introspection::get_table (unaliased->str ());
 
@@ -61,27 +65,25 @@ namespace shield
 	    {
 	      const introspection::column &col = table.get_column (field->str ());
 	      
-	      //cerr << "Found it" << endl;
 	      /*
 		If that column didn't exist, an exception would have been thrown. We found it! Yay!
 
-		Note that we use t here, not unaliased. 
+		Note that we use \c t here, not \c unaliased. 
 	      */
 	      return new text(t->str ());
 	    }
 	  catch (exception::not_found &e)
 	    {
-	      //     cerr << "Not there" << endl;
 	    }
 	}
 
       return 0;
     }
 
-    chain *query::
-    _get_condensed_table_list ()
+    void query::
+    _make_condensed_table_list ()
     {
-      throw exception::syntax ("Called get_condensed_table_list () on query which does not supply table list");
+      throw exception::syntax ("Called make_condensed_table_list () on query which does not supply table list");
     }
 
   }

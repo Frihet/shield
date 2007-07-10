@@ -1,5 +1,7 @@
 #include "transform.hh"
 #include "catalyst.hh"
+#include "exception.hh"
+#include "enum_char.hh"
 
 namespace shield
 {
@@ -7,12 +9,15 @@ namespace shield
   namespace transform
   {
 
-
     void update::
     _print (ostream &stream)
     {
-      assert (get_table_list ());
-      assert (get_update_list ());
+      
+      if (!get_table_list () || !get_update_list ())
+	{
+	  throw exception::invalid_state (get_node_name () + ": name or value list not set when calling _print ()");
+	}
+      
       stream << "update" << *get_table_list () << " set " << *get_update_list ();
       if (get_where_clause ())
 	{
@@ -34,13 +39,14 @@ namespace shield
       return this->transform (ident);
     }
 
-
-    chain *update::
-    _get_condensed_table_list (void)
+    
+    void update::
+    _make_condensed_table_list (void)
     {
-      catalyst::find_table cat (this);
+      _condensed_table_list.clear ();
+      catalyst::find_table cat (this);      
       transform (cat);
-      return cat.get_table_list ();
+      _condensed_table_list = cat.get_table_list ();
     }
 
 

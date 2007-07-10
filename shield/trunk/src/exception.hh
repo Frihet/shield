@@ -32,6 +32,15 @@ as published by the Free Software Foundation; version 2 or later.
 namespace shield
 {
 
+  /**
+     @namespace shield::exception
+
+     All Shield exceptions. All exceptions in this namespace inherit
+     the ability to to print a stack trace from
+     shield::exception::exception. On platforms where the function
+     calls in the stack trace are mangled, the names are autometically
+     unmangled to make the trace significantly easier to read.
+  */
   namespace exception
   {
 
@@ -39,37 +48,42 @@ namespace shield
     
     /**
        The base class for all shield exceptions. Contains convenience
-       methods for easily printing out an error message.
-
+       methods for easily printing out an error message and an associated stack trace.
     */
     class exception
       : public std::exception
     {
     public:
 
+      exception (const exception &e)
+      {
+	__what = strdup (e.__what);
+      }
+
       /**
 	 Create a stack trace of the calling function. 
 	 
-	 The function names in the trace are not demangled. There is a
-	 name demangling function in libiberty, but using it seems
-	 like to much of a chore to be worth it.
-
-	 Also, it would be very nice to get line numbers, but there
-	 does not seem to be any method of obtaining that.
+	 On platforms where the function calls in the stack trace are
+	 mangled, the names are automatically unmangled to
+	 make the trace significantly easier to read.
+	 
+	 It would be very nice to get line numbers for the stack
+	 trace, but there does not seem to be any method of obtaining
+	 that. 
       */
       exception (void);
 
       /**
-	 Returns the string specified using \c _set_what ().
+	 Returns the string specified using \c _set_what () and a human readable stack trace.
       */
       virtual const char *what (void) const throw ()
       {
-	string res = __what + "\n" + __stack_trace;
-	return res.c_str ();
+	return __what;
       }
-
+      
       virtual ~exception (void) throw ()
       {
+	free (__what);
       }
 
     protected:
@@ -79,7 +93,8 @@ namespace shield
       */
       void _set_what (const string &what)
       {
-	__what = what;
+	string tmp = what + "\n" + __stack_trace;
+	__what = strdup (tmp.c_str ());
       }
 
     private:
@@ -87,13 +102,19 @@ namespace shield
       /**
 	 The message string returned by what ().
       */
-      string __what;
+      char *__what;
+
+      /**
+	 The stack trace, which is created by the constructor.
+      */
       string __stack_trace;
     }
     ;
-    /**
-       This exception is thrown when a a valid SQL query is entered, which shield can not handle because that functionality has yet to be implemented.
+ 
 
+   /**
+       This exception is thrown when a a valid SQL query is entered, which shield can not handle because that functionality has yet to be implemented.
+       This is thrown in lots and lots of places in the parser, since only a very small subset of the entire syntax tree is supported.       
     */
     class unsupported
       : public exception
@@ -102,7 +123,8 @@ namespace shield
 
       unsupported (const string &file, int line);
   
-    };
+    }
+    ;
 
     /**
        This exception is thrown when the later stages of parsing encounter a problem in the supplied syntax.
@@ -155,7 +177,9 @@ namespace shield
     ;
 
     /**
-       This exception is thrown when data (usually an AST node) is in an invalid state, such as if there are cycles in the the tree
+       Exception for when data (usually an AST node) is in
+       an invalid state, such as if there are cycles in the the tree
+       or if a node is of an unexpected type. 
     */
     class invalid_state
       : public exception
@@ -171,7 +195,23 @@ namespace shield
     ;
 
     /**
-       This exception is thrown when data (usually an AST node) is in an invalid state, such as if there are cycles in the the tree
+       Exception for an invalid input parameter to a method or function. 
+    */
+    class invalid_param
+      : public exception
+    {
+    public:
+
+      invalid_param (const string &what)
+      {
+	_set_what (string ("Invalid parameter: ")+what);
+      }
+
+    }
+    ;
+
+    /**
+       Exception for database errors.
     */
     class database
       : public exception
@@ -185,7 +225,6 @@ namespace shield
 
     }
     ;
-
 
   }
 

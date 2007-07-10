@@ -4,7 +4,11 @@
 	Most of these functions need more testing.
 
 	date_format has unimeplemented commands.
-	
+
+DATE date (STRING)
+STRING date_format (DATE||DATE_TIME)	
+DATE curdate()
+DATETIME now()
 */
 
 SET SERVEROUTPUT ON;
@@ -810,3 +814,43 @@ begin
 	res := shield.make_select_query ('select', 'from test2 group by test2.id;', shield_list ('test2'));
 end;
 /
+
+drop table shield_table_lookup;
+
+/*
+
+*/
+create table shield_table_lookup
+(
+       	id number (14, 0),     
+	table_name varchar2 (64),     
+	column_name varchar2 (64),    
+	column_type varchar2 (32) 
+);
+
+drop sequence shield_table_lookup_id_s_;
+
+create sequence shield_table_lookup_id_s_
+start with 1
+increment by 1
+nomaxvalue;
+
+create or replace trigger shield_table_lookup_id_t_
+before insert on shield_table_lookup
+for each row
+begin
+        select shield_table_lookup_id_s_.nextval into :new.id from dual;
+end;
+/
+
+
+drop index shield_table_lookup_idx2;
+
+create index shield_table_lookup_idx1
+on shield_table_lookup (table_name);
+
+drop index shield_table_lookup_idx2;
+
+create index shield_table_lookup_idx2
+on shield_table_lookup (table_name, column_name);
+

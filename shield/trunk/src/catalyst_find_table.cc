@@ -1,5 +1,5 @@
-#include "catalyst.hh"
 #include "transform.hh"
+#include "catalyst.hh"
 
 namespace shield
 {
@@ -11,11 +11,10 @@ namespace shield
     find_table (transform::query *q)
       : __query (q)
     {
-      __res = new transform::chain ();
     }
 
     transform::printable *find_table::
-    operator () (transform::printable *p)
+    catalyze (transform::printable *p)
     {
       transform::printable_alias *a = dynamic_cast<transform::printable_alias *> (p);
 
@@ -23,7 +22,7 @@ namespace shield
 	{
 	  if (a->get_alias ())
 	    {
-	      __res->push (a->get_alias ());
+	      __res.push_back (a->get_alias ());
 	    }
 	  else
 	    {
@@ -34,7 +33,7 @@ namespace shield
 		{
 		  if (print->get_query () == __query)
 		    {
-		      __res->push (new transform::text (print->str ()));
+		      __res.push_back (print);
 		    }
 		}
 	    }
@@ -46,7 +45,7 @@ namespace shield
 	    {
 	      find_table c2 (sel);
 	      sel->get_table_list ()->transform (c2);
-	      __res->insert(__res->end (), c2.__res->begin (), c2.__res->end ());
+	      __res.insert(__res.end (), c2.__res.begin (), c2.__res.end ());
 	    }
 	}
 

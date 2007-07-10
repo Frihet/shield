@@ -9,7 +9,7 @@ namespace shield
   {
 
     transform::printable *validation::
-    operator () (transform::printable *p)
+    catalyze (transform::printable *p)
       {
 	/*
 	  Check that we have a valid node

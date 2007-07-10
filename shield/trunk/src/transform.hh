@@ -14,84 +14,6 @@
 
 */
 
-/**
-   @mainpage Shield API documentation
-
-   @section Introduction
-
-   Shield, or SQL Helper Interfacce Enabling Legacy Databases, is a
-   wrapper program, that is intended to make it possible to use the
-   Oracle database program with program that where written for the
-   MySQL database.
-
-   @section tech Technical description
-   
-   At it's heart, Shield is a compiler. Shield translates from one
-   language, MySQL SQL, into another language which may seem similar
-   but only on the surface, namely Oracle SQL. This translation is
-   divided into three distinct phases, parsing, transformation and
-   output.
-
-   @subsection parsing Parsing
-
-   This first pass has the goal of creating a tree structure representing the query to 
-   translate. This tree is called the Abstract Syntax Tree or AST. Parsing is performed by two 
-   modules. 
-
-   - The first is the lexer, also called the tokenizer. This module divides the input into logical tokens and classifies them. The lexer is written in the flex language, and is defined in transform_lex.y. Flex files consist of a list of regular expressions, and an action associated with each expression. The longest matching regular expression will isrepeatedly chosen and its action is run.
-
-   - The second is the actual parser. This module actually constructs the AST from the tokens. The lexer is written as a bison grammar and is defined in transform_yacc.y. A bison grammar consists of a series of rules. Each rule tells how the compiler how to transform a set of zero or more nodes into a single node. When parsing a file, these rules are repeatedly applied on the input until only a singe node remains.
-
-   For more information about flex and bison, see the respective
-   manuals.
-
-   @subsection transformation Transformation
-
-   This consists of various transformations of the AST. It is
-   implemented using the transform method and functors deriving from
-   the catalyst base class. The catalyst base class defines a functor
-   that takes a AST node as argument and returns a node to replace it
-   with. 
-
-   @subsection output Output
-
-   The AST is written into a output stream. Each node has a _print
-   method that prints that specific node and all its children. The
-   _print method is overloaded by most nodes to perform node type
-   specific formating. 
-
-   Some nodes, like the cast node, which is used to convert an
-   expression to a specific type, do all their actual work at print
-   time.
-
-   @subsection memory-management Memory managment
-
-   The non-parser part of shield is written using a simple modern C++
-   memory managment style where memory managment is handled implicityl
-   and very few objects are dynamically allocated. Unfortunatly, bison
-   requires all AST nodes to be inserted into a union, and C++ does
-   not permit putting classes in union, so this is not possible in the
-   parser. Instead, Shield has an extremly simply allocation strategy:
-   The entire AST is allocated using a non-oveloaded new operator, and
-   each node is inserted into a vector. Once the tree has been
-   written, every element of the vector is deleted. This has a few
-   drawbacks:
-
-   - Multiple inheritance is not allowed
-
-   - Multithreading in the parser is not allowed without some clever coding. In order to have multithreading, one would need to use Thread Local Storage for the allocation vector.
-
-   The benefit of this memory model is that memory leaks in the parser
-   are extremely rare. The above limitations are not a serious
-   limitations, and both can be worked around with some work.
-   
-   @subsection style Coding style
-
-   Shield relies heavily on dynamic casting to perform its task. Most
-   catalysts only work on one specific type of nodes, and test each
-   node using dynamic casting.
-
-*/
 
 
 #ifndef TRANSFORM_HH
@@ -102,9 +24,8 @@
 #include <vector>
 #include <map>
 #include <stdarg.h>
-#include <assert.h>
 
-//#include "util.hh"
+#include "shield.hh"
 #include "logger.hh"
 
 namespace shield
@@ -117,6 +38,16 @@ namespace shield
     class catalyst;
   }
 
+  namespace introspection
+  {
+    class column_type;
+  }
+
+  /**
+     @namespace shield::transform
+
+     All AST node types as well as parsing functions.
+  */
   namespace transform
   {
 
@@ -192,8 +123,8 @@ namespace shield
 
     /**
        List of all node child types. This list has to be shared
-       between all node types to avoid clashes when one node type
-       inherits from its child.
+       between all node types to avoid clashes when a node type
+       inherits nodes from its parent.
     */
     enum child_type
       {
@@ -233,51 +164,10 @@ namespace shield
 	CHILD_CREATE_OPTIONS,
 	CHILD_INITIAL_DATA,
 	CHILD_LIKE_CLAUSE,
+	CHILD_PARAM
       }
     ;
     
-    /**
-       The various possible contexts for a printable to be in
-    */
-    enum context
-      {
-	/**
-	   Unknown context.
-	*/
-	CONTEXT_UNDEFINED,
-	
-	/**
-	   Any lob context, like lob, clob, blob
-	*/
-	CONTEXT_LOB,
-	
-	/**
-	   Any numeric context
-	*/
-	CONTEXT_NUMBER, 
-	
-	/**
-	   Any string context, like char, varchar, etc.
-	*/
-	CONTEXT_STRING,
-	
-	/**
-	   Any type that can be sorted, compared, etc. I.e. _not_ lob.
-	*/
-	CONTEXT_SORTABLE,
-	
-	/**
-	   A date type
-	*/
-	CONTEXT_DATE,
-	
-	/**
-	   A datetime object
-	*/
-	CONTEXT_DATETIME,
-      }
-    ;
-
     class printable_alias;
     class limit;
     class chain;
@@ -285,6 +175,7 @@ namespace shield
     class query;
     class type;
     class text;
+    class create_table;
 
     /**
        Check whether the specified string is a reserved word
@@ -336,20 +227,20 @@ namespace shield
       string str (void);
 
       /**
-	 Set the context of this printable to be the desired
+	 Set the data_type of this printable to be the desired
 	 state. This function does not work on all subclasses - many
 	 of them, such as field names, know what context they belong
 	 to and ignore this value.
       */
-      void set_context (context c)
+      void set_context (data_type c)
       {
 	__context = c;
       }
 
       /**
-	 Returns the \c context of this printable. 
+	 Returns the \c data_type of this printable. 
       */
-      virtual context get_context (void)
+      virtual data_type get_context (void)
       {
 	return __context;
       }
@@ -389,7 +280,7 @@ namespace shield
       /**
 	 Reparent this node.
 
-	 @param the new parent. May not be null, or an invalid_state
+	 @param parent the new parent. May not be null, or an invalid_state
 	 exception is thrown.
       */
       void set_parent (printable *parent);
@@ -428,6 +319,26 @@ namespace shield
       {
 	return __push_front;
       }
+
+      /**
+	 Return a string showing the path from the root to this node
+
+	 @param is_first internal parameter caller should not set this.
+      */
+      string get_path ( bool is_first=true);
+
+      /**
+	 Returns a hopefully human readble string representing this
+	 node type. Overloaded versions of this method may give additional information.
+      */
+      virtual string get_node_name ();
+
+      /**
+	 Return a string representing the tree created by this node and all its children
+
+	 @param level internal parameter caller should not set this.
+      */
+      virtual string get_tree (int level=0);
 
     protected:
 
@@ -473,6 +384,10 @@ namespace shield
 	return res_cast;
       }
 
+      /*
+	Add a new query to the root of the AST. 
+      */
+      void _add_query (query *q);
 
     private:
 
@@ -506,10 +421,10 @@ namespace shield
       bool __skip_space;
 
       /**
-	 The type context of this node. This is only valid for nodes that
+	 The type data_type of this node. This is only valid for nodes that
 	 represent an expression.
       */
-      context __context;
+      data_type __context;
 
       /**
 	 The parent of this node
@@ -520,6 +435,7 @@ namespace shield
 	 A map of all children
       */
       map<int, printable *> __children;
+
     };
 
     /**
@@ -558,8 +474,10 @@ namespace shield
 	 Returns a chain object whare each child is a table. The
 	 tables may be aliased.
       */
-      virtual chain *_get_condensed_table_list (void);
+      virtual void _make_condensed_table_list (void);
       
+      vector<printable *> _condensed_table_list;
+
     private:
 
     }
@@ -572,7 +490,7 @@ namespace shield
     */
     ostream &operator << (ostream &stream, printable &e);
 
-    /*
+    /**
       A printable that represents an arbitrary piece of text, a
       string literal, or an identifier.
 
@@ -580,11 +498,11 @@ namespace shield
       unescaping any mysql escape sequences and escape using oracle
       syntax.
 
-      When type is EXACT, not transformation will be performed.
+      - When type is EXACT, not transformation will be performed.
 
-      When type is IDENTIFIER, reserved words will have an underscore appended to them.
+      - When type is IDENTIFIER, reserved words will have an underscore appended to them.
 
-      When type is IDENTIFIER_QUOTED, the quoting is stripped and reserved words will have an underscore appended to them.
+      - When type is IDENTIFIER_QUOTED, the quoting is stripped and reserved words will have an underscore appended to them.
     */
     class text 
       : public printable
@@ -602,7 +520,7 @@ namespace shield
 	: __val (text), __type (type)
       {
 	if (type == LITERAL)
-	  set_context (CONTEXT_STRING);
+	  set_context (DATA_TYPE_CHAR);
 
 	set_skip_space (!insert_whitespace);
       }
@@ -624,7 +542,7 @@ namespace shield
       {
 	return __val.length ();
       }
-
+      
       /**
 	 Returns the type of text
       */
@@ -632,6 +550,8 @@ namespace shield
       {
 	return __type;
       }
+
+      virtual string get_node_name ();
 
     protected:
       
@@ -656,7 +576,8 @@ namespace shield
 
     /**
        This class represents a sequence of child nodes with no known
-       internal relation. 
+       internal relation except for their internal order. The class
+       mostly implements the vector interface.
     */
     class chain 
       : public printable
@@ -672,7 +593,7 @@ namespace shield
       typedef vector<printable *>::iterator iterator;
 
       /**
-	 Construct a new chain with the specifgied contents.
+	 Construct a new chain with the specified contents.
       */
       chain (printable *a=0, 
 	     printable *b=0, 
@@ -783,6 +704,16 @@ namespace shield
       {
 	__chain.insert (pos, begin, end);
       }
+      
+      /**
+	 Returns a string reresenting this node and its shildren as a tree
+      */
+      virtual string get_tree (int level=0);
+
+      /**
+	 Return the context of the first subitem
+      */
+      virtual data_type get_context (void);
 
     protected:
 
@@ -854,7 +785,6 @@ namespace shield
 
       void set_table_list( chain *list )
       {
-	assert (list);
 	_set_child (CHILD_TABLE_LIST, list);
       }
 
@@ -963,7 +893,7 @@ namespace shield
 	 names may be aliased. This list includes tables in
 	 subqueries.
       */
-      virtual chain *_get_condensed_table_list (void);
+      virtual void _make_condensed_table_list (void);
 
     };
 
@@ -1000,40 +930,6 @@ namespace shield
     }
     ;
     
-    
-    /**
-       A class for defining a table attribute. The point of this class
-       is that a lot of things can be defined inline in a mysql create
-       table query that need to be defined as a separate query in
-       Oracle. This class has a get_post_render () method that allows
-       you to return a printable that is used _after_ the first query.
-    */
-    class attribute
-      : public printable
-    {
-    public:
-      attribute (printable *render=0, printable *post_render=0)
-      {
-	_set_child (CHILD_RENDER, render);
-	_set_child (CHILD_POST_RENDER, post_render);
-      }
-
-      printable *get_post_render (void)
-      {
-	return _get_child (CHILD_POST_RENDER);
-      }
-
-      printable *get_render (void)
-      {
-	return _get_child (CHILD_RENDER);
-      }
-
-    protected:
-      virtual void _print (ostream &stream);
-
-    }
-    ;
-
     /**
        A class for creating an index
     */
@@ -1042,6 +938,7 @@ namespace shield
     {
     public:
 
+      create_index ();
       void set_key_type (key_type type);
       void set_name (printable *name);
       void set_key_list (chain *key_list);
@@ -1052,35 +949,77 @@ namespace shield
       */
       chain *get_filtered_key_list (chain *field_list);
 
+      /**
+	 Walk through tree to locate field and query information, then
+	 reparent this node as a separate query.
+      */
+      virtual printable *internal_transform (void);
+
     protected:
       
       virtual void _print (ostream &stream);
       
     private:
+      /**
+	 What type of index to create.
+      */
       key_type __type;
+
+      /**
+	 The query that created this node.
+	 
+	 This is not a child node, it should not be converted to using
+	 _set_child. It should not be transformed.
+      */
+      create_table *__table_query;
 
     }
     ;
 
+    /**
+       Creates sequences and triggers required to simulate an auto_increment:ed field under Oracle.
+
+    */
     class auto_increment
-      : public printable
+      : public query
     {
 
     public:
-      void set_field_name (printable *field_name)
-      {
-	__field_name = field_name;
-      }
+      /**
+	 Walk through tree to locate field and query information, then
+	 reparent this node as a separate query.
+      */
+      virtual printable *internal_transform (void);
 
     protected:
+      /**
+	 Create a new sequence and a trigger to simulate auto_increment
+      */
       virtual void _print (ostream &stream);
 
     private:
-      printable *__field_name;
 
+      /**
+	 The query that created this node.
+	 
+	 This is not a child node, it should not be converted to using
+	 _set_child. It should not be transformed.
+      */
+      create_table *__table_query;
+
+      /**
+	 The field to auto_increment.
+
+	 This is not a child node, it should not be converted to using
+	 _set_child. It should not be transformed.
+      */
+      printable *__field_name;
     }
     ;
 
+    /**
+       Node representing a field or table identity 
+    */
     class identity 
       : public printable
     {
@@ -1097,7 +1036,7 @@ namespace shield
       text *get_table ();
       text *get_field ();
 
-      virtual context get_context ();
+      virtual data_type get_context ();
 
     protected:
 
@@ -1108,6 +1047,9 @@ namespace shield
     }
     ;
 
+    /**
+       Print a table definition.
+    */
     class create_table 
       : public query
     {
@@ -1187,7 +1129,7 @@ namespace shield
 
       void set_check_existance (bool check);
   
-      chain *get_prev_index_list (void)
+      vector<printable *> &get_prev_index_list (void)
       {
 	return __prev_index_list;
       }
@@ -1196,17 +1138,23 @@ namespace shield
       virtual void _print (ostream &stream);
   
     private:
-      void post_render (ostream &stream, attribute *attr);
 
-    private:
-
+      /**
+	 If true, only define this table if it does not already exist
+      */
       bool __check;
-      chain *__prev_index_list;
+
+      /**
+	 List of all created indices. 
+      */
+      vector<printable *>__prev_index_list;
 
     }
     ;
     
-    
+    /**
+       Node representing an insert query
+    */
     class insert
       : public query
     {
@@ -1227,13 +1175,16 @@ namespace shield
       
     protected:
       virtual void _print (ostream &stream);
-      virtual chain *_get_condensed_table_list (void);
+      virtual void _make_condensed_table_list (void);
       
     private:
       bool __ignore;
     }
     ;
 
+    /**
+       Query for sropping a table
+    */
     class drop_table
       : public query
     {
@@ -1251,25 +1202,54 @@ namespace shield
     }
     ;
 
-    class date_function
+    /**
+       Node representing a sql function call. Contains information
+       about function return type.
+    */
+    class function
       : public printable
     {
 
     public:
 
-      date_function (printable *call)
-	: __call (call)
+      function (printable *name, data_type type, printable *param);
+
+      printable *get_name ()
       {
+	_get_child (CHILD_NAME);
       }
+
+      printable *get_param ()
+      {
+	_get_child (CHILD_PARAM);
+      }
+
+      /**
+	 Function calls have a complex get_context implementation. Or
+	 maybe it's more nasty than complex. Maybe it is both. Who can
+	 tell?
+
+	 Anyhow, when defined, a function is given a return type. This
+	 works well for most functions, and isn't a problem. But some
+	 functions have output types that depend on the input
+	 type. Nasty, that. What shield does is to try and walk down
+	 the tree to locate the first non-chain context, and return
+	 that. That should be the type of the first parameter, which
+	 should work for the functions we use.
+      */
+      virtual data_type get_context ();
 
     protected:
       virtual void _print (ostream &stream);
 
     private:
-      printable *__call;
+      data_type __type;
     }
     ;
 
+    /**
+       Node representing a date interval
+    */
     class interval 
       : public printable
     {
@@ -1279,12 +1259,12 @@ namespace shield
       {
 	_set_child (CHILD_EXPR, expr);
       }
-
+      
       void set_expr (printable *expr)
       {
 	_set_child (CHILD_EXPR, expr);
       }
-
+      
     protected:
       virtual void _print (ostream &stream);
   
@@ -1295,12 +1275,16 @@ namespace shield
     }
     ;
 
-
+    /**
+       Type definition node
+    */
     class type
       : public chain
     {
+
     public:
-      type (printable *a=0, 
+      type (data_type type,
+	    printable *a=0, 
 	    printable *b=0, 
 	    printable *c=0, 
 	    printable *d=0, 
@@ -1308,32 +1292,33 @@ namespace shield
 	    printable *f=0, 
 	    printable *g=0, 
 	    printable *h=0)
-	: chain (a, b, c, d, e, f, g, h), __indexable (true)
+	: __type (type), chain (a, b, c, d, e, f, g, h)
       {
       }
-
+      
       bool get_indexable (void)
       {
-	return __indexable;
+	return __type != DATA_TYPE_CLOB;
       }
-
-      void set_indexable (bool i)
-      {
-	__indexable = i;
-      }
-
+      
       string get_name (void)
       {
 	return (*this)[0]->str ();
       }
+      
+    protected:
+
+      virtual void _print (ostream &stream);
 
     private:
-
-      bool __indexable;
-
+      
+      data_type __type;
     }
     ;
 
+    /**
+       Node representing a field specification
+    */
     class field_spec
       : public printable
     {
@@ -1435,7 +1420,9 @@ namespace shield
     }
     ;
 
-
+    /**
+       A wildcarded field selection item for select queries.
+    */
     class select_item_wild 
       : public printable_alias
     {
@@ -1496,19 +1483,30 @@ namespace shield
     ;
 
     /**
-       A node representing a type cast. 
+       A node representing a type cast. Type casting can specify a
+       list of acceptable types, and unless the expression is already
+       of one of these types it will be cast to the one of them which
+       means the least loss of information.
     */
     class cast
       : public printable
     {
     public:
-      cast (printable *p, context c);
+      /**
+	 Create a new type cast node.
+	 
+	 @param p the expression to cast
+	 @param contexts an or:ed set of data_type values
+      */
+      cast (printable *p, int contexts);
+
+      virtual data_type get_context (void);
 
     protected:
       virtual void _print (ostream &stream);
 
     private:
-      context __context;
+      int __contexts;
 
     }
     ;
@@ -1634,7 +1632,7 @@ namespace shield
 
     protected:
       virtual void _print (ostream &stream);
-      virtual chain *_get_condensed_table_list (void);
+      virtual void _make_condensed_table_list (void);
 
     }
     ;
