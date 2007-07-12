@@ -1,5 +1,5 @@
-#include "introspection.hh"
-#include "transform.hh"
+#include "include/introspection.hh"
+#include "include/transform.hh"
 
 namespace shield
 {
@@ -7,6 +7,9 @@ namespace shield
   {
   
     using namespace shield::introspection;
+
+    logger::logger warning ("shield: introspection warning");
+    logger::logger debug ("shield: introspection debug");
 
     /*
       Map containing all previously introspected tables

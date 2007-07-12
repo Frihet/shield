@@ -1,5 +1,5 @@
-#include "transform.hh"
-#include "exception.hh"
+#include "include/transform.hh"
+#include "include/exception.hh"
 
 namespace shield
 {
@@ -11,12 +11,13 @@ namespace shield
     function (printable *name, data_type type, printable *param)
       : __type (type)
       {
-	if (!name || !param)
+	if (!name)
 	  {
-	    throw exception::invalid_param (get_node_name () +" constructor called with null param");
+	    throw exception::invalid_param (get_node_name () +" constructor called with null name");
 	  }
 	_set_child (CHILD_NAME, name);
-	_set_child (CHILD_PARAM, param);
+	if (param)
+	  _set_child (CHILD_PARAM, param);
       }
 
     data_type function::
@@ -25,6 +26,10 @@ namespace shield
       if (__type == DATA_TYPE_UNDEFINED)
 	{
 	  printable *node = _get_child (CHILD_PARAM);
+	  if (!node)
+	    {
+	      throw exception::invalid_state ("Function called with undefined return type and no parameter list");
+	    }
 	  while(true)
 	    {
 	      chain *ch = dynamic_cast<chain *> (node);
@@ -51,10 +56,15 @@ namespace shield
       if (!get_skip_space ())
 	stream << " ";
       
-      stream << *get_name () << " (";
-      
-      get_param ()->set_skip_space (true);
-      stream << *get_param () << ")";
+      stream << *get_name ();
+
+      if (get_param ())
+	{
+	  stream << " (";
+	  get_param ()->set_skip_space (true);
+	  stream << *get_param () << ")";
+	}
+
     }
 
   }

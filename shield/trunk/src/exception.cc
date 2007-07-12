@@ -3,8 +3,8 @@
 #include <execinfo.h>
 #include <signal.h>
 
-#include "exception.hh"
-#include "util.hh"
+#include "include/exception.hh"
+#include "include/util.hh"
 
 namespace shield
 {

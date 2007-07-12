@@ -5,10 +5,6 @@
 
 	date_format has unimeplemented commands.
 
-DATE date (STRING)
-STRING date_format (DATE||DATE_TIME)	
-DATE curdate()
-DATETIME now()
 */
 
 SET SERVEROUTPUT ON;
@@ -236,12 +232,6 @@ create or replace function shield_arb_agg_num (input number)
 	using shield_agg_arb_num_t;
 /
 
-/**
-	This type is used to pass around lists of table names in shield for functions that construct weird queries based on introspection data.
-*/
-create or replace type shield_list as varray (10) of varchar2(30);
-/
-
 create or replace package shield
 is
 	last_insert_id integer;
@@ -254,110 +244,26 @@ is
 		return number;
 
 	/**
-		This function takes a string containing a mysql-style date and converts it to an oracle date.
+		This function takes a date and strips the hour, 
+		minute and second information from it.
 	*/
-	function date_parse (str_date varchar2) 
+	function date_ (date_in date) 
 		return date deterministic;
 
 	/**
-		This function takes a string containing a mysql-style date and converts it to a number.
+		This is a workalike to the mysql date_format
+		function. It performs string formating on a date. Not
+		all formating commands are currently supported.
 	*/
-	function date_numeric(str_date varchar2) 
-		return number deterministic;
-
-	/**
-		This function takes a date and converts it to a string in the same format mysql uses.
-	*/
-	function date_char (da date) 
+	function date_format (da date, format varchar2) 
 		return varchar2 deterministic;
 
 	/**
-		This is a workalike to the mysql curdate function.
+		Returns the current date with hour, minute and second information stripped.
 	*/
+
 	function curdate 
-		return varchar2;
-
-	/**
-		This is a workalike to the mysql date function.
-	*/
-	function date_ (str_date varchar2) 
-		return varchar2 deterministic;
-
-	/**
-		This is a workalike to the mysql now function.
-	*/
-	function now 
-		return varchar2;
-
-	/**
-		This is a workalike to the mysql date_format function.
-	*/
-	function date_format (str_date varchar2, format varchar2) 
-		return varchar2 deterministic;
-
-	/**
-		This function is a no-op. 
-
-		The set of 'natural' functions are used to make sure that when comparing different field values, clobs are implicitly converted to chars, so that no error is thrown.
-	*/
-	function natural (in_val number) 
-		return number deterministic;
-	/**
-		This function converts a clob to a char. 
-
-		The set of 'natural' functions are used to make sure that when comparing different field values, clobs are implicitly converted to chars, so that no error is thrown.
-	*/
-	function natural (in_val clob) 
-		return varchar2 deterministic;
-	/**
-		This function is a no-op. 
-
-		The set of 'natural' functions are used to make sure that when comparing different field values, clobs are implicitly converted to chars, so that no error is thrown.
-	*/
-	function natural (in_val varchar2) 
-		return varchar2 deterministic;
-
-	/**
-		Perform null-safe equal comaprison, i.e. mysql <=> operator
-	*/
-	function null_safe_equal (v1 varchar2, v2 varchar) 
-		return char deterministic;
-
-	/**
-		Perform null-safe equal comaprison, i.e. mysql <=> operator
-	*/
-	function null_safe_equal (v1 number, v2 number) 
-		return char deterministic;
-
-	/**
-		Perform null-safe equal comaprison, i.e. mysql <=> operator
-	*/
-	function null_safe_equal (v1 clob, v2 clob) 
-		return char deterministic;
-
-	function equal (v1 number, v2 number) 
-		return char deterministic;
-
-	function equal (v1 clob, v2 clob) 
-		return char deterministic;
-
-	function equal (v1 varchar2, v2 varchar2) 
-		return char deterministic;
-
-	function equal (v1 varchar2, v2 number) 
-		return char deterministic;
-
-	function equal (v1 number, v2 varchar2) 
-		return char deterministic;
-
-	/**
-		This function creates and performs a select query using _all_ columns from the tables in the \c table_name varray, but without using a wildcard. This might seem useless (and it is) but it is needed since you can not use wildcards in subselect queries, and shield uses subselect to emulate the mysql limit clause.
-	*/
-	function make_select_limit_query (pre varchar2, post varchar2, table_name shield_list)
-		return number;
-
-	function make_select_group_query (pre varchar2, post varchar2, table_name shield_list, agg_name shield_list)
-		return number;
+		return date;
 
 end shield;
 /
@@ -372,90 +278,30 @@ is
 		return last_insert_id;
 	end;
 	
-	/*
-		Convert a date or datetime to an oracle date
-	*/
-	function date_parse (str_date varchar2) 
+	function date_ (date_in date) 
 		return date deterministic
 	is 
 	begin
-		if length (str_date) = 10 then
-			return to_date (str_date, 'yyyy-mm-dd');
-		else
-			return to_date (str_date, 'yyyy-mm-dd hh24:mi:ss');
-		end if;
+		return to_date (to_char (date_in, 'yyyy-mm-dd'), 'yyyy-mm-dd');
 	end;
 
-	/*
-		Convert a date or datetime variable to its numeric representation
-	*/
-	function date_numeric (str_date varchar2) 
-		return number deterministic
-	is 
-		da date;
-		str_res varchar2 (32);
-	begin
-		da := date_parse (str_date);
-
-		if length (str_date) = 10 then
-			str_res := to_char (da, 'yyyymmdd');
-		else
-			str_res := to_char (da, 'yyyymmddhh24miss');
-		end if;
-
-		return to_number(str_res);		
-	end;
-
-	/*
-		Convert an oracle date object to a datetime
-	*/
-	function date_char (da date) 
-		return varchar2 deterministic
-	is
-	
-	begin
-		return to_char (da, 'yyyy-mm-dd hh24:mi:ss');
-	end;
-
-	/*
-		Return the current date
-	*/
 	function curdate 
-		return varchar2
+		return date
 	is 
 	begin
-		return to_char (current_date, 'yyyy-mm-dd');
+		return shield.date_ (current_date);
 	end;
 
-	/*
-		Return the date portion of a datetime variable
-	*/
-	function date_ (str_date varchar2) 
-		return varchar2 deterministic
-	is 
-	begin
-		return substr (str_date, 1, 10);
-	end;
-
-	function now return varchar2
-	is 
-		tm varchar (32);
-	begin
-		return date_char (current_date);
-	end;
-
-	function date_format (str_date varchar2, 
+	function date_format (da date, 
 	                      format varchar2)
 		return varchar2 deterministic
 	is 
 		pos integer;
-		res varchar2 (256);
+		res varchar2 (512);
 		chr varchar2 (1);
-		da date;
 	begin
 		pos  := 1;
 		res  := '';
-		da := date_parse (str_date);
 
 		while pos <= length (format) loop
 			chr := substr (format,pos,1);
@@ -541,259 +387,6 @@ is
 
 	end;
 
-	function natural (in_val number) 
-		return number deterministic
-	is
-	begin
-		return in_val;
-	end;
-
-	function natural (in_val clob) 
-		return varchar2 deterministic
-	is
-	begin
-		return to_char(in_val);
-	end;
-
-	function natural (in_val varchar2) 
-		return varchar2 deterministic
-	is
-	begin
-		return in_val;
-	end;
-
-	function null_safe_equal (v1 varchar2, v2 varchar) 
-		return char deterministic
-	is
-	begin
-		if v1 is null then 
-			if v2 is null then
-				return 'Y';
-			end if;
-			return 'N';
-		else
-			if v2 is null then
-				return 'N';
-			end if;
-		end if;
-
-		if v1 = v2 then
-			return 'Y';
-		end if;
-		return 'N';
-	end;
-
-	function null_safe_equal (v1 clob, v2 clob) 
-		return char deterministic
-	is
-	begin
-		if v1 is null then 
-			if v2 is null then
-				return 'Y';
-			end if;
-			return 'N';
-		else
-			if v2 is null then
-				return 'N';
-			end if;
-		end if;
-
-		if v1 = v2 then
-			return 'Y';
-		end if;
-		return 'N';
-	end;
-
-	function null_safe_equal (v1 number, v2 number) 
-		return char deterministic
-	is
-	begin
-		if v1 is null then 
-			if v2 is null then
-				return 'Y';
-			end if;
-			return 'N';
-		else
-			if v2 is null then
-				return 'N';
-			end if;
-		end if;
-
-		if v1 = v2 then
-			return 'Y';
-		end if;
-		return 'N';
-	end;
-
-
-	function equal (v1 number, v2 number) 
-		return char deterministic
-	is
-	begin
-		if v1 = v2 then
-			return 'Y';
-		end if;
-		return 'N';
-	end;
-
-
-	function equal (v1 varchar2, v2 varchar2) 
-		return char deterministic
-	is
-	begin
-		if v1 = v2 then
-			return 'Y';
-		end if;
-		return 'N';
-	end;
-
-	function equal (v1 clob, v2 clob) 
-		return char deterministic
-	is
-	begin
-		if v1 = v2 then
-			return 'Y';
-		end if;
-		return 'N';
-	end;
-
-	function equal (v1 number, v2 varchar2) 
-		return char deterministic
-	is
-	begin
-		if to_char (v1) = v2 then
-			return 'Y';
-		end if;
-		return 'N';
-	end;
-
-	function equal (v1 varchar2, v2 number) 
-		return char deterministic
-	is
-	begin
-		if v1 = to_char (v2) then
-			return 'Y';
-		end if;
-		return 'N';
-	end;
-
-
-	function make_select_limit_query (pre varchar2, post varchar2, table_name shield_list)
-		return number
-	is
-		/*
-			Declare vars for cursor traversing over all columns of affected tables
-		*/
-		type column_cursor_type is ref cursor return user_tab_columns%rowtype;
-		column_cursor column_cursor_type;
-		current_row user_tab_columns%rowtype;
-
-		/*
-			Iterator variables
-		*/
-		t_name varchar (30);
-		i integer;
-
-		/*
-			resulting query goes here
-		*/
-		res varchar2 (4000);
-		
-		/*
-			flag for detecting first lap in loop
-		*/
-		is_first boolean;
-	begin
-		res := pre;
-
-		i := table_name.first;
-		is_first := true;
-		while i is not null loop
-			t_name := upper (table_name (i));
-			open column_cursor for select * from user_tab_columns where table_name = t_name;
-			loop
-				fetch column_cursor into current_row;
-				exit when column_cursor%notfound;
-				if is_first = true then
-					is_first := false;
-				else
-					res := res || ',';
-				end if;
-				res := res || ' ' || lower (t_name) || '.' || lower (current_row.column_name);
-			end loop;
-
-			i := table_name.next (i);
-		end loop;
-
-		res := res || ' ' || post;	
-		dbms_output.put_line( res);
-		return 0;
-	end;
-
-	function make_select_group_query (pre varchar2, post varchar2, table_name shield_list, agg_name shield_list)
-		return number
-	is
-		/*
-			Declare vars for cursor traversing over all columns of affected tables
-		*/
-		type column_cursor_type is ref cursor return user_tab_columns%rowtype;
-		column_cursor column_cursor_type;
-		current_row user_tab_columns%rowtype;
-
-		/*
-			Iterator variables
-		*/
-		t_name varchar (30);
-		i integer;
-
-		/*
-			resulting query goes here
-		*/
-		res varchar2 (4000);
-		
-		/*
-			flag for detecting first lap in loop
-		*/
-		is_first boolean;
-
-		agg_func varchar2 (128);
-	begin
-		res := pre;
-
-		i := table_name.first;
-		is_first := true;
-		while i is not null loop
-			t_name := upper (table_name (i));
-			open column_cursor for select * from user_tab_columns where table_name = t_name;
-			loop
-				fetch column_cursor into current_row;
-				exit when column_cursor%notfound;
-				if is_first = true then
-					is_first := false;
-				else
-					res := res || ',';
-				end if;
-
-				if current_row.type = 'NUMBER' or current_row.type = 'FLOAT' then
-					agg_func := 'shield_arb_agg_num';
-				elsif current_row.type = 'CLOB' then
-					agg_func := 'arb_agg_func_clob';
-				else
-					agg_func := 'arb_agg_func_char';
-				end if;
-
-				res := res || agg_func || ' (' || lower (t_name) || '.' || lower (current_row.column_name) || ')';
-			end loop;
-
-			i := table_name.next (i);
-		end loop;
-
-
-		res := res || ' ' || post;	
-		dbms_output.put_line( res);
-		return 0;
-	end;
-
 end shield;
 /
 
@@ -815,42 +408,42 @@ begin
 end;
 /
 
-drop table shield_table_lookup;
+drop table shield_table_column;
 
 /*
 
 */
-create table shield_table_lookup
+create table shield_table_column
 (
        	id number (14, 0),     
 	table_name varchar2 (64),     
 	column_name varchar2 (64),    
-	column_type varchar2 (32) 
+	column_type varchar2 (32)
 );
 
-drop sequence shield_table_lookup_id_s_;
+drop sequence shield_table_column_id_s_;
 
-create sequence shield_table_lookup_id_s_
+create sequence shield_table_column_id_s_
 start with 1
 increment by 1
 nomaxvalue;
 
-create or replace trigger shield_table_lookup_id_t_
-before insert on shield_table_lookup
+create or replace trigger shield_table_column_id_t_
+before insert on shield_table_column
 for each row
 begin
-        select shield_table_lookup_id_s_.nextval into :new.id from dual;
+        select shield_table_column_id_s_.nextval into :new.id from dual;
 end;
 /
 
 
-drop index shield_table_lookup_idx2;
+drop index shield_table_column_idx1;
 
-create index shield_table_lookup_idx1
-on shield_table_lookup (table_name);
+create index shield_table_column_idx1
+on shield_table_column (table_name);
 
-drop index shield_table_lookup_idx2;
+drop index shield_table_column_idx2;
 
-create index shield_table_lookup_idx2
-on shield_table_lookup (table_name, column_name);
+create index shield_table_column_idx2
+on shield_table_column (table_name, column_name);
 

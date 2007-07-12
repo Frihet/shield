@@ -1,8 +1,8 @@
-#include "introspection.hh"
-#include "transform.hh"
-#include "exception.hh"
-#include "database.hh"
-#include "util.hh"
+#include "include/introspection.hh"
+#include "include/transform.hh"
+#include "include/exception.hh"
+#include "include/database.hh"
+#include "include/util.hh"
 
 namespace shield
 {
@@ -28,13 +28,14 @@ namespace shield
       
       __is_col_init = true;
       
-      string q = "select column_name, data_type from user_tab_cols where table_name = % order by column_id";
+      string q = "select a.column_name, a.column_type from shield_table_column a left join user_tab_columns b on upper(a.column_name)=b.column_name and upper(a.table_name)=b.table_name where a.table_name = % order by b.column_id";
       
-      result_set &rs = query (q) << to_upper (__name);
+      result_set &rs = query (q) << __name;
 
       while (rs.next ())
 	{
-	  __col.push_back (column (to_lower (rs.get_string ("column_name")), to_lower (rs.get_string ("data_type"))));
+	  //debug << ( rs.get_string ("column_name") + " "+ rs.get_string ("column_type"));
+	  __col.push_back (column (rs.get_string ("column_name"), rs.get_string ("column_type")));
 	}
       rs.close ();
     }
@@ -43,13 +44,13 @@ namespace shield
     get_column (string name)
     {
       load_column ();
-      column_const_iterator i;
+      column_const_iterator it;
 
       string name2 = to_lower (name);
 
-      for (i=column_begin (); i<column_end (); i++)
+      for (it=column_begin (); it != column_end (); ++it)
 	{
-	  const column &c = *i;
+	  const column &c = *it;
 	  if (c.get_name () == name2)
 	    {
 	      return c;

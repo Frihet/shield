@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "enum_char.hh"
+#include "include/enum_char.hh"
 
 using std::map;
 using std::string;

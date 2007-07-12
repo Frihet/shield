@@ -2,8 +2,8 @@
 #include <iostream>
 #include <occi.h>
 
-#include "database.hh"
-#include "exception.hh"
+#include "include/database.hh"
+#include "include/exception.hh"
 
 using namespace std;
 using namespace oracle::occi;

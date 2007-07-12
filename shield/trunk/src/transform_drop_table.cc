@@ -1,6 +1,7 @@
-#include "transform.hh"
-#include "introspection.hh"
-#include "exception.hh"
+#include "include/transform.hh"
+#include "include/introspection.hh"
+#include "include/exception.hh"
+#include "include/util.hh"
 
 namespace shield
 {
@@ -33,7 +34,8 @@ namespace shield
 	    }
 	}
   
-      stream << "drop table" << *name << endl << endl;
+      stream << "drop table" << *name << endl << endl << sep;
+      stream << "delete from shield_table_column where table_name = " << util::oracle_escape (name->str ()) << endl << endl << sep;
     }
 
     

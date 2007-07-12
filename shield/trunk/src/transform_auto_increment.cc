@@ -1,5 +1,5 @@
-#include "transform.hh"
-#include "exception.hh"
+#include "include/transform.hh"
+#include "include/exception.hh"
 
 namespace shield
 {
@@ -77,8 +77,6 @@ namespace shield
 
       drop_item (stream, "sequence", name + "_s_");
 
-      stream << sep;
-
       stream << "create sequence " << name << "_s_" << endl;
       stream << "start with 1" << endl;
       stream << "increment by 1" << endl;
@@ -93,7 +91,7 @@ namespace shield
       stream << "\tselect " << name << "_s_.nextval into :new." << f_name << " from dual;" << endl;
       stream << "\tselect " << name << "_s_.currval into shield.last_insert_id from dual;" << endl;
       stream << "end;" <<endl;
-      stream << "/" << endl << endl;
+      stream << "/" << endl << endl << sep;
   
     }
 

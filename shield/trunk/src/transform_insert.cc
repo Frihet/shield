@@ -1,7 +1,7 @@
 
-#include "transform.hh"
-#include "exception.hh"
-#include "introspection.hh"
+#include "include/transform.hh"
+#include "include/exception.hh"
+#include "include/introspection.hh"
 
 using namespace shield;
 
@@ -160,13 +160,14 @@ namespace shield
 
 	      if (j)
 		stream << ",";
+
 	      cast *c =new cast ((*value)[j], icolumn.get_type ().get_type ());
 	      c->set_parent (this);
 	      stream << *c;
 	    }
 
 	  stream << ")";
-	  stream << endl << endl;
+	  stream << endl << endl << sep;
 	}
 
     }

@@ -2,7 +2,7 @@
 #
 # Author: Axel Liljencrantz
 # Copyright: FreeCode AS
-# License: GPLv2 or later
+# License: GPLv3
 
 #
 # Programs used by make
@@ -14,7 +14,7 @@ INSTALL := @INSTALL@
 #
 # Flags for different programs
 #
-CXXFLAGS := @CXXFLAGS@
+CXXFLAGS := @CXXFLAGS@ 
 CFLAGS := @CFLAGS@
 CPPFLAGS := @CPPFLAGS@ -I.
 LDFLAGS := @LDFLAGS@ -ll -locci -lclntsh -lpthread -lnnz10
@@ -118,7 +118,7 @@ $(BIN_DIR)/database_test: $(DATABASE_TEST_OBJS)
 # How to generate the lexer/parser c sources
 #
 $(SRC_DIR)/transform_lex.cc: $(SRC_DIR)/transform_lex.y
-	flex -i -o$(SRC_DIR)/transform_lex.cc $(SRC_DIR)/transform_lex.y 
+	flex -i -Plex_internal_ -o$(SRC_DIR)/transform_lex.cc $(SRC_DIR)/transform_lex.y 
 
 $(SRC_DIR)/transform_yacc.cc: $(SRC_DIR)/transform_yacc.y
 	bison -d $(SRC_DIR)/transform_yacc.y -o $(SRC_DIR)/transform_yacc.cc 
@@ -170,8 +170,8 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 # Rule for making dependencies
 #
 $(OBJ_DIR)/%.d: $(SRC_DIR)/%.cc
-	@if test ! -f $(SRC_DIR)/transform_lex.hh; then \
-		flex -i -o$(SRC_DIR)/transform_lex.cc $(SRC_DIR)/transform_lex.y; \
+	if test ! -f $(SRC_DIR)/transform_lex.hh; then \
+		flex -i -Plex_internal_ -o$(SRC_DIR)/transform_lex.cc $(SRC_DIR)/transform_lex.y; \
 	fi;\
 	if test ! -f $(SRC_DIR)/transform_yacc.hh; then \
 		bison -d $(SRC_DIR)/transform_yacc.y -o $(SRC_DIR)/transform_yacc.cc; \

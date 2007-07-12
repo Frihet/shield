@@ -11,11 +11,11 @@
 #include <set>
 #include <sstream>
 
-#include "transform.hh"
-#include "introspection.hh"
-#include "catalyst.hh"
-#include "exception.hh"
-#include "util.hh"
+#include "include/transform.hh"
+#include "include/introspection.hh"
+#include "include/catalyst.hh"
+#include "include/exception.hh"
+#include "include/util.hh"
 
 using namespace shield;
 
@@ -107,10 +107,10 @@ namespace shield
 	  }
 	else if (ch)
 	  {
-	    chain::const_iterator i;
-	    for (i=ch->begin (); i<ch->end (); i++)
+	    chain::const_iterator it;
+	    for (it=ch->begin (); it != ch->end (); ++it)
 	      {
-		get_table_alias (*i, table_alias);
+		get_table_alias (*it, table_alias);
 	      }
 	  }
       }
@@ -123,7 +123,7 @@ namespace shield
 
       std::ostringstream pre, post;
   
-      chain::const_iterator i;
+      chain::const_iterator it;
 
       /**
 	 This is set to true if the field list contains wildcards
@@ -151,6 +151,10 @@ namespace shield
       */
       set<string> group_field;
 
+      bool is_subselect=false;
+      printable *parent;
+      query *parent_query;
+
       if (!get_item_list ())
 	{
 	  throw exception::syntax ("No item list for select");
@@ -174,15 +178,16 @@ namespace shield
 	using group by or limit clauses, we need to special case
 	wildcards.
       */
-      for (i=get_item_list ()->begin (); i<get_item_list ()->end (); i++)
+      for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
 	{
-	  printable *pr = *i;
-	  printable_alias *it = dynamic_cast<printable_alias *> (pr);
-	  if (!it)
+	  printable *pr = *it;
+
+	  printable_alias *item = dynamic_cast<printable_alias *> (pr);
+	  if (!item)
 	    throw shield::exception::invalid_type ("Select query item list", "printable_alias");
 
       
-	  if (dynamic_cast<select_item_wild *> (it))
+	  if (dynamic_cast<select_item_wild *> (item))
 	    {
 	      has_wild = true;
 	      break;
@@ -199,9 +204,9 @@ namespace shield
       if (get_group_clause ())
 	{
 
-	  for (i=get_group_clause ()->begin (); i<get_group_clause ()->end (); i++)
+	  for (it=get_group_clause ()->begin (); it != get_group_clause ()->end (); ++it)
 	    {
-	      printable *pr = *i;
+	      printable *pr = *it;
 
 	      chain *ch = dynamic_cast<chain *> (pr);
 	  
@@ -217,14 +222,14 @@ namespace shield
 
 	  get_table_alias (get_table_list (), table_alias);
 	  
-	  for (i=get_item_list ()->begin (); i<get_item_list ()->end (); i++)
+	  for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
 	    {
-	      printable *pr = *i;
-	      printable_alias *it = dynamic_cast<printable_alias *> (pr);
+	      printable *pr = *it;
+	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
 	  
-	      if (it->get_alias ())
+	      if (item->get_alias ())
 		{
-		  field_alias[it->get_alias ()->str ()] = new text (it->get_item ()->str ());
+		  field_alias[item->get_alias ()->str ()] = new text (item->get_item ()->str ());
 		}
 
 	      /*
@@ -236,8 +241,8 @@ namespace shield
 		This should be implemented as a transform instead.
 	      */
 	  
-	      text *txt = dynamic_cast<text *> (it->get_item ());
-	      identity *id = dynamic_cast<identity *> (it->get_item ());
+	      text *txt = dynamic_cast<text *> (item->get_item ());
+	      identity *id = dynamic_cast<identity *> (item->get_item ());
 	  
 	      if (txt)
 		{
@@ -260,6 +265,21 @@ namespace shield
 		}
 	    }
 	}
+
+      pre << "/*\n";
+      for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
+	{
+	  printable *pr = *it;
+
+	  printable_alias *item = dynamic_cast<printable_alias *> (pr);
+	  if (!item)
+	    throw shield::exception::invalid_type ("Select query item list", "printable_alias");
+
+	  pre << item->get_alias ()->str () << "\n";
+
+	}
+      pre << "*/\n";
+
 
       if (get_limit_clause ())
 	pre << "select * from (";
@@ -312,12 +332,12 @@ namespace shield
 	  item_list = new chain ();
 	  item_list->set_separator (",");
 
-	  for (i=get_item_list ()->begin (); i<get_item_list ()->end (); i++)
+	  for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
 	    {
 	      bool handled = false;
 
-	      printable *pr = *i;
-	      printable_alias *it = dynamic_cast<printable_alias *> (pr);
+	      printable *pr = *it;
+	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
 	  
 	      /*
 		Try and locate all used fields. There are lots of
@@ -326,8 +346,8 @@ namespace shield
 		items.
 	      */
 	  
-	      text *txt = dynamic_cast<text *> (it->get_item ());
-	      identity *id = dynamic_cast<identity *> (it->get_item ());
+	      text *txt = dynamic_cast<text *> (item->get_item ());
+	      identity *id = dynamic_cast<identity *> (item->get_item ());
 
 	      if (txt)
 		{
@@ -366,7 +386,7 @@ namespace shield
 			  */
 			  handled = true;
 			  
-			  text *alias = it->get_alias ();
+			  text *alias = item->get_alias ();
 			  
 			  string unaliased_table_name = table_name;
 			  if (table_alias.find (table_name) != table_alias.end ())
@@ -377,13 +397,13 @@ namespace shield
 			}
 		      else
 			{
-			  item_list->push (it);
+			  item_list->push (item);
 			  handled = true;
 			}
 		    }
 		}
 	      
-	      select_item_wild * wi = dynamic_cast<select_item_wild *> (it);
+	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item);
 	      
 	      if (wi)
 		{
@@ -433,7 +453,7 @@ namespace shield
 
 	      if (!handled)
 		{
-		  item_list->push (*i);
+		  item_list->push (*it);
 		}
 	      
 	    }
@@ -451,15 +471,16 @@ namespace shield
 	  item_list = new chain ();
 	  item_list->set_separator (",");
 
-	  for (i=get_item_list ()->begin (); i<get_item_list ()->end (); i++)
+	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
 	    {
-	      printable *pr = *i;
-	      printable_alias *it = dynamic_cast<printable_alias *> (pr);
-	      if (!it)
+	      printable *pr = *it;
+	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
+
+	      if (!item)
 		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
 	      
 
-	      select_item_wild * wi = dynamic_cast<select_item_wild *> (it);
+	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item);
 	      
 	      if (wi)
 		{
@@ -488,16 +509,16 @@ namespace shield
 
 		  introspection::table &t = introspection::get_table (le);
 
-		  introspection::table::column_const_iterator i;
+		  introspection::table::column_const_iterator it;
 
-		  for (i=t.column_begin (); i<t.column_end (); i++)
+		  for (it=t.column_begin (); it!=t.column_end (); ++it)
 		    {
-		      item_list->push (new printable_alias (new text ((*i).get_name (),IDENTIFIER), 0));
+		      item_list->push (new printable_alias (new text ((*it).get_name (),IDENTIFIER), 0));
 		    }
 		}
 	      else
 		{
-		  item_list->push (it);
+		  item_list->push (item);
 		}
 	    }
 	}
@@ -505,12 +526,24 @@ namespace shield
 	{
 	  item_list = get_item_list ();
 	}
+
+      item_list->set_parent (this);
       
       stream << pre.str () << *item_list << "\n" << post.str ();
 
-      if (!get_parent ())
-	stream << endl << endl;      
-  
+      
+      parent = get_parent ();
+      if (parent)
+	{
+	  parent_query = parent->get_query ();
+	  if( dynamic_cast<select *> (parent_query))
+	    is_subselect = true;
+	}
+
+      if (!is_subselect)
+	{
+	  stream << endl << endl << sep;
+	}
     }
 
     void select::

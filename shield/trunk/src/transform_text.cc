@@ -1,7 +1,7 @@
-#include "util.hh"
+#include "include/util.hh"
 
 
-#include "transform.hh"
+#include "include/transform.hh"
 
 namespace shield
 {
@@ -25,7 +25,7 @@ namespace shield
       /**
 	 Remove quoting from quoted identifier
       */
-      static string ident_unescape (const string &in)
+      string ident_unescape (const string &in)
       {
 	return in.substr (1, in.length ()-2);
       }
@@ -34,21 +34,21 @@ namespace shield
 	 Unescaped quoted mysql strings. Wildly incomplete, e.g. character
 	 set specifications and numeric escapes are not yet supported.
       */
-      static string mysql_unescape (const string &in)
+      string mysql_unescape (const string &in)
       {
 	string out = "";
   
 	char end;
-	string::const_iterator i;
+	string::const_iterator it;
 
-	i=in.begin (); 
+	it=in.begin (); 
   
-	end = *i;
-	i++;
+	end = *it;
+	++it;
 
 	while (true)
 	  {
-	    char c = *i;
+	    char c = *it;
 
 	    if (c == end)
 	      {
@@ -57,13 +57,13 @@ namespace shield
       
 	    if (c == '\\')
 	      {
-		i++;
-		if (i == in.end ())
+		++it;
+		if (it == in.end ())
 		  {
 		    throw exception::syntax ("Malformed string");
 		  }
 
-		char c = *i;
+		char c = *it;
 	  
 		switch (c)
 		  {
@@ -109,12 +109,12 @@ namespace shield
 		out += c;
 	      }
 
-	    i++;
+	    ++it;
 	  }
 
-	i++;
+	++it;
 
-	if (i != in.end () )
+	if (it != in.end () )
 	  {
 	    throw exception::syntax ("Malformed string");
 	  }
@@ -125,29 +125,34 @@ namespace shield
       /**
 	 Make an identifier name a valid under oracle
       */
-      static string identifier_escape (const string &in)
+      string identifier_escape (const string &in)
       { 
 	string out = "";
-	string::const_iterator i;
+	string::const_iterator it;
   
-	for (i=in.begin (); i < in.end (); i++)
+	for (it=in.begin (); it != in.end (); ++it)
 	  {
-	    switch (*i)
+	    switch (*it)
 	      {
 	      case '_':
-		out += *i;
-		if ((i+1) == in.end ())
+		out += *it;
+		if ((it+1) == in.end ())
 		  out += "_";
 		break;
 
 	      default:
-		out += *i;
+		out += *it;
 		break;
 	      }
 	  }
 
 	return out;
       }
+
+      /**
+	 The maximum length of the snapshot of the preview in get_node_name
+      */
+      const int MAX_PREVIEW_LEN = 20;
 
     }
 
@@ -239,8 +244,7 @@ namespace shield
       string suffix = "...";
       res += ": ";
       
-      
-      for (int i=0; i<20; i++)
+      for (int i=0; i<MAX_PREVIEW_LEN; i++)
 	{
 	  if (i == content.size ())
 	    {
@@ -248,9 +252,13 @@ namespace shield
 	      break;
 	    }
 
+	  /*
+	    Below 32 are non-printables, skip them and print
+	    whitespace
+	  */
 	  if (content[i]<32)
 	    {
-	      res += " ";
+	      res += ' ';
 	    }
 	  else
 	    {

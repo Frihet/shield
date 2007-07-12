@@ -28,9 +28,6 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <stdio.h>
 
@@ -42,8 +39,8 @@ Boston, MA 02111-1307, USA.  */
 #include <stdlib.h>
 #endif
 
-#include "libiberty.h"
-#include "dyn-string.h"
+#include "include/libiberty.h"
+#include "include/dyn-string.h"
 
 /* If this file is being compiled for inclusion in the C++ runtime
    library, as part of the demangler implementation, we don't want to

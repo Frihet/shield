@@ -1,10 +1,10 @@
 
 #include <sstream>
 
-#include "transform.hh"
-#include "catalyst.hh"
-#include "exception.hh"
-#include "util.hh"
+#include "include/transform.hh"
+#include "include/catalyst.hh"
+#include "include/exception.hh"
+#include "include/util.hh"
 
 namespace shield
 {

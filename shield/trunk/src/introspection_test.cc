@@ -1,6 +1,6 @@
 
-#include "introspection.hh"
-#include "database.hh"
+#include "include/introspection.hh"
+#include "include/database.hh"
 
 int main (int argc, char **argv)
 {
@@ -14,12 +14,12 @@ int main (int argc, char **argv)
     {
       table &t = get_table ("test2");
       table &t2 = get_table ("i_dont_exist");
-      for (table::column_const_iterator i = t.column_begin (); i<t.column_end (); i++)
+      for (table::column_const_iterator it = t.column_begin (); it != t.column_end (); ++it)
 	{
-	  cout <<"name " << (*i).get_name () << endl;
-	  cout << "is number :" << (*i).get_type ().is_number () << endl;
-	  cout << "is char :" << (*i).get_type ().is_char () << endl;
-	  cout << "is lob :" << (*i).get_type ().is_lob () << endl;
+	  cout <<"name " << (*it).get_name () << endl;
+	  cout << "is number :" << (*it).get_type ().is_number () << endl;
+	  cout << "is char :" << (*it).get_type ().is_char () << endl;
+	  cout << "is lob :" << (*it).get_type ().is_lob () << endl;
 	}
       
       cout << t.exists() << endl;

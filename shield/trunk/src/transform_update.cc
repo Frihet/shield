@@ -1,7 +1,7 @@
-#include "transform.hh"
-#include "catalyst.hh"
-#include "exception.hh"
-#include "enum_char.hh"
+#include "include/transform.hh"
+#include "include/catalyst.hh"
+#include "include/exception.hh"
+#include "include/enum_char.hh"
 
 namespace shield
 {
@@ -29,7 +29,7 @@ namespace shield
       if (get_delete_limit_clause ())
 	stream << *get_delete_limit_clause ();
       
-      stream << endl << endl;
+      stream << endl << endl << sep;
     }
 
     printable *update::

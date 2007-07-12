@@ -1,6 +1,6 @@
-#include "transform.hh"
-#include "exception.hh"
-#include "util.hh"
+#include "include/transform.hh"
+#include "include/exception.hh"
+#include "include/util.hh"
 
 namespace shield
 {
@@ -50,7 +50,6 @@ namespace shield
 	      {DATA_TYPE_CLOB, DATA_TYPE_VARCHAR, DATA_TYPE_VARCHAR },
 	      {DATA_TYPE_CLOB, DATA_TYPE_DATE, DATA_TYPE_VARCHAR },
 	      {DATA_TYPE_CLOB, DATA_TYPE_DATETIME, DATA_TYPE_VARCHAR },
-	      {DATA_TYPE_CLOB, DATA_TYPE_SORTABLE, DATA_TYPE_VARCHAR },
 	      {DATA_TYPE_CLOB, DATA_TYPE_UNDEFINED, DATA_TYPE_VARCHAR },
 
 	      {DATA_TYPE_NUMBER, DATA_TYPE_DATE, DATA_TYPE_NUMBER },
@@ -66,10 +65,8 @@ namespace shield
 	      {DATA_TYPE_VARCHAR, DATA_TYPE_DATETIME, DATA_TYPE_CHAR },
 
 	      {DATA_TYPE_DATE, DATA_TYPE_DATETIME, DATA_TYPE_DATE },
-	      {DATA_TYPE_DATE, DATA_TYPE_SORTABLE, DATA_TYPE_DATE },
 	      {DATA_TYPE_DATE, DATA_TYPE_UNDEFINED, DATA_TYPE_DATE },
 
-	      {DATA_TYPE_DATETIME, DATA_TYPE_SORTABLE, DATA_TYPE_DATETIME },
 	      {DATA_TYPE_DATETIME, DATA_TYPE_UNDEFINED, DATA_TYPE_DATETIME }
 	    }
 	  ;

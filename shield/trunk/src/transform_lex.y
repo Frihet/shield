@@ -1,6 +1,6 @@
 
 %{
-#include "transform.hh"
+#include "include/transform.hh"
 
 namespace shield
 {
@@ -12,12 +12,16 @@ namespace shield
        shield::transform namespace. This is a plain C file, and we
        don't want to pollute the global namespace...
     */
-#include "transform_yacc.hh"
+#include "include/transform_yacc.hh"
 
   }
 }
 
+using shield::transform::yypos;
+
 %}
+
+
 
 %%
 
@@ -550,17 +554,17 @@ zerofill return ZEROFILL;
 '([^']|\\.)*' return TEXT_STRING;
 \"([^\"]|\\.)*\" return TEXT_STRING;
 
-`([^`]|\\.)*` return IDENT_QUOTED;
+`(``|[^`]|\\.)*` return IDENT_QUOTED;
 [a-zA-Z_][a-zA-Z0-9_]* return IDENT;
 
 [0-9]+ return NUM;
 [0-9]*\.[0-9]+ return FLOAT_NUM;
 0x[0-9a-fA-F]+ return HEX_NUM;
 
-[ \t\n\r] ;
-\#[^\n]*\n ;
+[ \t\n\r] return NOTHING;
+\#[^\n]*\n return NOTHING;
 
-:[a-zA-Z0-9_]+ return  TEXT_STRING;
+:[a-zA-Z0-9_]+ return TEXT_STRING;
 
 . return 0;
 

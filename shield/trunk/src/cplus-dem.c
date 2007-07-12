@@ -45,11 +45,11 @@ Boston, MA 02111-1307, USA.  */
 
 #include <stdlib.h>
 
-#include "demangle.h"
+#include "include/demangle.h"
 #undef CURRENT_DEMANGLING_STYLE
 #define CURRENT_DEMANGLING_STYLE work->options
 
-#include "libiberty.h"
+#include "include/libiberty.h"
 
 //#define PARAMS(a) a
 //#define ATTRIBUTE_NORETURN 

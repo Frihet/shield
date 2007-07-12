@@ -1,7 +1,7 @@
 
-#include "transform.hh"
-#include "exception.hh"
-#include "catalyst.hh"
+#include "include/transform.hh"
+#include "include/exception.hh"
+#include "include/catalyst.hh"
 
 namespace shield
 {
@@ -33,6 +33,11 @@ namespace shield
 	{
 	  return p;
 	}
+
+      transform::printable_alias *parent_as_alias = dynamic_cast<transform::printable_alias *> (parent);
+      if (parent_as_alias && p == parent_as_alias->get_alias ())
+	return p;
+
 
       if (p->get_query () != __query)
 	return p;

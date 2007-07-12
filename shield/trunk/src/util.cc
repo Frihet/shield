@@ -1,8 +1,8 @@
 #include <cctype>
 #include <stdarg.h>
 
-#include "util.hh"
-#include "demangle.h"
+#include "include/util.hh"
+#include "include/demangle.h"
 
 
 namespace util
@@ -82,7 +82,7 @@ namespace util
       string out = "'";
       int count = 0;
       bool is_clob = false;
-      string::const_iterator i;
+      string::const_iterator it;
 
       if (in.length () == 0)
 	in = " ";
@@ -98,10 +98,10 @@ namespace util
 	}
 
 
-      for (i=in.begin (); i < in.end (); i++)
+      for (it=in.begin (); it != in.end (); ++it)
 	{
      
-	  char c = *i;
+	  char c = *it;
       
 	  if (c == '\'')
 	    {

@@ -33,10 +33,10 @@ implement, luckily Joomla does not seem to use them.
 #include <vector>
 #include <string>
 
-#include "transform.hh"
-#include "exception.hh"
-#include "catalyst.hh"
-#include "util.hh"
+#include "include/transform.hh"
+#include "include/exception.hh"
+#include "include/catalyst.hh"
+#include "include/util.hh"
 
   /**
      This is the text contents of the last element parsed by the lexer. We need to be _very_ careful when we use this, since the parser sometimes needs to perform lookahead, in which case yytext points to the contents of the element _after_ the current one. For this reason, yytext should only ever be used on tokens which 
@@ -56,7 +56,9 @@ namespace shield
        shield::transform namespace. This is a plain C file, and we
        don't want to pollute the global namespace...
     */
-#include "transform_yacc.hh"
+#include "include/transform_yacc.hh"
+
+    int yylex ();
 
 %}
 
@@ -77,8 +79,11 @@ namespace shield
   printable_alias *select_item_val;
 }
 
+%locations
+
 %token  END_OF_INPUT
 
+%token  NOTHING
 %token  ABORT_SYM
 %token  ACTION
 %token  ADD
@@ -1513,20 +1518,7 @@ create2a:
         field_list ')' opt_create_table_options create3 
 	  {
 	    $$ = new create_table ();
-
-	    chain *field = new chain ();
-	    chain *key = new chain ();
-
-	    field->set_separator (",");
-	    chain::const_iterator i;
-
-	    for( i=$1 -> begin (); i<$1 -> end (); i++ )
-	      {
-		field->push (*i);
-	      }
-
-	    $$ -> set_field_list (field);
-	    $$ -> set_key_list (key);
+	    $$ -> set_field_list ($1);
 	    $$ -> set_create_options ($3);
 	    $$ -> set_initial_data ($4);
 	  }
@@ -1784,20 +1776,6 @@ constraint:
 field_spec:
 	field_ident type opt_attribute
 	  {
-	    /*	    if ($3)
-	      {
-		chain::const_iterator i;
-		for (i=$3->begin (); i<$3->end (); i++)
-		  {
-		    auto_increment *ai = dynamic_cast<auto_increment *> (*i);
-
-		    if (ai)
-		      ai->set_field_name ($1);
-
-		  }
-		    
-	      }
-	    */
 	    $$ = new field_spec ($1, $2, $3);
 	  }
 	;
@@ -2744,7 +2722,7 @@ select_item_list:
 	  { 
 	    $$ -> push ($3);
 	  }
-	| select_item
+	  | select_item
 	  { 
 	    $$ = new chain ($1);
 	    $$ -> set_separator (",");
@@ -2760,7 +2738,18 @@ select_item:
 	  select_item2 select_alias 
 	  {
 	    $$ = $1;
-	    $$->set_alias ($2);
+	    if ($2)
+	      {
+		$$->set_alias ($2);
+	      }
+	    else
+	      {
+		int pos1 = @1.first_column;
+		int pos2 = @1.last_column;
+		
+		text *imp_alias = new text (lex_get_string ().substr (pos1, pos2-pos1));
+		$$->set_alias (imp_alias, true);
+	      }
 	  };
 
 
@@ -2768,7 +2757,7 @@ select_item2:
 	table_wild	
 	| expr		
 	{
-	    $$ = new printable_alias ( $1 );
+	  $$ = new printable_alias (new cast ($1, DATA_TYPE_SELECTABLE));
 	}
 	;
 
@@ -3110,7 +3099,7 @@ simple_expr:
 	| DATABASE '(' ')'
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| DATE_SYM '(' expr ')'
-	  { $$ = new function (new text ("shield.date"), DATA_TYPE_DATE, $3); }
+	  { $$ = new function (new text ("shield.date_"), DATA_TYPE_DATE, $3); }
 	| DAY_SYM '(' expr ')'
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| ELT_FUNC '(' expr ',' expr_list ')'
@@ -3283,19 +3272,19 @@ simple_expr:
 		  }
 		else
 		  {
-		    vector<printable *>::const_iterator i;
+		    vector<printable *>::const_iterator it;
 		    chain *res = new chain ();
-		    i=$3 -> begin (); 
-		    while (i < $3 -> end ())
+		    it=$3 -> begin (); 
+		    while (it != $3 -> end ())
 		      {
-			if (i != $3 -> begin ())
+			if (it != $3 -> begin ())
 			  {
 			    res -> push (new text ("||"));
 			  }
 
-			res -> push (new paran (new cast (*i, DATA_TYPE_CHAR)));
+			res -> push (new paran (new cast (*it, DATA_TYPE_CHAR)));
 			
-			i++;
+			++it;
 		      }
 		    $$ = new paran (res);
 		    $$ -> set_context (DATA_TYPE_CHAR);
@@ -3313,26 +3302,26 @@ simple_expr:
 		  }
 		else
 		  {
-		    vector<printable *>::const_iterator i;
+		    vector<printable *>::const_iterator it;
 		    chain *res = new chain ();
-		    i=$3 -> begin (); 
+		    it=$3 -> begin (); 
 
-		    printable *sep = new cast (*i, DATA_TYPE_CHAR);
+		    printable *sep = new cast (*it, DATA_TYPE_CHAR);
 		    
-		    i++;
+		    ++it;
 		    
-		    while (i < $3 -> end ())
+		    while (it < $3 -> end ())
 		      {
-			if (i != ($3 -> begin ()+1))
+			if (it != ($3 -> begin ()+1))
 			  {
 			    res -> push (new text ("||"));
 			    res -> push (sep);
 			    res -> push (new text ("||"));			
 			  }
 
-			res -> push (new paran (new cast (*i, DATA_TYPE_CHAR)));
+			res -> push (new paran (new cast (*it, DATA_TYPE_CHAR)));
 			
-			i++;
+			++it;
 		      }
 		    $$ = new paran (res);
 		    $$ -> set_context (DATA_TYPE_CHAR);
@@ -3359,6 +3348,10 @@ simple_expr:
 		    /*
 		      DATA_TYPE_UNDEFINED return type means same
 		      return type as input type of first argument.
+		      
+		      If min or max is called on a function with no
+		      parameters, an exception will be thrown whenever
+		      trying to access its type.
 		    */
 		    func_translate["char_length"] = make_pair ("length", DATA_TYPE_NUMBER);
 		    func_translate["length"] = make_pair ("lengthb", DATA_TYPE_NUMBER);
@@ -3369,9 +3362,14 @@ simple_expr:
 		    func_translate["lower"] = make_pair ("lower", DATA_TYPE_CHAR);
 		    func_translate["upper"] = make_pair ("upper", DATA_TYPE_CHAR);
 		    func_translate["lpad"] = make_pair ("lpad", DATA_TYPE_CHAR);
-		    func_translate["date"] = make_pair ("shield.date", DATA_TYPE_DATE);
+		    func_translate["now"] = make_pair ("current_date", DATA_TYPE_DATETIME);
+
+		    /*
+		      Functions implemented by the shield package
+		    */
+		    func_translate["date"] = make_pair ("shield.date_", DATA_TYPE_DATE);
 		    func_translate["curdate"] = make_pair ("shield.curdate", DATA_TYPE_DATE);
-		    func_translate["now"] = make_pair ("shield.now", DATA_TYPE_DATETIME);
+		    func_translate["current_date"] = make_pair ("shield.curdate", DATA_TYPE_DATE);
 		  }
 
 		map<string,pair<string,data_type> >::iterator i = func_translate.find (func_name);
@@ -3778,7 +3776,6 @@ normal_join:
 	| CROSS JOIN_SYM	{throw exception::unsupported (__FILE__, __LINE__);}
 	;
 
-/* Warning - may return NULL in case of incomplete SELECT */
 table_factor:
         table_ident opt_table_alias opt_key_definition
 	{
@@ -3786,6 +3783,7 @@ table_factor:
 	    throw exception::unsupported (__FILE__, __LINE__);
 
 	  $$ = new printable_alias ($1, $2);
+
 	}
 	| '{' ident table_ref LEFT OUTER JOIN_SYM table_ref
           ON
@@ -4215,10 +4213,10 @@ drop:
 	DROP opt_temporary table_or_tables if_exists table_list opt_restrict
 	{
 	  chain *res = new chain ();
-	  chain::const_iterator i;
-	  for (i=$5 -> begin (); i < $5 -> end (); i++ )
+	  chain::const_iterator it;
+	  for (it=$5 -> begin (); it != $5 -> end (); ++it )
 	    {
-	      res->push (new drop_table (*i, $4));
+	      res->push (new drop_table (*it, $4));
 	    }
 	  $$ = new fake_query (res);
 	}
@@ -6247,6 +6245,29 @@ opt_migrate:
 
 
 %%
+
+int yylex ()
+{
+
+  int pos;
+  int res;
+  int pos2;
+
+  while (true)
+    {
+      pos = yypos;
+      res = lex_do ();
+
+      if (res != NOTHING)
+	break;
+    }
+  pos2 = yypos;
+
+  yylloc.first_column = pos;
+  yylloc.last_column = pos2;
+
+  return res;
+}
 
 }
 

@@ -1,6 +1,6 @@
-#include "transform.hh"
-#include "introspection.hh"
-#include "exception.hh"
+#include "include/transform.hh"
+#include "include/introspection.hh"
+#include "include/exception.hh"
 
 using namespace shield;
 
@@ -79,7 +79,7 @@ namespace shield
       if (!q)
 	{
 	  cerr << "parent = " << get_parent ()->get_node_name () << endl;
-	  throw exception::invalid_state ("No parent query in identity node");
+	  throw exception::invalid_state ("No parent query in identity node " + get_path ());
 	}
 
       text *table = get_table ();

@@ -1,5 +1,5 @@
-#include "transform.hh"
-#include "exception.hh"
+#include "include/transform.hh"
+#include "include/exception.hh"
 
 namespace shield
 {
@@ -184,7 +184,7 @@ namespace shield
 	    }
 
 	  drop_item (stream, "index", name );
-      
+	  
 	  stream << "create";
 
 	  if (__type == UNIQUE)
@@ -194,7 +194,7 @@ namespace shield
 	  stream << "on" << *table_name << " (" << *key_list << ")";
 	}
   
-      stream  << endl << endl;
+      stream  << endl << endl << sep;
 
     }
 

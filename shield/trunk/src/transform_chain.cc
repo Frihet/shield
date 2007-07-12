@@ -1,7 +1,7 @@
 
-#include "transform.hh"
-#include "catalyst.hh"
-#include "exception.hh"
+#include "include/transform.hh"
+#include "include/catalyst.hh"
+#include "include/exception.hh"
 
 namespace shield
 {

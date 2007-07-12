@@ -9,11 +9,12 @@ using namespace std;
 #include <locale.h>
 #include <getopt.h>
 
-#include "util.hh"
-#include "exception.hh"
-#include "transform.hh"
-#include "database.hh"
-#include "catalyst.hh"
+#include "include/util.hh"
+#include "include/exception.hh"
+#include "include/transform.hh"
+#include "include/introspection.hh"
+#include "include/database.hh"
+#include "include/catalyst.hh"
 
 namespace shield
 {
@@ -25,7 +26,7 @@ namespace shield
        shield::transform namespace. This is a plain C file, and we
        don't want to pollute the global namespace...
     */
-#include "transform_yacc.hh"
+#include "include/transform_yacc.hh"
   }
 
 }
@@ -139,6 +140,16 @@ namespace
 		{
 		  shield::catalyst::warning.enable ();
 		}
+
+	      if (contains(optarg, "introspection", "all"))
+		{
+		  shield::introspection::warning.enable ();
+		}
+
+	      if (contains(optarg, "database", "all"))
+		{
+		  shield::database::warning.enable ();
+		}
 	      break;
 
 	    case 'd':
@@ -150,6 +161,16 @@ namespace
 	      if (contains(optarg, "catalyst", "all"))
 		{
 		  shield::catalyst::debug.enable ();
+		}
+
+	      if (contains(optarg, "introspection", "all"))
+		{
+		  shield::introspection::debug.enable ();
+		}
+
+	      if (contains(optarg, "database", "all"))
+		{
+		  shield::database::debug.enable ();
 		}
 	      break;
 
@@ -237,7 +258,6 @@ main (int argc, char **argv)
 	      break;
 	    }
 
-	  cout << shield::transform::sep;
 	  cout << shield::transform::sep;
 	  cout.flush ();
 		  

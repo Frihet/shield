@@ -1,7 +1,7 @@
 
-#include "transform.hh"
-#include "exception.hh"
-#include "introspection.hh"
+#include "include/transform.hh"
+#include "include/exception.hh"
+#include "include/introspection.hh"
 
 namespace shield
 {
@@ -77,7 +77,9 @@ namespace shield
 	Desired is a bitmask of all types that are ok. 
       */
       int desired = __contexts;
-
+      
+      debug << ("Cast from " + ENUM_TO_STRING (data_type, real) + " to whatever");
+      
       /*
 	First check if the actual type is one of the allowed types. If so, do no casting.
       */
@@ -89,24 +91,7 @@ namespace shield
 	{
 	  stream << " ";
 
-	  if (desired & DATA_TYPE_CLOB)
-	    {  
-	      inner->set_skip_space (true);
-
-	      if (real & DATA_TYPE_DATETIME)
-		{
-		  stream << "to_clob (to_char (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss'))";
-		}
-	      else if (real & DATA_TYPE_DATE)
-		{
-		  stream << "to_clob (to_char (" << *inner << ", 'yyyy-mm-dd'))";
-		}
-	      else 
-		{
-		  stream << "to_clob (" << *inner << ")";
-		}
-	    }
-	  else if (desired & (DATA_TYPE_CHAR | DATA_TYPE_VARCHAR))
+	  if (desired & (DATA_TYPE_CHAR | DATA_TYPE_VARCHAR))
 	    {
 	      if (real & (DATA_TYPE_CHAR | DATA_TYPE_VARCHAR))
 		{
@@ -126,6 +111,23 @@ namespace shield
 		{
 		  inner->set_skip_space (true);
 		  stream << "to_char (" << *inner << ")";
+		}
+	    }
+	  else if (desired & DATA_TYPE_CLOB)
+	    {  
+	      inner->set_skip_space (true);
+
+	      if (real & DATA_TYPE_DATETIME)
+		{
+		  stream << "to_clob (to_char (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss'))";
+		}
+	      else if (real & DATA_TYPE_DATE)
+		{
+		  stream << "to_clob (to_char (" << *inner << ", 'yyyy-mm-dd'))";
+		}
+	      else 
+		{
+		  stream << "to_clob (" << *inner << ")";
 		}
 	    }
 	  else if (desired & (DATA_TYPE_NUMBER | DATA_TYPE_FLOAT))
@@ -165,9 +167,9 @@ namespace shield
 		  inner->set_skip_space (true);
 		  stream << "to_date (" << *inner << ", 'yyyymmdd')";
 		}
-	      else if (real & (DATA_TYPE_DATE | DATA_TYPE_DATETIME))
+	      else if (real & (DATA_TYPE_DATETIME))
 		{
-		  stream << *inner;
+		  stream << "shield.date_ (" << *inner << ")";
 		}
 	      else
 		{

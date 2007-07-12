@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include "transform.hh"
+#include "include/transform.hh"
 
 namespace shield
 {
@@ -15,7 +15,7 @@ namespace shield
        shield::transform namespace. This is a plain C file, and we
        don't want to pollute the global namespace...
     */
-#include "transform_yacc.hh"
+#include "include/transform_yacc.hh"
 
   }
 }
@@ -77,7 +77,7 @@ main (void)
   
   for( int i=0; i < sizeof(result)/sizeof(int);i++ )
     {
-      int d = yylex();
+      int d = shield::transform::lex_do();
       if (d != result[i] )
 	{
 	  printf( "Symbol number %d: Got symbol ", i );

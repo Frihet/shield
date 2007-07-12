@@ -1,6 +1,6 @@
 
-#include "database.hh"
-#include "util.hh"
+#include "include/database.hh"
+#include "include/util.hh"
 
 namespace shield
 {

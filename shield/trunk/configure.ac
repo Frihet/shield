@@ -88,8 +88,9 @@ for i in /usr/lib/oracle/xe/app/oracle/product/*/server/rdbms /usr/lib/oracle/xe
 
 done
 
-if expr "$CXX" : g++.\* >/dev/null; then
+if test "$GXX" = yes; then
 	LDFLAGS="$LDFLAGS -rdynamic"
+	CXXFLAGS="$CXXFLAGS -pipe"
 fi
 
 # Tell the world what we know

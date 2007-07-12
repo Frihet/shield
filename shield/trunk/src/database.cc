@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "database.hh"
-#include "exception.hh"
+#include "include/database.hh"
+#include "include/exception.hh"
 
 namespace shield
 {
@@ -10,6 +10,9 @@ namespace shield
   {
     using namespace oracle::occi;
     using namespace shield;
+
+    logger::logger warning ("shield: database warning");
+    logger::logger debug ("shield: database debug");
 
     namespace
     {

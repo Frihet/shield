@@ -1,7 +1,7 @@
 
-#include "transform.hh"
-#include "introspection.hh"
-#include "exception.hh"
+#include "include/transform.hh"
+#include "include/introspection.hh"
+#include "include/exception.hh"
 
 using namespace shield;
 

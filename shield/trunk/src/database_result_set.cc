@@ -1,7 +1,7 @@
 
-#include "database.hh"
-#include "exception.hh"
-#include "util.hh"
+#include "include/database.hh"
+#include "include/exception.hh"
+#include "include/util.hh"
 
 namespace shield
 {
@@ -158,6 +158,8 @@ namespace shield
 	{
 	  throw syntax ("Did not use all supplied parameters in query '" + __query + "'");
 	}
+
+      debug << q2;
 
       __rs = __stmt->executeQuery (q2);
     }

@@ -1,8 +1,10 @@
 
-#include "transform.hh"
-#include "catalyst.hh"
-#include "exception.hh"
-#include "introspection.hh"
+#include "include/transform.hh"
+#include "include/catalyst.hh"
+#include "include/exception.hh"
+#include "include/introspection.hh"
+#include "include/enum_char.hh"
+#include "include/util.hh"
 
 namespace shield
 {
@@ -45,8 +47,44 @@ namespace shield
 	  stream << "(" << *get_field_list () << " )" ;
 	}
 
-      stream << endl << endl;
+      stream << endl << endl << sep;
 
+    }
+
+    printable *create_table::
+    internal_transform ()
+    {
+      create_lookup_entries();
+      return this;
+    }
+
+    void create_table::
+    create_lookup_entries()
+    {
+      using util::oracle_escape;
+
+      chain *field_list = get_field_list ();
+      if (field_list)
+	{
+	  chain::const_iterator it;
+	  for (it=field_list->begin (); it!=field_list->end (); ++it)
+	    {
+	      printable *node = *it;
+	      field_spec *spec = dynamic_cast<field_spec *> (node);
+
+	      if (!spec)
+		throw exception::invalid_state ("Field spec for create table contains non-field_spec type node " + node->get_node_name ());
+
+	      string str = "insert into shield_table_column (table_name, column_name, column_type) values (";
+	      str += oracle_escape (get_name ()->str ())+", "+oracle_escape (spec->get_name ()->str ()) + ", " + oracle_escape (ENUM_TO_STRING (data_type, spec->get_type ()->get_type ())) + ")\n\n";
+	      str += sep;
+	      _add_query (new fake_query (new text (str, EXACT, false)));
+	    }
+	}
+      else
+	{
+	  throw exception::unsupported ("Create table ... like-queries are not sup");
+	}
     }
 
   }

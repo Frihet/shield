@@ -1,6 +1,6 @@
 
-#include "transform.hh"
-#include "util.hh"
+#include "include/transform.hh"
+#include "include/util.hh"
 
 namespace shield
 {
@@ -92,7 +92,7 @@ namespace shield
       stream << "\t\tdbms_sql.close_cursor (cursor_handle);" << endl;
       stream << "\tend if;" << endl;
       stream << "end;" << endl;
-      stream << "/" << endl << endl;
+      stream << "/" << endl << endl << sep;
   
     }
 

@@ -1,5 +1,5 @@
-#include "transform.hh"
-#include "exception.hh"
+#include "include/transform.hh"
+#include "include/exception.hh"
 
 namespace shield
 {
@@ -37,7 +37,16 @@ namespace shield
     void interval::
     _print (ostream &stream)
     {
-      stream << " interval" << *_get_child (CHILD_EXPR) << " " << type_string (__type);
+      printable *child = _get_child (CHILD_EXPR);
+      text *child_text = dynamic_cast<text *> (child);
+      if (child_text)
+	{
+	  if (child_text->get_type () == EXACT)
+	    {
+	      child = child_text = new text (string ("'")+child->str ()+"'", LITERAL);
+	    }
+	}
+      stream << " interval" << *child << " " << type_string (__type);
     }
 
   }

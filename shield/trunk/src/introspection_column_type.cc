@@ -1,5 +1,5 @@
-#include "introspection.hh"
-#include "util.hh"
+#include "include/introspection.hh"
+#include "include/util.hh"
 
 namespace shield
 {
@@ -12,24 +12,14 @@ namespace shield
     column_type::
     column_type (string t)
     {
-      string s = to_lower (t);
-
-      if (s=="char")
-	__type = DATA_TYPE_CHAR;
-      else if (s=="varchar")
-	__type = DATA_TYPE_VARCHAR;
-      else if (s=="varchar2")
-	__type = DATA_TYPE_VARCHAR;
-      else if (s=="number")
-	__type = DATA_TYPE_NUMBER;
-      else if (s=="float")
-	__type = DATA_TYPE_FLOAT;
-      else if (s=="clob")
-	__type = DATA_TYPE_CLOB;
-      else if (s=="date")
-	__type = DATA_TYPE_DATETIME;
-      else
-	throw shield::exception::syntax ("Unkown column type " + s);
+      try
+	{
+	  __type = STRING_TO_ENUM (data_type, t);
+	}
+      catch (enum_char::bad_enum &e)
+	{
+	  throw shield::exception::syntax ("Unkown column type " + t);
+	}
     }
 
     bool column_type::
