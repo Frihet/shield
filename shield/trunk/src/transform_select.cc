@@ -120,45 +120,50 @@ namespace shield
     void select::
     _print (ostream &stream)
     {
-
-      std::ostringstream pre, post;
   
       chain::const_iterator it;
-
-      /**
-	 This is set to true if the field list contains wildcards
-      */
-      bool has_wild=false;
-      
-      /**
-	 This is set to true of there are fields that are not grouped on
-      */
-      bool has_ungrouped=false;
-  
-      /*
-	Mappings from field aliases to the underlying field
-	definition. The field definition may be an expression.
-      */
-      map<string, printable *> field_alias;
-
-      /**
-	 Mapping between table aliases and the actual table names.
-      */
-      map<string, printable *> table_alias;
-
-      /**
-	 Set of fields on which grouping is performed
-      */
-      set<string> group_field;
 
       bool is_subselect=false;
       printable *parent;
       query *parent_query;
+      
 
       if (!get_item_list ())
 	{
 	  throw exception::syntax ("No item list for select");
 	}
+
+
+      stream << "/*\n";
+      for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
+	{
+	  printable *pr = *it;
+
+	  printable_alias *item = dynamic_cast<printable_alias *> (pr);
+	  if (!item)
+	    throw shield::exception::invalid_type ("Select query item list", "printable_alias");
+
+	  if (item->get_alias ())
+	    {
+	      stream << item->get_alias ()->str () << "\n";
+	    }
+	  else
+	    {
+	      stream << item->get_item ()->str () << "\n";
+	    }
+	}
+      stream << "*/\n";
+
+
+      if (get_limit_clause ())
+	stream << "select"<< *get_item_list () <<" from (";
+
+      stream << "select";
+
+      if (get_option_clause ())
+	stream << *get_option_clause ();
+
+      stream << *get_item_list ();
 
       /*
 	We use the magic rownum field to simulate the limit clause.
@@ -169,369 +174,45 @@ namespace shield
       */
       if (get_limit_clause ())
 	{
-	  get_item_list ()->push (new printable_alias (new text ("rownum", EXACT),
-						       new text ("shield_rownum", EXACT)));
+	  stream << "," << *(new printable_alias (new text ("rownum", EXACT),
+						  new text ("shield_rownum", EXACT)));
 	}
 
-      /*
-	Find out if there are any wildcards among the select items.  When
-	using group by or limit clauses, we need to special case
-	wildcards.
-      */
-      for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
-	{
-	  printable *pr = *it;
-
-	  printable_alias *item = dynamic_cast<printable_alias *> (pr);
-	  if (!item)
-	    throw shield::exception::invalid_type ("Select query item list", "printable_alias");
-
-      
-	  if (dynamic_cast<select_item_wild *> (item))
-	    {
-	      has_wild = true;
-	      break;
-	    }
-	}
-
-      /*
-	There are various ways in which Oracle is stricter than MySQL when
-	it comes to group by/having clauses that we need to work
-	around. If we are using a group by clause, we need to find out
-	some information about the query in order to properly transform
-	it.
-      */  
-      if (get_group_clause ())
-	{
-
-	  for (it=get_group_clause ()->begin (); it != get_group_clause ()->end (); ++it)
-	    {
-	      printable *pr = *it;
-
-	      chain *ch = dynamic_cast<chain *> (pr);
-	  
-	      if (!ch)
-		throw shield::exception::invalid_type ("Select query group by-item", "chain");
-
-	      if (!ch->size ())
-		throw shield::exception::not_found ("Select query group by-item");
-
-	      string id = (*ch)[0]->str ();
-	      group_field.insert (id);
-	    }
-
-	  get_table_alias (get_table_list (), table_alias);
-	  
-	  for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
-	    {
-	      printable *pr = *it;
-	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
-	  
-	      if (item->get_alias ())
-		{
-		  field_alias[item->get_alias ()->str ()] = new text (item->get_item ()->str ());
-		}
-
-	      /*
-		Try and locate all used fields. There are lots of
-		situataions where this is not good enough, e.g. when using
-		non-cumulative functions or math operators in select
-		items.
-
-		This should be implemented as a transform instead.
-	      */
-	  
-	      text *txt = dynamic_cast<text *> (item->get_item ());
-	      identity *id = dynamic_cast<identity *> (item->get_item ());
-	  
-	      if (txt)
-		{
-		  id = new identity (0, 0, txt);
-		}
-
-	      if (id)
-		{
-
-		  txt = id->get_field ();
-
-		  if (txt->get_type () == IDENTIFIER || 
-		      txt->get_type () == IDENTIFIER_QUOTED)
-		    {
-		      if (group_field.find (id->str ()) == group_field.end ())
-			{
-			  has_ungrouped = true;
-			}
-		    }
-		}
-	    }
-	}
-
-      pre << "/*\n";
-      for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
-	{
-	  printable *pr = *it;
-
-	  printable_alias *item = dynamic_cast<printable_alias *> (pr);
-	  if (!item)
-	    throw shield::exception::invalid_type ("Select query item list", "printable_alias");
-
-	  pre << item->get_alias ()->str () << "\n";
-
-	}
-      pre << "*/\n";
-
-
-      if (get_limit_clause ())
-	pre << "select * from (";
-
-      pre << "select";
-
-      if (get_option_clause ())
-	pre << *get_option_clause ();
-
-      post << "from";
+      stream << "\nfrom";
 
       if (get_table_list () && !get_table_list ()->empty ())
 	{
-	  post << *get_table_list ();
+	  stream << *get_table_list ();
 	}
       else
 	{
-	  post << " dual";
+	  stream << " dual";
 	}
 
       if (get_where_clause ())
 	{
-	  post << "\nwhere" << *get_where_clause ();
+	  stream << "\nwhere" << *get_where_clause ();
 	}
 
       if (get_group_clause ())
 	{
-	  post << "\ngroup by" << *get_group_clause ();
+	  stream << "\ngroup by" << *get_group_clause ();
 	}
 
       if (get_having_clause ())
 	{
-	  post << "\nhaving";
-	  print_having (post, get_having_clause (), field_alias);
+	  stream << "\nhaving";
+	  print_having (stream, get_having_clause (), __field_alias);
 	}
 
       if (get_order_clause ())
 	{
-	  post << "\norder by" << *get_order_clause ();
+	  stream << "\norder by" << *get_order_clause ();
 	}
 
       if (get_limit_clause () )
-	post << ") where" << *get_limit_clause ();
+	stream << ") where" << *get_limit_clause ();
 
-      chain *item_list;
-      
-      if (get_group_clause () && (has_wild || has_ungrouped))
-	{
-
-	  item_list = new chain ();
-	  item_list->set_separator (",");
-
-	  for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
-	    {
-	      bool handled = false;
-
-	      printable *pr = *it;
-	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
-	  
-	      /*
-		Try and locate all used fields. There are lots of
-		situataions where this is not good enough, e.g. when using
-		non-cumulative functions or math operators in select
-		items.
-	      */
-	  
-	      text *txt = dynamic_cast<text *> (item->get_item ());
-	      identity *id = dynamic_cast<identity *> (item->get_item ());
-
-	      if (txt)
-		{
-		  id = new identity (0, 0, txt);
-		}
-
-	      if (id)
-		{
-		  string table_name = get_table_list ()-> str ();
-
-		  if (id->get_namespace ())
-		    {
-		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. I'm lazy. Sorry.");
-		    }
-
-		  if (id->get_table ())
-		    {
-		      table_name = id->get_table ()->str ();
-		    }
-
-		  txt = id->get_field ();
-
-		  if (txt->get_type () == IDENTIFIER || 
-		      txt->get_type () == IDENTIFIER_QUOTED)
-		    {
-		      if (group_field.find (txt->str ()) == group_field.end ())
-			{
-			  string le = oracle_escape (to_upper (txt->str ()));
-			  /*		      
-					     if (extra_group_list.length () )
-					     extra_group_list += ", ";
-					     else
-					     extra_group_list = "list (";
-		      
-					     extra_group_list += le;
-			  */
-			  handled = true;
-			  
-			  text *alias = item->get_alias ();
-			  
-			  string unaliased_table_name = table_name;
-			  if (table_alias.find (table_name) != table_alias.end ())
-			    unaliased_table_name = table_alias[table_name]->str ();
-
-			  item_list->push (aggregate (txt, alias, table_name, unaliased_table_name));
-			  
-			}
-		      else
-			{
-			  item_list->push (item);
-			  handled = true;
-			}
-		    }
-		}
-	      
-	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item);
-	      
-	      if (wi)
-		{
-	      
-		  string le = "";
-
-		  if (wi->get_namespace ())
-		    {
-		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. I'm lazy. Sorry.");
-		    }
-	      
-		  if (wi->get_table ())
-		    {
-		      le = wi->get_table ()->str ();
-		    }
-		  else
-		    {
-		      le = get_table_list ()-> str ();
-		    }
-
-
-		  introspection::table &t = introspection::get_table (le);
-		  
-		  introspection::table::column_const_iterator i;
-
-		  for (i=t.column_begin (); i<t.column_end (); i++)
-		    {
-		      string name = (*i).get_name ();
-		      if (group_field.find (name) == group_field.end ())
-			{
-
-			  string unaliased_table_name = le;
-			  if (table_alias.find (le) != table_alias.end ())
-			    unaliased_table_name = table_alias[le]->str ();
-
-			  item_list->push (aggregate (new text (name), 0, le, unaliased_table_name));
-			}
-		      else
-			{
-			  item_list->push (new printable_alias (new text (name), 0));
-			}
-		    }
-
-		  handled = true;
-		  
-		}
-
-	      if (!handled)
-		{
-		  item_list->push (*it);
-		}
-	      
-	    }
-	  
-	}
-      else if (true)//get_limit_clause () && has_wild)
-	{
-
-	  /**
-	     We shouldn't really expand all wildcards, but it is far
-	     easier to always do it than to figure out all the
-	     situations when it should happen.
-	  */
-
-	  item_list = new chain ();
-	  item_list->set_separator (",");
-
-	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
-	    {
-	      printable *pr = *it;
-	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
-
-	      if (!item)
-		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
-	      
-
-	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item);
-	      
-	      if (wi)
-		{
-
-		  string le;
-
-		  if (wi->get_namespace ())
-		    {
-		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and limit clauses. Yes, this may seem like a pretty arbitrary limitation. Sorry.");
-		    }
-
-		  if (wi->get_table ())
-		    {
-		      le = wi->get_table ()->str ();
-		    }
-		  else
-		    {
-		      catalyst::find_table cat (this);
-		      get_table_list ()->transform (cat);
-		      if (!cat.get_table_list ().size ())
-			{
-			  throw shield::exception::not_found ("Select query table");
-			}
-		      le = (*cat.get_table_list ().begin ())->str ();
-		    }
-
-		  introspection::table &t = introspection::get_table (le);
-
-		  introspection::table::column_const_iterator it;
-
-		  for (it=t.column_begin (); it!=t.column_end (); ++it)
-		    {
-		      item_list->push (new printable_alias (new text ((*it).get_name (),IDENTIFIER), 0));
-		    }
-		}
-	      else
-		{
-		  item_list->push (item);
-		}
-	    }
-	}
-      else
-	{
-	  item_list = get_item_list ();
-	}
-
-      item_list->set_parent (this);
-      
-      stream << pre.str () << *item_list << "\n" << post.str ();
-
-      
       parent = get_parent ();
       if (parent)
 	{
@@ -584,10 +265,260 @@ namespace shield
     printable *select::
     internal_transform ()
     {
+      __pre_calculate ();
+      __resolve_item_list ();
+
       catalyst::create_identity id_catalyst (this);
       return this->transform (id_catalyst);
+    }
+
+    void select::
+    __resolve_item_list ()
+    {
+
+      /*
+	 The new item list
+      */
+      chain *item_list;
+      chain::const_iterator it;
+
+      item_list = new chain ();
+      item_list->set_separator (",");
+
+      if (get_group_clause ())
+	{
+
+	  for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
+	    {
+	      bool handled = false;
+
+	      printable *pr = *it;
+	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
+	  
+	      /*
+		Try and locate all used fields. There are lots of
+		situataions where this is not good enough, e.g. when using
+		non-cumulative functions or math operators in select
+		items.
+	      */
+	  
+	      text *txt = dynamic_cast<text *> (item->get_item ());
+	      identity *id = dynamic_cast<identity *> (item->get_item ());
+
+	      if (txt)
+		{
+		  id = new identity (0, 0, txt);
+		}
+
+	      if (id)
+		{
+		  string table_name = get_table_list ()-> str ();
+
+		  if (id->get_namespace ())
+		    {
+		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. I'm lazy. Sorry.");
+		    }
+
+		  if (id->get_table ())
+		    {
+		      table_name = id->get_table ()->str ();
+		    }
+
+		  txt = id->get_field ();
+
+		  if (txt->get_type () == IDENTIFIER || 
+		      txt->get_type () == IDENTIFIER_QUOTED)
+		    {
+		      if (__group_field.find (txt->str ()) == __group_field.end ())
+			{
+			  string le = oracle_escape (to_upper (txt->str ()));
+			  /*		      
+					     if (extra_group_list.length () )
+					     extra_group_list += ", ";
+					     else
+					     extra_group_list = "list (";
+		      
+					     extra_group_list += le;
+			  */
+			  handled = true;
+			  
+			  text *alias = item->get_alias ();
+
+			  string unaliased_table_name = unalias_table(new text (table_name))->str ();
+
+			  item_list->push (aggregate (txt, alias, table_name, unaliased_table_name));
+			  
+			}
+		      else
+			{
+			  item_list->push (item);
+			  handled = true;
+			}
+		    }
+		}
+	      
+	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item);
+	      
+	      if (wi)
+		{
+	      
+		  string le = "";
+
+		  if (wi->get_namespace ())
+		    {
+		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. I'm lazy. Sorry.");
+		    }
+	      
+		  if (wi->get_table ())
+		    {
+		      le = wi->get_table ()->str ();
+		    }
+		  else
+		    {
+		      le = get_table_list ()-> str ();
+		    }
+
+
+		  introspection::table &t = introspection::get_table (le);
+		  
+		  introspection::table::column_const_iterator i;
+
+		  for (i=t.column_begin (); i<t.column_end (); i++)
+		    {
+		      string name = (*i).get_name ();
+		      if (__group_field.find (name) == __group_field.end ())
+			{
+
+			  string unaliased_table_name = unalias_table(new text (le))->str ();
+
+			  item_list->push (aggregate (new text (name), 0, le, unaliased_table_name));
+			}
+		      else
+			{
+			  item_list->push (new printable_alias (new text (name)));
+			}
+		    }
+
+		  handled = true;
+		  
+		}
+
+	      if (!handled)
+		{
+		  item_list->push (*it);
+		}
+	      
+	    }
+	  
+	}
+      else 
+	{
+
+
+	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
+	    {
+	      printable *pr = *it;
+	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
+
+	      if (!item)
+		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
+	      
+
+	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item);
+	      
+	      if (wi)
+		{
+
+		  string le;
+
+		  if (wi->get_namespace ())
+		    {
+		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and limit clauses. Yes, this may seem like a pretty arbitrary limitation. Sorry.");
+		    }
+
+		  if (wi->get_table ())
+		    {
+		      le = wi->get_table ()->str ();
+		    }
+		  else
+		    {
+		      catalyst::find_table cat (this);
+		      get_table_list ()->transform (cat);
+		      if (!cat.get_table_list ().size ())
+			{
+			  throw shield::exception::not_found ("Select query table");
+			}
+		      le = (*cat.get_table_list ().begin ())->str ();
+		    }
+
+		  introspection::table &t = introspection::get_table (le);
+
+		  introspection::table::column_const_iterator it;
+
+		  for (it=t.column_begin (); it!=t.column_end (); ++it)
+		    {
+		      item_list->push (new printable_alias (new text ((*it).get_name (),IDENTIFIER), 0));
+		    }
+		}
+	      else
+		{
+		  item_list->push (item);
+		}
+	    }
+	}
+
+      _set_child (CHILD_ITEM_LIST, item_list);
+      
+    }
+
+    void select::
+    __pre_calculate ()
+    {
+
+      chain::const_iterator it;
+
+      /*
+	There are various ways in which Oracle is stricter than MySQL when
+	it comes to group by/having clauses that we need to work
+	around. If we are using a group by clause, we need to find out
+	some information about the query in order to properly transform
+	it.
+      */  
+      if (get_group_clause ())
+	{
+
+	  for (it=get_group_clause ()->begin (); it != get_group_clause ()->end (); ++it)
+	    {
+	      printable *pr = *it;
+
+	      chain *ch = dynamic_cast<chain *> (pr);
+	  
+	      if (!ch)
+		throw shield::exception::invalid_type ("Select query group by-item", "chain");
+
+	      if (!ch->size ())
+		throw shield::exception::not_found ("Select query group by-item");
+
+	      string id = (*ch)[0]->str ();
+	      __group_field.insert (id);
+	    }
+
+	  for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
+	    {
+	      printable *pr = *it;
+	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
+	  
+	      if (item->get_alias ())
+		{
+		  __field_alias[item->get_alias ()->str ()] = new text (item->get_item ()->str ());
+		}
+
+	    }
+	}
+
     }
 
   }
 
 }
+

@@ -33,6 +33,11 @@ namespace shield
  
 namespace
 {
+  
+  logger::logger error ("shield: error");
+
+  vector<string> command;
+
     /**
        Print a short help message.
 
@@ -97,7 +102,7 @@ namespace
 
 	  int opt = getopt_long( argc,
 				 argv,
-				 "u:p:h:PHd:w:",
+				 "c:u:p:h:PHd:w:",
 				 long_options,
 				 &opt_index );
 
@@ -109,7 +114,7 @@ namespace
 	      
 	    case 0:
 	      break;
-	    
+
 	    case 'H':
 	      print_help( cout );
 	      exit(0);
@@ -181,6 +186,11 @@ namespace
 	
 	}
 
+      for (int i =optind; i<argc; i++)
+	{
+	  command.push_back (string(argv[i]));
+	}
+
       shield::database::init (username, password,host);
 
     }
@@ -197,6 +207,39 @@ namespace
       }
   }
 
+
+  void translate (const string &str) throw ()
+  {
+    try
+      {
+	if (str != "")
+	  {
+	    shield::transform::lex_set_string (str);
+	    shield::transform::yyparse ();
+	  }
+	
+      }
+    catch (const shield::exception::exception &e)
+      {
+	error << e.what ();
+	cout << shield::transform::sep;
+      }
+    catch (const std::exception &e)
+      {
+	error << string("Non-shield exception thrown: ")+e.what ();
+	cout << shield::transform::sep;
+      }
+    catch (...)
+      {
+	error << "Unknown error";
+	cout << shield::transform::sep;
+      }
+    
+    cout << shield::transform::sep;
+    cout.flush ();
+  }
+    
+
 }
 
 int
@@ -211,63 +254,42 @@ main (int argc, char **argv)
   
   parse_args (argc, argv);
 
-  logger::logger error ("shield: error");
   error.enable ();
 
-  int err = 0;
-  while( true )
+  if (command.size ())
     {
-      int c;
-
-      c = cin.get ();
-
-      if (c && c != EOF)
+      vector<string>::const_iterator it;
+      
+      for (it=command.begin (); it != command.end (); ++it)
 	{
-	  str += c;
+	  translate (*it);
 	}
-      else
+    }
+  else
+    {
+      while( true )
 	{
-	  try
+	  int c;
+	  
+	  c = cin.get ();
+	  
+	  if (c && c != EOF)
 	    {
-	      if (str != "")
-		{
-		  shield::transform::lex_set_string (str);
-		  err += shield::transform::yyparse ();
-		}
-	      
+	      str += c;
+	    }
+	  else
+	    {
+	      translate (str);
 	      str="";
-	      
-	    }
-	  catch (const shield::exception::exception &e)
-	    {
-	      err ++;
-	      error << e.what ();
-	      
-	      break;
-	    }
-	  catch (const std::exception &e)
-	    {
-	      err ++;
-	      error << string("Non-shield exception thrown: ")+e.what ();
-	      
-	      break;
-	    }
-	  catch (...)
-	    {
-	      error << "Unknown error";
-	      break;
-	    }
-
-	  cout << shield::transform::sep;
-	  cout.flush ();
-		  
-	  if (c==EOF)
-	    {
-	      break;
+			      
+	      if (c==EOF)
+		{
+		  break;
+		}
 	    }
 	}
     }
   
-  return err;
+  return 0;
 }
 

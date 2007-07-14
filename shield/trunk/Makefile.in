@@ -23,7 +23,7 @@ LDFLAGS := @LDFLAGS@ -ll -locci -lclntsh -lpthread -lnnz10
 # Various build directories. Do not build in source directory.
 #
 BIN_DIR := bin
-OBJ_DIR := obj
+OBJ_DIR := build
 SRC_DIR := src
 
 #
@@ -71,10 +71,10 @@ $(OBJ_DIR)/transform_lex_wrapper.o
 
 INTROSPECTION_TEST_OBJS := $(OBJ_DIR)/introspection_test.o	\
 $(INTROSPECTION_OBJS) $(DATABASE_OBJS) $(OBJ_DIR)/util.o	\
-$(EXCEPTION_OBJS)
+$(EXCEPTION_OBJS) $(OBJ_DIR)/logger.o $(OBJ_DIR)/enum_char.o
 
 DATABASE_TEST_OBJS := $(OBJ_DIR)/database_test.o $(DATABASE_OBJS)	\
-$(OBJ_DIR)/util.o $(EXCEPTION_OBJS)
+$(OBJ_DIR)/util.o $(EXCEPTION_OBJS) $(OBJ_DIR)/logger.o $(OBJ_DIR)/enum_char.o
 
 ALL_OBJS := $(TRANSFORM_OBJS) $(INTROSPECTION_OBJS) $(DATABASE_OBJS)	\
 $(EXCEPTION_OBJS) $(EXCEPTION_OBJS) $(CATALYST_OBJS)			\
@@ -129,7 +129,7 @@ $(SRC_DIR)/transform_yacc.hh: $(SRC_DIR)/transform_yacc.cc
 # How to convert the package definition into C++ code
 #
 $(SRC_DIR)/transform_print_package.cc: $(BIN_DIR)/shield_make_package_string shield_package.sql
-	echo "#include \"transform.hh\"" >$@.tmp
+	echo "#include \"include/transform.hh\"" >$@.tmp
 	echo "void shield::transform::print_package ()" >>$@.tmp
 	echo "{" >>$@.tmp
 	echo -n "	cout << " >>$@.tmp
