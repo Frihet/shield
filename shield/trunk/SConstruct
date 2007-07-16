@@ -1,0 +1,93 @@
+# SConstruct file for Shield
+#
+# This is the equivalent of a Makefile, but for use with the SCons
+# build system
+#
+# Author: Axel Liljencrantz
+# Copyright: FreeCode AS
+# License: GPLv3
+
+# Construct the main environment
+#
+# Add the base build directory to cdpath. That way, #includes can all
+# prepend the directory in which they are located, and everything will
+# work just spiffy!
+env = Environment(CPPPATH=[Dir('.')])
+Export('env')
+
+import glob
+import os
+import sys
+from stat import *
+
+# Respect various defaults from the environment
+for name in ['CXX','CC','CFLAGS','CXXFLAGS']:
+	if os.getenv(name) != None:
+		env[name] = os.getenv(name)
+
+# Implementation of the 'OracleCheck' custom check
+def CheckOracleInclude(context, locs):
+	'''Check for a suitable oracle include directory
+	'''	
+	for loc in locs:
+		path = os.path.join(loc,'public')
+		if os.path.isdir(path):
+			context.env.Append(CPPPATH=[Dir(path)])
+			return True	
+
+def CheckOracleLink(context, locs):
+	'''Check for a suitable oracle link directory
+	'''	
+	for loc in locs:
+		path = os.path.join(loc,'lib')
+		if os.path.isdir(path):
+			context.env.Append(LIBPATH=[Dir(path)])
+			return True	
+		
+def CheckOracle(context):
+	'''Check for presense of needed Oracle libraries. If Oracle can be found, the include and link paths are modified to incorporate oracle and True is returned. Otherwise False is returned.
+	'''	
+	context.Message('Checking for Oracle installation files')
+	locs_wc = ['/usr/lib/oracle/xe/app/oracle/product/*/server/rdbms', '/usr/lib/oracle/xe/app/oracle/product/*/client/rdbms', '/usr/lib/oracle/xe/app/oracle/product/*/server', '/usr/lib/oracle/xe/app/oracle/product/*/client']
+	locs=[]
+	for loc in locs_wc:
+		locs = locs+glob.glob(loc)
+
+	result=True	
+	if not CheckOracleInclude(context, locs):
+		result=False
+	if not CheckOracleLink(context, locs):
+		result=False
+	context.Result(result)
+	return result
+
+def CheckGxx(context):
+	'''Check if the c++ compiler is g++. Return True if yes, false otherwise.
+	'''
+	return context.env['CXX'][0:3] == 'g++'
+
+conf = Configure(env, custom_tests = {'CheckOracle' : CheckOracle, 'CheckGxx' : CheckGxx})
+
+#
+# Call the CheckOracle custom check
+#
+if not conf.CheckOracle():
+	print 'Oracle OCCI library files are not installed!'
+	print 'They can be found in e.g. the Oracle-XE client libraries,'
+	print 'which can be downloaded from http://www.oracle.com.'
+	Exit(1)
+
+if conf.CheckGxx():
+	env['CXXFLAGS']=env['CXXFLAGS']+' -pipe'
+	env['LINKFLAGS']=env['LINKFLAGS']+' -rdynamic'
+
+env = conf.Finish()
+
+#
+# Build the src subdirectory with a separate build dirctory called 'build'
+#
+SConscript('src/SConscript', build_dir='build')
+
+# Build the actual programs
+SConscript('bin/SConscript')
+

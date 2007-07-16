@@ -1,0 +1,12 @@
+Import('*')
+
+env.Program('shield', shield, LIBS=['l','occi','clntsh','pthread','nnz10'])
+
+env.Program('shield_make_package_string', shield_make_package_string)
+
+env.Program('transform_lex_test', transform_lex_test)
+
+env.Program('introspection_test', introspection_test, LIBS=['l','occi','clntsh','pthread','nnz10'])
+
+env.Program('database_test', database_test, LIBS=['l','occi','clntsh','pthread','nnz10'])
+

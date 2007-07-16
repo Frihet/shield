@@ -1,0 +1,80 @@
+Import('env')
+
+env.Command('transform_lex.cc', 'transform_lex.y', 'flex -i -Plex_internal_ -o$TARGET $SOURCE')
+env.Command(['transform_yacc.cc', 'transform_yacc.hh'], 'transform_yacc.y', 'bison -d $SOURCE -o $TARGET')
+
+env.Command('transform_print_package.cc', '../shield_package.sql',"""
+
+echo '#include \"include/transform.hh\"' >transform_print_package.cc.tmp
+echo "void shield::transform::print_package ()" >>transform_print_package.cc.tmp
+echo "{" >>transform_print_package.cc.tmp
+echo -n "	cout << " >>transform_print_package.cc.tmp
+bin/shield_make_package_string < shield_package.sql >>transform_print_package.cc.tmp
+echo ";" >>transform_print_package.cc.tmp
+echo "}" >>transform_print_package.cc.tmp
+mv transform_print_package.cc.tmp $TARGET""")
+
+Depends('transform_print_package.cc','../bin/shield_make_package_string')
+
+
+#
+# All the sources to build
+#
+introspection = env.Object(Split("""introspection_table.cc
+	introspection.cc
+	introspection_column.cc
+	introspection_column_type.cc"""))
+
+exception = env.Object(Split("""exception_unsupported.cc			
+	exception.cc 
+	cplus-dem.c
+	cp-demangle.c
+	dyn-string.c"""))
+
+database = env.Object(Split("""database.cc					
+	database_result_set.cc 
+	database_parameter.cc"""))
+
+transform = env.Object(Split("""transform_common.cc				
+	transform_yacc.cc 
+	transform_lex_wrapper.cc		
+	transform_printable.cc 
+	transform_select.cc		
+	transform_identity.cc 
+	transform_text.cc		
+	transform_create_table.cc 
+	transform_insert.cc	
+	transform_auto_increment.cc					
+	transform_create_index.cc 
+	transform_drop_table.cc	
+	transform_function.cc 
+	transform_interval.cc		
+	transform_query.cc 
+	transform_print_package.cc	
+	transform_chain.cc 
+	transform_comparison.cc		
+	transform_cast.cc 
+	transform_update.cc		
+	transform_fake_query.cc 
+	transform_type.cc"""))
+
+catalyst = env.Object(Split("""catalyst.cc					
+	catalyst_create_identity.cc 
+	catalyst_find_table.cc	
+	catalyst_internal.cc						
+	catalyst_replace_identifier.cc				
+	catalyst_validation.cc"""))
+
+misc = env.Object(Split("""util.cc logger.cc enum_char.cc"""))
+
+shield = env.Object('shield.cc')+introspection+exception+database+transform+catalyst+misc
+
+shield_make_package_string = env.Object('shield_make_package_string.cc')
+
+transform_lex_test = env.Object(Split('''transform_lex_test.cc transform_lex_wrapper.cc'''))
+
+introspection_test = env.Object(Split('''introspection_test.cc''')) + introspection+database+exception+misc
+
+database_test = env.Object(Split('''database_test.cc''')) + database + exception + misc
+
+Export('shield shield_make_package_string transform_lex_test introspection_test database_test')
