@@ -7,7 +7,7 @@ using namespace std;
 
 #include "include/transform.hh"
 
-#include "src/transform_lex.cc"
+#include "build/transform_lex.cc"
 
 int lex_internal_wrap ()
 {

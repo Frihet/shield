@@ -136,9 +136,6 @@ namespace shield
       for (i=get_value_list ()->begin (); i<get_value_list ()->end (); i++)
 	{
 
-	  if (i!=get_value_list ()->begin ())
-	    stream << sep;
-	  
 	  stream << "insert into" << *get_name () << endl;
 	  get_field_list ()->set_skip_space (true);
 	  stream << "(" << *get_field_list () << ")" << endl;
@@ -166,7 +163,7 @@ namespace shield
 	      stream << *c;
 	    }
 
-	  stream << ")";
+	  stream << ")"; 
 	  stream << endl << endl << sep;
 	}
 

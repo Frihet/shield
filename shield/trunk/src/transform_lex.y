@@ -12,7 +12,7 @@ namespace shield
        shield::transform namespace. This is a plain C file, and we
        don't want to pollute the global namespace...
     */
-#include "include/transform_yacc.hh"
+#include "build/transform_yacc.hh"
 
   }
 }
