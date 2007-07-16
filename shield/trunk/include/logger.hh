@@ -1,18 +1,20 @@
 /**
-@file logger.hh
+   @file logger.hh
 
-A simple, generic logger class making it easy to selectively log very
-specific log event types. The logger does not contain any concept of
-loglevels. Instead, the idea is to create lots and lots of logger
-objects. That way, it becomes easy to enable logging of a specific
-type of event, thus avoiding being drowned in unrelated log messages
-whever additional logging information is enabled.
+   A simple, generic logger class making it easy to selectively log
+   very specific log event types. The logger does not contain any
+   concept of loglevels. Instead, the idea is to create lots and lots
+   of logger objects. That way, it becomes easy to enable logging of a
+   specific type of event, thus avoiding being drowned in unrelated
+   log messages whever additional logging information is enabled.
 
-@author Axel Liljencrantz
+   @author Axel Liljencrantz
+   @remark package: shield
+   @remark Copyright: FreeCode AS
 
-This file is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; version 3.
+   This file is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation; version 3.
 
 */
 
@@ -91,12 +93,33 @@ namespace logger
       return *this;
     }
 
+    /**
+       Set whether timestamps should be shown in messages. Defaults to no.
+     */
+    void set_timestamp (bool show)
+    {
+      __show_timestamp = show;
+    }
+
+    /**
+       Set whether pids should be shown in messages. Defaults to no.
+     */
+    void set_pid (bool show)
+    {
+      __show_pid = show;
+    }
+
   private:
 
     /**
        Returns a string containing a human-readable time stamp
     */
     string __timestamp (void);
+
+    /**
+       Returns a string containing a human-readable pid
+    */
+    string __pid (void);
 
   private:
 
@@ -114,6 +137,16 @@ namespace logger
        The name to use first in all messages
     */
     string __name;
+
+    /**
+       Set to true if the timestamp should be shown
+     */
+    bool __show_timestamp;
+
+    /**
+       Set to true if the process id should be shown
+     */
+    bool __show_pid;
 
   }
   ;

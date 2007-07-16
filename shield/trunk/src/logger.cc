@@ -1,4 +1,19 @@
+/**
+
+   @remark package: shield
+   @remark Copyright: FreeCode AS
+   @author Axel Liljencrantz
+
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; version 3.
+
+*/
+
+#include <sys/types.h>
+#include <unistd.h>
 #include <time.h>
+#include <sstream>
 
 #include "include/logger.hh"
 
@@ -19,7 +34,15 @@ namespace logger
     if (!is_enabled ())
       return *this;
     
-    __stream << __name << ": " << __timestamp () << " " << message << endl;
+    __stream << __name;
+
+    if (__show_timestamp)
+      __stream << ": " << __timestamp ();
+
+    if (__show_pid)
+      __stream << ": " << __pid ();
+
+    __stream << " " << message << endl;
     
     return *this;
   }
@@ -44,6 +67,23 @@ namespace logger
       the latter is also very important.
     */
     return "";
+  }
+
+  string logger::__pid (void)
+  {
+    pid_t pid = getpid ();
+
+    std::ostringstream out;
+    if (!(out << pid))
+      {
+	/*
+	  Return empty string on error - it's much more important to get
+	  the log message out than having correct formating, even though
+	  the latter is also very important.
+	*/
+	return "";
+      }
+    return out.str ();
   }
   
 }

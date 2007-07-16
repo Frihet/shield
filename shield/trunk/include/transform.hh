@@ -4,7 +4,8 @@
    The transform namespace contains all code for parsing MySQL sql and
    transforming it into Oracle sql.
 
-   @package shield
+   @remark package: shield
+   @remark Copyright: FreeCode AS
    @author Axel Liljencrantz
 
    This file is free software; you can redistribute it and/or

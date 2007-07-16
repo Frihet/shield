@@ -10,3 +10,5 @@ env.Program('introspection_test', introspection_test, LIBS=['l','occi','clntsh',
 
 env.Program('database_test', database_test, LIBS=['l','occi','clntsh','pthread','nnz10'])
 
+env.Program('shield_multiplex', shield_multiplex)
+

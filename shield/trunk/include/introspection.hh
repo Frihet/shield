@@ -1,14 +1,16 @@
 /**
-@file introspection.hh
+   @file introspection.hh
 
-A set of functions and classes for obtaining introspection information on the tables of a Oracle database.
-
-@package Shield
-@author Axel Liljencrantz
-
-This file is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; version 3.
+   A set of functions and classes for obtaining introspection
+   information on the tables of a Oracle database.
+   
+   @package Shield
+   @remark Copyright: FreeCode AS
+   @author Axel Liljencrantz
+   
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; version 3.
 
 */
 #ifndef INTROSPECTION_HH

@@ -6,7 +6,16 @@
    there are so many optional query parts, and so many of them work
    differently in Oracle. The code is a bit ugly in places and there
    are a few situations where valid but rare cases are not handeld
-   correctly. Needs a bit more work.
+   correctly. 
+
+   @remark package: shield
+   @remark Copyright: FreeCode AS
+   @author Axel Liljencrantz
+
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; version 3.
+
 */
 #include <set>
 #include <sstream>

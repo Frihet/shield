@@ -3,6 +3,10 @@
    
    Common header data.
 
+   @remark package: shield
+   @remark Copyright: FreeCode AS
+   @author Axel Liljencrantz
+
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
    published by the Free Software Foundation; version 3.
@@ -22,6 +26,18 @@
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
    published by the Free Software Foundation; version 3.
+
+   @section about About the program
+
+
+   @remark package: shield
+   @remark Copyright: FreeCode AS
+   @author Axel Liljencrantz
+
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; version 3.
+
 
    @section tech Technical description
    
@@ -99,6 +115,8 @@
    method does just that. Keep in mind that a node must _never_ call
    _add_query during the parsing phase, or an exception will be
    thrown.
+
+
 
 */
 

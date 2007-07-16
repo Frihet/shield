@@ -4,7 +4,7 @@
    Headers for all catalysts. Catalysts are functors used to transform the AST. 
 
    @remark package: shield
-
+   @remark Copyright: FreeCode AS
    @author Axel Liljencrantz
 
    This file is free software; you can redistribute it and/or

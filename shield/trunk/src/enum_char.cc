@@ -1,8 +1,21 @@
+/**
+
+   @remark package: shield
+   @remark Copyright: FreeCode AS
+   @author Axel Liljencrantz
+
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; version 3.
+
+*/
+
 #include <ctype.h>
 #include <map>
 #include <exception>
 #include <iostream>
 #include <stdexcept>
+#include <errno.h>
 
 #include "include/enum_char.hh"
 

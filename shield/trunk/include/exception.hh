@@ -14,6 +14,7 @@ All these exceptions in this namespace return a stack trace toghether
 with their error message.
 
 @package Shield
+@remark Copyright: FreeCode AS
 @author Axel Liljencrantz
 
 This file is free software; you can redistribute it and/or

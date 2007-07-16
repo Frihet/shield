@@ -1,3 +1,15 @@
+/**
+
+   @remark package: shield
+   @remark Copyright: FreeCode AS
+   @author Axel Liljencrantz
+
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; version 3.
+
+*/
+
 /*
   This is the file where the Shield main loop is defined. Nothing
   interesting happens here, the main loop calls out to yyparse to do
@@ -7,7 +19,10 @@
 using namespace std;
 
 #include <locale.h>
+
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#endif
 
 #include "include/util.hh"
 #include "include/exception.hh"
@@ -35,8 +50,11 @@ namespace
 {
   
   logger::logger error ("shield: error");
-
+  
   vector<string> command;
+
+  const char *GETOPT_ARG = "c:u:p:h:PHd:w:";
+
 
     /**
        Print a short help message.
@@ -61,6 +79,9 @@ namespace
       */
       while( 1 )
 	{
+	  int opt_index = 0;
+
+#ifdef HAVE_GETOPT_LONG
 	  static struct option
 	    long_options[] =
 	    {
@@ -98,25 +119,31 @@ namespace
 	    }
 	  ;
 
-	  int opt_index = 0;
 
-	  int opt = getopt_long( argc,
+	  int opt = getopt_long (argc,
 				 argv,
-				 "c:u:p:h:PHd:w:",
+				 GETOPT_ARG
 				 long_options,
-				 &opt_index );
+				 &opt_index);
+#else
+	  int opt = getopt (argc,
+			    argv,
+			    GETOPT_ARG);
+				
 
-	  if( opt == -1 )
+#endif //#ifdef HAVE_GETOPT_LONG
+
+	  if (opt == -1)
 	    break;
 
-	  switch( opt )
+	  switch (opt)
 	    {   
 	      
 	    case 0:
 	      break;
 
 	    case 'H':
-	      print_help( cout );
+	      print_help (cout);
 	      exit(0);
 	    
 	    case 'P':
@@ -136,44 +163,44 @@ namespace
 	      break;
 
 	    case 'w':
-	      if (contains(optarg, "transform", "all"))
+	      if (contains (optarg, "transform", "all"))
 		{
 		  shield::transform::warning.enable ();
 		}
 
-	      if (contains(optarg, "catalyst", "all"))
+	      if (contains (optarg, "catalyst", "all"))
 		{
 		  shield::catalyst::warning.enable ();
 		}
 
-	      if (contains(optarg, "introspection", "all"))
+	      if (contains (optarg, "introspection", "all"))
 		{
 		  shield::introspection::warning.enable ();
 		}
 
-	      if (contains(optarg, "database", "all"))
+	      if (contains (optarg, "database", "all"))
 		{
 		  shield::database::warning.enable ();
 		}
 	      break;
 
 	    case 'd':
-	      if (contains(optarg, "transform", "all"))
+	      if (contains (optarg, "transform", "all"))
 		{
 		  shield::transform::debug.enable ();
 		}
 
-	      if (contains(optarg, "catalyst", "all"))
+	      if (contains (optarg, "catalyst", "all"))
 		{
 		  shield::catalyst::debug.enable ();
 		}
 
-	      if (contains(optarg, "introspection", "all"))
+	      if (contains (optarg, "introspection", "all"))
 		{
 		  shield::introspection::debug.enable ();
 		}
 
-	      if (contains(optarg, "database", "all"))
+	      if (contains (optarg, "database", "all"))
 		{
 		  shield::database::debug.enable ();
 		}
@@ -191,7 +218,7 @@ namespace
 	  command.push_back (string(argv[i]));
 	}
 
-      shield::database::init (username, password,host);
+      shield::database::init (username, password, host);
 
     }
 

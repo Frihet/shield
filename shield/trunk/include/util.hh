@@ -1,14 +1,15 @@
 /**
-@file util.hh
+   @file util.hh
+ 
+   A small set of commun utility functions.
 
-A small set of commun utility functions.
+   @package Shield
+   @remark Copyright: FreeCode AS
+   @author Axel Liljencrantz
 
-@package Shield
-@author Axel Liljencrantz
-
-This file is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; version 3.
+   This file is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation; version 2 or later.
 
 */
 #ifndef UTIL_HH
@@ -16,8 +17,7 @@ as published by the Free Software Foundation; version 3.
 
 #include <sstream>
 #include <string>
-
-#include "exception.hh"
+#include <set>
 
 /**
    @namespace util
@@ -28,6 +28,10 @@ namespace util
 {
 
   using namespace std;
+
+  /**
+     Semi-ulgy but very useful hack for checking if an element is in a list
+   */
 
 #define contains( str,... ) util::contains_str( str, __VA_ARGS__, (void *)0 )
 
@@ -40,7 +44,7 @@ namespace util
   {
     std::ostringstream out;
     if (!(out << x))
-      throw shield::exception::syntax ("stringify called on invalid type");
+      return "";
     return out.str ();
   }
 

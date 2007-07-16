@@ -20,22 +20,23 @@ Depends('transform_print_package.cc','../bin/shield_make_package_string')
 #
 # All the sources to build
 #
-introspection = env.Object(Split("""introspection_table.cc
+introspection = env.Object(Split("""
+	introspection_table.cc
 	introspection.cc
 	introspection_column.cc
 	introspection_column_type.cc"""))
 
-exception = env.Object(Split("""exception_unsupported.cc			
-	exception.cc 
-	cplus-dem.c
-	cp-demangle.c
-	dyn-string.c"""))
+exception = env.Object(Split("""
+	exception_unsupported.cc			
+	exception.cc""")) 
 
-database = env.Object(Split("""database.cc					
+database = env.Object(Split("""
+	database.cc					
 	database_result_set.cc 
 	database_parameter.cc"""))
 
-transform = env.Object(Split("""transform_common.cc				
+transform = env.Object(Split("""
+	transform_common.cc				
 	transform_yacc.cc 
 	transform_lex_wrapper.cc		
 	transform_printable.cc 
@@ -58,14 +59,20 @@ transform = env.Object(Split("""transform_common.cc
 	transform_fake_query.cc 
 	transform_type.cc"""))
 
-catalyst = env.Object(Split("""catalyst.cc					
+catalyst = env.Object(Split("""
+	catalyst.cc
 	catalyst_create_identity.cc 
 	catalyst_find_table.cc	
 	catalyst_internal.cc						
 	catalyst_replace_identifier.cc				
 	catalyst_validation.cc"""))
 
-misc = env.Object(Split("""util.cc logger.cc enum_char.cc"""))
+misc = env.Object(Split("""
+	util.cc logger.cc 
+	enum_char.cc 	
+	cplus-dem.c
+	cp-demangle.c
+	dyn-string.c"""))
 
 shield = env.Object('shield.cc')+introspection+exception+database+transform+catalyst+misc
 
@@ -77,4 +84,6 @@ introspection_test = env.Object(Split('''introspection_test.cc''')) + introspect
 
 database_test = env.Object(Split('''database_test.cc''')) + database + exception + misc
 
-Export('shield shield_make_package_string transform_lex_test introspection_test database_test')
+shield_multiplex = env.Object(Split('''shield_multiplex.cc''')) + misc
+
+Export('shield shield_make_package_string transform_lex_test introspection_test database_test shield_multiplex')

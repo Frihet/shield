@@ -10,7 +10,7 @@
    The functions in this function may throw the exception::database exception
 
    @remark package: shield
-
+   @remark Copyright: FreeCode AS
    @author Axel Liljencrantz
 
    This file is free software; you can redistribute it and/or
