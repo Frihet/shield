@@ -883,7 +883,7 @@ query:
 
 	      shield::transform::debug << ("final tree:\n" + root->get_tree ());
 
-	      cout << *root;
+	      output_stream << *root;
 	    }
 	    printable_delete();
 	  }
@@ -1698,6 +1698,7 @@ field_list:
 	  field_list_item
 	  {
 	    $$ = new chain ($1);
+	    $$ -> set_line_break (1);
 	    $$ -> set_separator (",");
 	  }
 	  | field_list ',' field_list_item
@@ -1994,7 +1995,7 @@ attribute:
 	  }
 	| DEFAULT now_or_signed_literal
 	  {
-	    $$ = new chain( new text ("default"), $2); 
+	    $$ = new default_value( $2); 
 	    $$ -> set_push_front (true);
 	  }
 	| ON UPDATE_SYM NOW_SYM optional_braces 
@@ -4617,11 +4618,12 @@ show_param:
 	    
 	    if ($3)
 	      {
-		$$ = new fake_query (new text ("select table_name as tables_in_mysql from user_tables where tablespace_name = '" + $3->str () + "';\n\n", EXACT, false));
+		$$ = new fake_query (new text ("select table_name as tables_in_mysql from user_tables\n\n", EXACT, false));
+		//		$$ = new fake_query (new text ("select table_name as tables_in_mysql from user_tables where tablespace_name = '" + $3->str () + "'\n\n", EXACT, false));
 	      }
 	    else
 	      {
-		$$ = new fake_query (new text ("select table_name as tables_in_mysql from user_tables;\n\n", EXACT, false));
+		$$ = new fake_query (new text ("select table_name as tables_in_mysql from user_tables\n\n", EXACT, false));
 	      }
 	    
 	  }

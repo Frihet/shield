@@ -155,15 +155,19 @@ namespace shield
       vector<printable *> &prev_index = __table_query->get_prev_index_list ();
       
       vector<printable *>::const_iterator pii;
+
       for (pii = prev_index.begin (); pii < prev_index.end (); pii++)
 	{
 	  create_index *other = dynamic_cast<create_index *> (*pii);
+
 	  chain *other_key_list = other->get_filtered_key_list (field_list);
 	  if (key_list_match (key_list, other_key_list))
 	    {
 	      return;
 	    }
 	}
+
+      prev_index.push_back (this);
 	
       
       if (__type == PRIMARY_KEY)
@@ -194,7 +198,7 @@ namespace shield
 	      name = t_name.substr(0, 15) + "_" + f_name;
 	      name = name.substr(0, 30);
 	    }
-
+	  
 	  drop_item (stream, "index", name );
 	  
 	  stream << "create";

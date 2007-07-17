@@ -204,6 +204,12 @@ namespace shield
     */
     table &get_table (string table_name);
   
+    /**
+       Factory function for telling the introspection code that the
+       specified table has been changed.
+    */
+    void clear_table (string table_name);
+  
   }
 
 }

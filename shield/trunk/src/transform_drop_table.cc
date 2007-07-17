@@ -45,7 +45,8 @@ namespace shield
 	      return;
 	    }
 	}
-  
+
+      introspection::clear_table (name->str ());
       stream << "drop table" << *name << endl << endl << sep;
       stream << "delete from shield_table_column where table_name = " << util::oracle_escape (name->str ()) << endl << endl << sep;
     }

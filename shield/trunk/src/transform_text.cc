@@ -11,9 +11,8 @@
 */
 
 #include "include/util.hh"
-
-
 #include "include/transform.hh"
+#include "include/exception.hh"
 
 namespace shield
 {

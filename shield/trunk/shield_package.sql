@@ -265,6 +265,12 @@ is
 	function curdate 
 		return date;
 
+	function to_date_ (date_in varchar2, format varchar2) 
+		return date deterministic;
+
+	function to_date_ (date_in number, format varchar2) 
+		return date deterministic;
+
 end shield;
 /
 
@@ -387,6 +393,49 @@ is
 
 	end;
 
+	function to_date_ (date_in varchar2, format varchar2) 
+		return date deterministic
+	is 
+		date_in2 varchar2 (512);
+	begin
+		date_in2 := date_in;
+		if length(format) = 10 then
+			if date_in = '0000-00-00' or date_in = '0' then
+				date_in2 := '0001-01-01';
+			end if;
+		else
+			if date_in = '0000-00-00 00:00:00' or date_in = '0' then
+				date_in2 := '0001-01-01 00:00:00';
+			end if;
+
+		end if;
+		
+		return to_date (date_in2, format);
+	end;
+
+
+	function to_date_ (date_in number, format varchar2) 
+		return date deterministic
+	is 
+		date_in2 varchar2 (512);
+	begin
+		date_in2 := date_in;
+		if length(format) = 8 then
+			if date_in = '00000000' or date_in = '0' then
+				date_in2 := '00010101';
+			end if;
+		else
+			if date_in = '00000000000000' or date_in = '0' then
+				date_in2 := '00010101000000';
+			end if;
+
+		end if;
+		
+		return to_date (date_in2, format);
+	end;
+
+
+
 end shield;
 /
 
@@ -396,15 +445,6 @@ create or replace trigger after_logon
 	on database
 begin
 	execute immediate 'alter session set nls_date_format=''yyyymmddhh24miss''';
-end;
-/
-
-alter session set nls_date_format='yyyymmddhh24miss';
-
-declare
-	res number;
-begin
-	res := shield.make_select_query ('select', 'from test2 group by test2.id;', shield_list ('test2'));
 end;
 /
 

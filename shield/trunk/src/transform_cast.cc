@@ -112,12 +112,12 @@ namespace shield
 	      else if (real & DATA_TYPE_DATETIME)
 		{
 		  inner->set_skip_space (true);
-		  stream << "to_char (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss')";
+		  stream << "shield.to_char (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss')";
 		}
 	      else if (real & DATA_TYPE_DATE)
 		{
 		  inner->set_skip_space (true);
-		  stream << "to_char (" << *inner << ", 'yyyy-mm-dd')";
+		  stream << "shield.to_char (" << *inner << ", 'yyyy-mm-dd')";
 		}
 	      else
 		{
@@ -131,11 +131,11 @@ namespace shield
 
 	      if (real & DATA_TYPE_DATETIME)
 		{
-		  stream << "to_clob (to_char (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss'))";
+		  stream << "to_clob (shield.to_char (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss'))";
 		}
 	      else if (real & DATA_TYPE_DATE)
 		{
-		  stream << "to_clob (to_char (" << *inner << ", 'yyyy-mm-dd'))";
+		  stream << "to_clob (shield.to_char (" << *inner << ", 'yyyy-mm-dd'))";
 		}
 	      else 
 		{
@@ -159,7 +159,7 @@ namespace shield
 	      if (real & (DATA_TYPE_NUMBER | DATA_TYPE_FLOAT))
 		{
 		  inner->set_skip_space (true);
-		  stream << "to_date (" << *inner << ", 'yyyymmddhh24miss')";
+		  stream << "shield.to_date_ (" << *inner << ", 'yyyymmddhh24miss')";
 		}
 	      else if (real & (DATA_TYPE_DATE | DATA_TYPE_DATETIME))
 		{
@@ -168,7 +168,7 @@ namespace shield
 	      else
 		{
 		  inner->set_skip_space (true);
-		  stream << "to_date (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss')";
+		  stream << "shield.to_date_ (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss')";
 		}
 	    }
 	  else if (desired & DATA_TYPE_DATE)
@@ -177,7 +177,7 @@ namespace shield
 	      if (real & (DATA_TYPE_NUMBER | DATA_TYPE_FLOAT))
 		{
 		  inner->set_skip_space (true);
-		  stream << "to_date (" << *inner << ", 'yyyymmdd')";
+		  stream << "shield.to_date_ (" << *inner << ", 'yyyymmdd')";
 		}
 	      else if (real & (DATA_TYPE_DATETIME))
 		{
@@ -186,7 +186,7 @@ namespace shield
 	      else
 		{
 		  inner->set_skip_space (true);
-		  stream << "to_date (" << *inner << ", 'yyyy-mm-dd')";
+		  stream << "shield.to_date_ (" << *inner << ", 'yyyy-mm-dd')";
 		}
 	    }
 	  else

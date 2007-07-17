@@ -12,6 +12,7 @@
 # Add the base build directory to cdpath. That way, #includes can all
 # prepend the directory in which they are located, and everything will
 # work just spiffy!
+
 env = Environment(CPPPATH=[Dir('.')])
 Export('env')
 
@@ -64,7 +65,10 @@ def CheckOracle(context):
 def CheckGxx(context):
 	'''Check if the c++ compiler is g++. Return True if yes, false otherwise.
 	'''
-	return context.env['CXX'][0:3] == 'g++'
+	context.Message('Checking if the compiler is g++')
+	result = context.env['CXX'][0:3] == 'g++'
+	context.Result(result)
+	return result
 
 conf = Configure(env, custom_tests = {'CheckOracle' : CheckOracle, 'CheckGxx' : CheckGxx})
 
@@ -72,15 +76,15 @@ conf = Configure(env, custom_tests = {'CheckOracle' : CheckOracle, 'CheckGxx' : 
 # Check for presence of various headers
 #
 for header in ['getopt.h', 'sys/select.h']:
-	if conf.CheckHeader(header):
+	if conf.CheckCHeader(header):
 		var_name = header.upper().replace('.','/').replace('/','_')
-		env['CXXFLAGS']+=(' -D'+var_name+'=1')
+		conf.env['CXXFLAGS']+=' -DHAVE_'+var_name+'=1'
 	
 #
 # Check for presence of getopt.h header
 #
-#if conf.CheckFunction('getopt_long'):
-#	env['CXXFLAGS']=env['CXXFLAGS']+' -DHAVE_GETOPT_H=1'
+if conf.CheckFunc('getopt_long'):
+	conf.env['CXXFLAGS']+= ' -DHAVE_GETOPT_LONG=1'
 	
 
 #
@@ -90,14 +94,14 @@ if not conf.CheckOracle():
 	print 'Oracle OCCI library files are not installed!'
 	print 'They can be found in e.g. the Oracle-XE client libraries,'
 	print 'which can be downloaded from http://www.oracle.com.'
-#	Exit(1)
+	Exit(1)
 
 # 
 # Add gcc-specifig options
 #
 if conf.CheckGxx():
-	env['CXXFLAGS']=env['CXXFLAGS']+' -pipe'
-	env['LINKFLAGS']=env['LINKFLAGS']+' -rdynamic'
+	conf.env['CXXFLAGS']+=' -pipe'
+	conf.env['LINKFLAGS']+=' -rdynamic'
 
 env = conf.Finish()
 

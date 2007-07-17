@@ -12,6 +12,7 @@
 
 #include "include/introspection.hh"
 #include "include/util.hh"
+#include "include/exception.hh"
 
 namespace shield
 {

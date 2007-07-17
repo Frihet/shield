@@ -16,6 +16,8 @@
   everything even remotely cool.
 */
 #include <iostream>
+#include <sstream>
+
 using namespace std;
 
 #include <locale.h>
@@ -23,6 +25,8 @@ using namespace std;
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
+
+#include <unistd.h>
 
 #include "include/util.hh"
 #include "include/exception.hh"
@@ -42,6 +46,8 @@ namespace shield
        don't want to pollute the global namespace...
     */
 #include "build/transform_yacc.hh"
+    
+    ostringstream output_stream;
   }
 
 }
@@ -122,7 +128,7 @@ namespace
 
 	  int opt = getopt_long (argc,
 				 argv,
-				 GETOPT_ARG
+				 GETOPT_ARG,
 				 long_options,
 				 &opt_index);
 #else
@@ -210,9 +216,8 @@ namespace
 	      exit (1);
 
 	    }
-	
 	}
-
+      
       for (int i =optind; i<argc; i++)
 	{
 	  command.push_back (string(argv[i]));
@@ -241,28 +246,58 @@ namespace
       {
 	if (str != "")
 	  {
+	    string::const_iterator it;
+	    int sep_count=0;
+	    string res;
+
 	    shield::transform::lex_set_string (str);
 	    shield::transform::yyparse ();
+	    
+	    res =  shield::transform::output_stream.str ();
+	    shield::transform::output_stream.str ("");
+	    
+ 	    for (it=res.begin (); it != res.end (); ++it)
+	      {
+		if (*it == shield::transform::sep)
+		  {
+		    if (!sep_count)
+		      {
+			cout << *it;
+			sep_count++;
+		      }
+		  }
+		else
+		  {
+		    cout << *it;
+		    sep_count = 0;
+		  }
+	      }
+
+	    for (int i=sep_count; i<2; i++)
+	      {
+		cout << shield::transform::sep;
+	      }
 	  }
-	
       }
     catch (const shield::exception::exception &e)
       {
 	error << e.what ();
+	cout << shield::transform::sep;
 	cout << shield::transform::sep;
       }
     catch (const std::exception &e)
       {
 	error << string("Non-shield exception thrown: ")+e.what ();
 	cout << shield::transform::sep;
+	cout << shield::transform::sep;
       }
     catch (...)
       {
 	error << "Unknown error";
 	cout << shield::transform::sep;
+	cout << shield::transform::sep;
       }
     
-    cout << shield::transform::sep;
     cout.flush ();
   }
     

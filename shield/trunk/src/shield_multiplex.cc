@@ -63,6 +63,8 @@ using namespace std;
 namespace
 {
 
+  using namespace util;
+
   logger::logger error ("shield_multiplex error");
   logger::logger debug ("shield_multiplex debug");
   logger::logger warning ("shield_multiplex warning");
@@ -71,8 +73,9 @@ namespace
   class context
   {
   public:
-    int shield_fd[0];
-    int shield_pid;
+    int shield_send_pipe[2];
+    int shield_recive_pipe[2];
+    pid_t shield_pid;
   }
     ;
 
@@ -154,7 +157,7 @@ namespace
 
 	if (errno != EINTR)
 	  {
-	    error << (string("Error in 'dup' function call: ") + strerror (errno));
+	    error << (string("Error in 'dup (") + stringify (fd) + ")' function call: " + strerror (errno));
 	    break;
 	  }
       }
@@ -163,15 +166,25 @@ namespace
   }
 
   
-  pid_t create_child (char **argv, char **envp, int *fds)
+  void create_child (char **argv, char **envp, context &ctx)
   {
     pid_t pid;
     
-    if (retry_pipe (fds))
+    if (retry_pipe (ctx.shield_send_pipe))
       {
 	error << "Could not create pipe for communicating with child";
 	exit(1);
       }
+
+    debug << (string ("pipe 1 has fds ") + stringify (ctx.shield_send_pipe[0]) + " and " + stringify (ctx.shield_send_pipe[1] ));
+    
+    if (retry_pipe (ctx.shield_recive_pipe))
+      {
+	error << "Could not create pipe for communicating with child";
+	exit(1);
+      }
+
+    debug << (string ("pipe 2 has fds ") + stringify (ctx.shield_recive_pipe[0]) + " and " + stringify (ctx.shield_recive_pipe[1] ));
 
     
     pid = retry_fork ();
@@ -189,28 +202,96 @@ namespace
 	/*
 	  I am child. Lets do childish stuff.
 	*/
-	
-	if( retry_dup (fds[0])==-1 || retry_dup (fds[1])==-1)
+
+	/*
+	  Set up file descriptors on child end. MAke the send/recive
+	  pipes into the new stdin/stdout for the shield process.
+	  This is some pretty hairy stuff. Pay attention!
+	*/
+
+
+	/*
+	  Close unneeded pipe fd:s, since they might be blocking the
+	  fd numbers we want. (send_pipe[1] most probably is fd 1,
+	  which is what we want recive_pipe[1] to be dup:ed to
+	*/
+	retry_close (ctx.shield_send_pipe[1]);
+	retry_close (ctx.shield_recive_pipe[0]);
+
+	/*
+	  If the file descriptors aren't already at the right
+	  location, dup them and move them and close the original fd.
+	*/
+	if (ctx.shield_send_pipe[0] != 0)
 	  {
-	    error << "Failed to set up pipe to shield. Exiting.";
-	    exit (1);
+	    retry_close (0);
+	    if( retry_dup (ctx.shield_send_pipe[0])!=0)
+	      {
+		error << "Failed to set up pipe to shield. Exiting.";
+		exit (1);
+	      }
+	    retry_close (ctx.shield_send_pipe[0]);
 	  }
-	execve("shield", argv, envp);
+
+	if (ctx.shield_recive_pipe[1] != 1)
+	  {
+	    retry_close (1);
+	    if( retry_dup (ctx.shield_recive_pipe[1])!=1)
+	      {
+		error << "Failed to set up pipe to shield. Exiting.";
+		exit (1);
+	      }
+	    retry_close (ctx.shield_recive_pipe[1]);
+	  }
+
+	/*
+	  And we're done. Lets execute this thing.
+	*/
+	argv[0] = "shield";
+	debug << "Calling execve in child - this is goodbye.";
+	execve("./bin/shield", argv, envp);
 	error << (string("Function call 'execve' failed: ") + strerror (errno));
 	exit (1);
 	break;
 
       default:
-	debug << "Parent done in create_child, returning";
-	return pid;
+	retry_close (ctx.shield_send_pipe[0]);
+	retry_close (ctx.shield_recive_pipe[1]);
+	ctx.shield_pid = pid;
 
       }
   }
 
-  string translate_query (const string &query)
+  string translate_query (context &ctx, const string &query)
   {
+
+    char prev=1;
+    char buff[1];
+    buff[0] = '\0';
+
+    write (ctx.shield_send_pipe[1], query.c_str (), query.size () +1);
+    write (ctx.shield_send_pipe[1], buff, 1);
+    fsync (ctx.shield_send_pipe[1]);
     
-    return "hej hopp\n\n";
+    debug << "Wrote message to shield";
+    
+    string res="";
+
+    while (true)
+      {
+	if (read (ctx.shield_recive_pipe[0], buff, 1)<=0)
+	  break;
+	
+	res += buff[0];
+
+	if ( !buff[0] && !prev)
+	  break;
+
+	prev = buff[0];
+      }
+
+    return res;
+
   }
 
   void handle_query (context &ctx, int socket, const string &query)
@@ -218,12 +299,13 @@ namespace
     
     if (query != "")
       {
-	debug << string ("Read string ")+query;
-	string query_out = translate_query (query);
+	string query_out = translate_query (ctx, query);
+	debug << (string ("translate_query returned '") + query_out + "'");
+	debug << (string ("Write response to fd '") + stringify (socket) + "'");
 	write (socket, query_out.c_str (), query_out.size ());
+	fsync(socket);
       }
-	
-  }    
+  }
 
 
   void handle_connection (context &ctx, int socket)
@@ -233,13 +315,12 @@ namespace
     while (true)
       {
 	int c;
-
 	char buff[1];
-
 	ssize_t count = read (socket, buff, 1);
-	if (count == (ssize_t)-1)
+	
+	if (count != 1)
 	  break;
-
+	
 	c = buff[0];
 	
 	if (c)
@@ -248,9 +329,11 @@ namespace
 	  }
 	else
 	  {
+	    debug << (string ("Read query '") + str + "' from socket");
 	    handle_query (ctx, socket, str);
 	    str="";
-		
+	    
+	    return;
 	  }
       }
 
@@ -425,13 +508,15 @@ int main (int argc, char **argv, char **envp)
   int res;
   
   init ();  
-  ctx.shield_pid = create_child (argv, envp, ctx.shield_fd);
+  create_child (argv, envp, ctx);
 
-  handle_query (ctx, 2, "select now ()");
+  debug << (string("main Read from fd ") + stringify (ctx.shield_recive_pipe[0]));
+
+  /*  handle_query (ctx, 2, "select now ()");
 
   debug << "Tested multiplexer, shutting down";
   exit(0);
-
+  */
   while(1)
     {
       t = sizeof (remote);
@@ -469,14 +554,12 @@ int main (int argc, char **argv, char **envp)
 	    }
 	  else
             {
-	      debug << "Connected with new child";
-
+	      debug << (string ("Connected with new child on fd ") + stringify (client_socket));
+	      
 	      handle_connection (ctx, client_socket);
 	      retry_close (client_socket);
             }
         }
-
     }
-
 }
 

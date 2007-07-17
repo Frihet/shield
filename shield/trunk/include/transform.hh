@@ -21,6 +21,7 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <map>
 #include <stdarg.h>
@@ -56,7 +57,8 @@ namespace shield
     extern const char sep;
     extern int yypos;
     extern char *yytext;
-
+    extern ostringstream output_stream;
+    
     /**
        Logger object for transform warnings
     */
@@ -1676,6 +1678,33 @@ namespace shield
 
     }
     ;
+
+    /**
+       The default value of a column in a create table statement. 
+    */
+    class default_value
+      : public printable
+    {
+    public:
+
+      default_value (printable *val)
+      {
+	_set_child (CHILD_INNER, val);
+      }
+
+      virtual printable *internal_transform (void);
+
+    protected:
+
+      void _print (ostream &stream)
+      {
+	stream << " default" << *_get_child (CHILD_INNER);
+      }
+
+    }
+    ;
+
+
 
     /**
        Error callback for yyparse and yylex. Prints the specified error message.

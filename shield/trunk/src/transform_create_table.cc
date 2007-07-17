@@ -59,6 +59,7 @@ namespace shield
 	}
 
       stream << endl << endl << sep;
+      introspection::clear_table (get_name ()->str ());
 
     }
 
