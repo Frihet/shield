@@ -27,6 +27,11 @@ namespace shield
     transform::printable *catalyst::
     operator () (transform::printable *node)
     {
+      if (!node)
+	{
+	  throw exception::invalid_type ("catalyst::operator ()", "non-null");
+	}
+
       if (__done.find (node) != __done.end ())
 	{
 	  return node;

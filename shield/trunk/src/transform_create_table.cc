@@ -42,7 +42,7 @@ namespace shield
   
       if (__check)
 	{
-	  introspection::table &t = introspection::get_table (get_name ()->str ());
+	  introspection::table &t = introspection::get_table (get_name ()->unmangled_str ());
 	  if (t.exists ())
 	    return;
 	}
@@ -57,9 +57,9 @@ namespace shield
 	{
 	  stream << "(" << *get_field_list () << " )" ;
 	}
-
+      
       stream << endl << endl << sep;
-      introspection::clear_table (get_name ()->str ());
+      introspection::clear_table (get_name ()->unmangled_str ());
 
     }
 
@@ -83,19 +83,27 @@ namespace shield
 	    {
 	      printable *node = *it;
 	      field_spec *spec = dynamic_cast<field_spec *> (node);
-
+	      
 	      if (!spec)
 		throw exception::invalid_state ("Field spec for create table contains non-field_spec type node " + node->get_node_name ());
-
-	      string str = "insert into shield_table_column (table_name, column_name, column_type) values (";
-	      str += oracle_escape (get_name ()->str ())+", "+oracle_escape (spec->get_name ()->str ()) + ", " + oracle_escape (ENUM_TO_STRING (data_type, spec->get_type ()->get_type ())) + ")\n\n";
+	      
+	      string str = "insert into shield_table_column (table_name, column_name, column_type, mangled_table_name, mangled_column_name) values (";
+	      
+	      str += oracle_escape (get_name ()->unmangled_str ())+", "
+		+ oracle_escape (spec->get_name ()->unmangled_str ()) + ", " 
+		+ oracle_escape (ENUM_TO_STRING (data_type, spec->get_type ()->get_type ())) + ", "
+		+ oracle_escape (get_name ()->str ()) + "," 
+		+ oracle_escape (spec->get_name ()->str ()) 
+		+ ")\n\n";
+	      
 	      str += sep;
 	      _add_query (new fake_query (new text (str, EXACT, false)));
+	      
 	    }
 	}
       else
 	{
-	  throw exception::unsupported ("Create table ... like-queries are not sup");
+	  throw exception::unsupported ("Create table ... like-queries are not supported");
 	}
     }
 

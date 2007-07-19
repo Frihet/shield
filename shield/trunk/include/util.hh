@@ -92,6 +92,8 @@ namespace util
   */
   string cxx_demangle (const string &in);
 
+  string identifier_unescape (const string &in);
+
 }
 
 #endif //#ifndef UTIL_HH

@@ -28,13 +28,13 @@ namespace shield
       if (!contexts)
 	throw shield::exception::syntax ("Cast called with no legal type");
 
-      _set_child (CHILD_INNER, p);
+      _set_child (CHILD_ITEM, p);
     }
 
     data_type cast::
     get_context (void)
     {
-      printable *inner = _get_child (CHILD_INNER);
+      printable *inner = get_item ();
 
       if (!inner)
 	throw shield::exception::syntax ("Cast of null node");
@@ -78,7 +78,7 @@ namespace shield
     void cast::
     _print (ostream &stream)
     {
-      printable *inner = _get_child (CHILD_INNER);
+      printable *inner = get_item ();
 
       if (!inner)
 	throw shield::exception::syntax ("Cast of null node");
@@ -90,7 +90,7 @@ namespace shield
       */
       int desired = __contexts;
       
-      debug << ("Cast from " + ENUM_TO_STRING (data_type, real) + " to whatever");
+      //      debug << ("Cast from " + ENUM_TO_STRING (data_type, real) + " to whatever");
       
       /*
 	First check if the actual type is one of the allowed types. If so, do no casting.
@@ -112,12 +112,12 @@ namespace shield
 	      else if (real & DATA_TYPE_DATETIME)
 		{
 		  inner->set_skip_space (true);
-		  stream << "shield.to_char (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss')";
+		  stream << "shield.to_char_ (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss')";
 		}
 	      else if (real & DATA_TYPE_DATE)
 		{
 		  inner->set_skip_space (true);
-		  stream << "shield.to_char (" << *inner << ", 'yyyy-mm-dd')";
+		  stream << "shield.to_char_ (" << *inner << ", 'yyyy-mm-dd')";
 		}
 	      else
 		{
@@ -131,11 +131,11 @@ namespace shield
 
 	      if (real & DATA_TYPE_DATETIME)
 		{
-		  stream << "to_clob (shield.to_char (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss'))";
+		  stream << "to_clob (shield.to_char_ (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss'))";
 		}
 	      else if (real & DATA_TYPE_DATE)
 		{
-		  stream << "to_clob (shield.to_char (" << *inner << ", 'yyyy-mm-dd'))";
+		  stream << "to_clob (shield.to_char_ (" << *inner << ", 'yyyy-mm-dd'))";
 		}
 	      else 
 		{

@@ -1,30 +1,24 @@
 /*
-   Copyright (C) 2000-2003 MySQL AB
-   Copyright (C) 2007 FreeCode AS
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 /** \file shield_yacc.yy 
    
-The mysql parser definition. 
+   The mysql parser definition. 
 
-Currently roughly 250 of 1300 language rules are correctly handled,
-enough to handle most select, insert, update, drop table, delete, and
-create table queries. This seems to be almost everything needed to run
-Joomla.
+   Currently roughly 250 of 1300 language rules are correctly handled,
+   enough to handle most select, insert, update, drop table, delete,
+   and create table queries. This seems to be almost everything needed
+   to run Joomla.
 
-'replace' and 'update ... on duplicate key' queries are non-trivial to
-implement, luckily Joomla does not seem to use them. 
+   'replace' and 'update ... on duplicate key' queries are non-trivial
+   to implement, luckily Joomla does not seem to use them.
+
+   @remark package: shield (Originally from the MySQL database server)
+   @remark Copyright: MySQL AB, FreeCode AS
+   @author MySQL AB, Axel Liljencrantz
+
+   This file is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation; version 3.
 
 */
 
@@ -657,60 +651,23 @@ namespace shield
 %right	NOT_SYM NOT2_SYM
 %right	BINARY COLLATE_SYM
 
-%type <printable_val> TEXT_STRING simple_ident TEXT_STRING_filesystem TEXT_STRING_literal text_literal literal term_operator create opt_bin_mod insert_table insert2 update_elem opt_primary opt_full wild_and_where show_param select_lock_type
-
-%type <select_item_val> select_item2 select_item table_wild
-
-%type <key_type_val> key_type constraint_key_type opt_key_or_index
-
-%type <printable_val> attribute
-
-%type <printable_val> opt_create_table_options create3 create_table_options create_table_option default_charset char select_option
-
-%type <chain_val> insert_values values_list udf_expr_list udf_expr_list2 udf_expr_list3 ident_eq_list ident_eq_value opt_attribute opt_attribute_list update_list expr_list expr_list2 key_list opt_values values select_options select_option_list opt_len order_list group_clause group_list
-
-%type <insert_val> insert insert_field_spec
-
-%type <create_table_val> create2a create2 
-
-%type <text_val> ident IDENT_sys keyword keyword_sp keyword_reserved ident_any select_alias TEXT_STRING_sys 
-
-%type <printable_val> table_ident field_ident
-
-%type <printable_val> where_clause having_clause opt_order_clause order_clause procedure_clause into opt_check_constraint check_constraint
-
-%type <printable_val>
-        IDENT IDENT_QUOTED DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
-	LEX_HOSTNAME ULONGLONG_NUM ident_or_text
-        UNDERSCORE_CHARSET olap_opt
-	NCHAR_STRING opt_component key_cache_name
-        sp_opt_label BIN_NUM label_ident 
-
-%type <select_val> select_part2 select_init2 select_from select_into opt_select_from select_derived2 select_paren
-
+%type <printable_val> TEXT_STRING simple_ident TEXT_STRING_filesystem TEXT_STRING_literal 
+%type <printable_val> text_literal literal term_operator create opt_bin_mod update_elem 
+%type <printable_val> opt_primary opt_full wild_and_where show_param select_lock_type
+%type <printable_val> attribute opt_create_table_options create3 create_table_options 
+%type <printable_val> create_table_option default_charset char select_option
+%type <printable_val> where_clause having_clause opt_order_clause order_clause procedure_clause into 
+%type <printable_val> opt_check_constraint check_constraint
+%type <printable_val> IDENT IDENT_QUOTED DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
+%type <printable_val> LEX_HOSTNAME ULONGLONG_NUM ident_or_text
+%type <printable_val> UNDERSCORE_CHARSET olap_opt
+%type <printable_val> NCHAR_STRING opt_component key_cache_name
+%type <printable_val> sp_opt_label BIN_NUM label_ident 
 %type <printable_val> expr simple_expr factor bool_term bool_and_expr bool_or_expr bool_factor 
-
 %type <printable_val>  verb_clause
-
-%type <text_val>
-	opt_table_alias
-
-%type <printable_val>
-	table_ident_nodb references xid
-
-%type <printable_val>
-	opt_ident opt_db text_or_password
-	opt_constraint constraint ident_or_empty
-
-%type <printable_val>
-	text_string opt_gconcat_separator
-
-%type <bool_val> if_exists
-
-%type <type_val> type 
-
-%type <bool_val> opt_if_not_exists
-
+%type <printable_val> table_ident_nodb references xid
+%type <printable_val> opt_ident opt_db text_or_password opt_constraint constraint ident_or_empty
+%type <printable_val> text_string opt_gconcat_separator
 %type <printable_val>
 	real_type order_dir lock_option
 	udf_type opt_local opt_table_options table_options
@@ -719,78 +676,33 @@ namespace shield
         opt_ignore_leaves fulltext_options spatial_type union_option
         start_transaction_opts opt_chain opt_release
         union_opt select_derived_init option_type2
-
 %type <printable_val>
 	raid_types merge_insert_types
-
 %type <printable_val>
 	replace_lock_option opt_low_priority insert_lock_option load_data_lock
-
-
-%type <printable_val>
-	insert_ident order_ident default_collation
-	opt_expr opt_else sum_expr in_sum_expr
-	variable variable_aux bool_test bool_pri 
-	predicate bit_expr bit_term bit_factor value_expr term 
-	udf_expr
-	expr_or_default set_expr_or_default interval_expr
-	param_marker geometry_function
-	signed_literal now_or_signed_literal opt_escape
-	sp_opt_default
-	simple_ident_nospvar simple_ident_q
-        field_or_var 
-
-%type <ull_val> limit_option num ulong_num ulonglong_num
-
-%type <limit_val> limit_options limit_clause opt_limit_clause
-
-%type <printable_val>
-	NUM_literal
-
-
-%type <printable_val>
-	when_list
-	ident_list ident_list_arg opt_expr_list
-
-%type <printable_val>
-        option_type opt_var_type opt_var_ident_type
-
-%type <printable_val>
-	opt_unique_or_fulltext
-
-%type <printable_val>
-	key_alg opt_btree_or_rtree
-
-%type <printable_val>
-	key_usage_list using_list
-
-%type <printable_val>
-	key_part
-
-%type <printable_val> join_table
+%type <printable_val> insert_ident order_ident default_collation
+%type <printable_val> opt_expr opt_else sum_expr in_sum_expr
+%type <printable_val> variable variable_aux bool_test bool_pri 
+%type <printable_val> predicate bit_expr bit_term bit_factor value_expr term udf_expr
+%type <printable_val> expr_or_default set_expr_or_default interval_expr
+%type <printable_val> param_marker geometry_function signed_literal now_or_signed_literal opt_escape
+%type <printable_val> sp_opt_default simple_ident_nospvar simple_ident_q field_or_var 
+%type <printable_val> NUM_literal
+%type <printable_val> when_list ident_list ident_list_arg opt_expr_list
+%type <printable_val> option_type opt_var_type opt_var_ident_type
+%type <printable_val> opt_unique_or_fulltext key_alg opt_btree_or_rtree
+%type <printable_val> join_table key_part key_usage_list using_list
         table_factor table_ref
         select_derived 
-
 %type <printable_val> date_time_type;
-
-%type <interval_val> interval interval_time_st
-
 %type <printable_val> storage_engines
-
-%type <printable_val> row_types
-
-%type <printable_val> isolation_types
-
-%type <printable_val> handler_rkey_mode
-
-%type <printable_val> cast_type
-
+%type <printable_val> call sp_proc_stmts sp_proc_stmts1 sp_proc_stmt
+%type <printable_val> sp_decl_idents sp_opt_inout sp_handler_type sp_hcond_list
+%type <printable_val> sp_decls sp_decl sp_cursor_stmt sp_name sp_cond sp_hcond
+%type <printable_val> row_types isolation_types handler_rkey_mode cast_type
 %type <printable_val> udf_func_type
-
 %type <printable_val> FUNC_ARG0 FUNC_ARG1 FUNC_ARG2 FUNC_ARG3 
-
 %type <printable_val> user grant_user
-
 %type <printable_val>
 	opt_collate
 	charset_name
@@ -799,18 +711,11 @@ namespace shield
 	old_or_new_charset_name_or_default
 	collation_name
 	collation_name_or_default
-
 %type <printable_val> internal_variable_name
-
 %type <printable_val> select_init
-
 %type <printable_val> subselect subselect_init
 	get_select_lex
-
 %type <printable_val> comp_op
-
-%type <chain_val> select_item_list derived_table_list join_table_list opt_insert_update field_list table_list fields 
-
 %type <printable_val> query change select do drop replace 
 	update delete truncate rename
 	show describe load alter optimize keycache preload flush
@@ -845,18 +750,45 @@ namespace shield
 	view_suid view_tail view_list_opt view_list view_select
 	view_check_option trigger_tail sp_tail
         case_stmt_specification simple_case_stmt searched_case_stmt END_OF_INPUT
-
-%type <printable_val> call sp_proc_stmts sp_proc_stmts1 sp_proc_stmt
-%type <printable_val>  sp_decl_idents sp_opt_inout sp_handler_type sp_hcond_list
-%type <printable_val> sp_cond sp_hcond
-%type <printable_val> sp_decls sp_decl
-%type <printable_val> sp_cursor_stmt
-%type <printable_val> sp_name
-
 %type <printable_val>
 	'-' '+' '*' '/' '%' '(' ')'
 	',' '!' '{' '}' '&' '|' AND_SYM OR_SYM OR_OR_SYM BETWEEN_SYM CASE_SYM
 	THEN_SYM WHEN_SYM DIV_SYM MOD_SYM OR2_SYM AND_AND_SYM
+
+%type <text_val> ident IDENT_sys keyword keyword_sp keyword_reserved ident_any select_alias 
+%type <text_val> opt_table_alias TEXT_STRING_sys 
+
+%type<identity_val> table_ident field_ident insert2 insert_table
+
+%type <select_item_val> select_item2 select_item table_wild
+
+%type <select_val> select_part2 select_init2 select_from select_into opt_select_from 
+%type <select_val> select_derived2 select_paren
+
+%type <key_type_val> key_type constraint_key_type opt_key_or_index
+
+%type <chain_val> insert_values values_list udf_expr_list udf_expr_list2 udf_expr_list3 
+%type <chain_val> ident_eq_list ident_eq_value opt_attribute opt_attribute_list update_list
+%type <chain_val> expr_list expr_list2 key_list opt_values values select_options 
+%type <chain_val> select_option_list opt_len order_list group_clause group_list
+%type <chain_val> select_item_list derived_table_list join_table_list opt_insert_update 
+%type <chain_val> field_list table_list fields 
+
+%type <insert_val> insert insert_field_spec
+
+%type <create_table_val> create2a create2 
+
+%type <bool_val> if_exists opt_if_not_exists
+
+%type <type_val> type 
+
+%type <ull_val> limit_option num ulong_num ulonglong_num
+
+%type <limit_val> limit_options limit_clause opt_limit_clause
+
+%type <interval_val> interval interval_time_st
+
+
 
 %%
 
@@ -870,7 +802,7 @@ query:
 	      query_list->push ($1);
 	      shield::catalyst::validation v;
 	      root = root->transform (v);
-
+	      
 	      shield::catalyst::debug << "Validation catalyst pass 1 done";
 	      
 	      shield::catalyst::internal i;
@@ -878,14 +810,14 @@ query:
 	      shield::catalyst::debug << "Internal catalyst done";
 	      
 	      root = root->transform (v);
-
+	      
 	      shield::catalyst::debug << "Validation catalyst pass 2 done";
-
+	      
 	      shield::transform::debug << ("final tree:\n" + root->get_tree ());
-
+	      
 	      output_stream << *root;
 	    }
-	    printable_delete();
+	    printable_delete ();
 	  }
         ;
 
@@ -1777,7 +1709,7 @@ constraint:
 field_spec:
 	field_ident type opt_attribute
 	  {
-	    $$ = new field_spec ($1, $2, $3);
+	    $$ = new field_spec ($1->get_field (), $2, $3);
 	  }
 	;
 
@@ -1995,7 +1927,7 @@ attribute:
 	  }
 	| DEFAULT now_or_signed_literal
 	  {
-	    $$ = new default_value( $2); 
+	    $$ = new default_value ($2); 
 	    $$ -> set_push_front (true);
 	  }
 	| ON UPDATE_SYM NOW_SYM optional_braces 
@@ -2730,7 +2662,7 @@ select_item_list:
 	  }
 	| '*'
 	  { 
-	    $$ = new chain (new select_item_wild ());
+	    $$ = new chain (new printable_alias (new select_item_wild ()));
 	    $$ -> set_separator (",");
 	  };
 
@@ -2747,9 +2679,42 @@ select_item:
 	      {
 		int pos1 = @1.first_column;
 		int pos2 = @1.last_column;
+
+		text *txt=0;
+		identity *id;
+		printable *sub_item;
+
+		/*
+		  The subitem of the printable_alias should be a cast
+		*/
+		printable *item = $1->get_item ();
+		cast *item_cast = dynamic_cast<cast *> (item);
 		
-		text *imp_alias = new text (lex_get_string ().substr (pos1, pos2-pos1));
-		$$->set_alias (imp_alias, true);
+		if (item_cast)
+		  {
+		    sub_item = item_cast->get_item ();
+		    //debug << (string ("MOPED ") + $1->get_item ()->get_node_name ());
+
+		    txt = dynamic_cast<text *> (sub_item);
+		    id = dynamic_cast<identity *> (sub_item);
+		    
+		    if (id)
+		      {
+			txt = id->get_field ();
+		      }
+		  }
+		
+		if (txt && ((txt->get_type () == IDENTIFIER) || (txt->get_type () == IDENTIFIER_QUOTED) || (txt->get_type () == LITERAL)))
+		  {
+		    text *imp_alias;
+		    imp_alias = new text (txt->unmangled_str (), IDENTIFIER);
+		    $$->set_alias (imp_alias, false);
+		  }
+		else
+		  {
+		    text *imp_alias = new text (lex_get_string ().substr (pos1, pos2-pos1), IDENTIFIER);
+		    $$->set_alias (imp_alias, true);
+		  }
 	      }
 	  };
 
@@ -4217,7 +4182,7 @@ drop:
 	  chain::const_iterator it;
 	  for (it=$5 -> begin (); it != $5 -> end (); ++it )
 	    {
-	      res->push (new drop_table (*it, $4));
+	      res->push (new drop_table (dynamic_cast<identity *> (*it), $4));
 	    }
 	  $$ = new fake_query (res);
 	}
@@ -4498,9 +4463,9 @@ delete:
 	DELETE_SYM
 	opt_delete_options single_multi 
 	{ 
-	  text *del = new text ("delete", EXACT, false);
-	  text *end = new text (";\n\n", EXACT, false);
-	  $$ = new chain(del, $2, $3, end)
+	  text *del = new text ("delete", EXACT, true);
+	  text *end = new text ("\n\n", EXACT, true);
+	  $$ = new fake_query (new chain(del, $2, $3, end));
 	}
 	;
 
@@ -5155,11 +5120,11 @@ insert_ident:
 table_wild:
 	ident '.' '*'
 	{
-	  $$ = new select_item_wild( 0, $1 );
+	  $$ = new printable_alias (new select_item_wild( 0, $1 ));
 	}
 	| ident '.' ident_any '.' '*'
 	{
-	  $$ = new select_item_wild( $1, $3 ); 
+	  $$ = new printable_alias (new select_item_wild( $1, $3 )); 
 	}
 	;
 

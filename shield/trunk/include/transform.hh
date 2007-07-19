@@ -71,8 +71,7 @@ namespace shield
    /**
        The various types thet the text node can be of
     */
-    enum text_type
-      {
+    ENUM_STRING (text_type,
 	/**
 	   The text node represents an exect sequence of characters and
 	   should not be transformed
@@ -93,9 +92,7 @@ namespace shield
 	   The text node is a string literal, and should be converted to
 	   an oracle style string literal
 	*/
-	LITERAL
-      }
-    ;
+	LITERAL );
 
     /**
        Set of different types of keys (indices)
@@ -130,8 +127,7 @@ namespace shield
        between all node types to avoid clashes when a node type
        inherits nodes from its parent.
     */
-    enum child_type
-      {
+    ENUM_STRING ( child_type,
 	CHILD_ITEM_LIST,
 	CHILD_TABLE_LIST,
 	CHILD_WHERE_CLAUSE,
@@ -169,8 +165,7 @@ namespace shield
 	CHILD_INITIAL_DATA,
 	CHILD_LIKE_CLAUSE,
 	CHILD_PARAM
-      }
-    ;
+		  );
     
     class printable_alias;
     class limit;
@@ -557,6 +552,8 @@ namespace shield
 
       virtual string get_node_name ();
 
+      string unmangled_str ();
+
     protected:
       
       /**
@@ -829,7 +826,7 @@ namespace shield
 
       void set_order_clause( printable *clause )
       {
-	_set_child (CHILD_HAVING_CLAUSE, clause);
+	_set_child (CHILD_ORDER_CLAUSE, clause);
       }
 
       printable *get_order_clause (void)
@@ -1062,6 +1059,8 @@ namespace shield
 
       virtual data_type get_context (void);
 
+      string unmangled_str ();
+
     protected:
 
       virtual void _print (ostream &stream);
@@ -1131,14 +1130,14 @@ namespace shield
 	return _get_child (CHILD_INITIAL_DATA);
       }
 
-      void set_name (printable *l)
+      void set_name (identity *l)
       {
 	_set_child (CHILD_NAME, l);
       }
 
-      printable *get_name (void)
+      identity *get_name (void)
       {
-	return _get_child (CHILD_NAME);
+	return _get_child<identity> (CHILD_NAME);
       }
 
       void set_like_clause (printable *l)
@@ -1191,15 +1190,15 @@ namespace shield
       insert(void);
       
       void set_ignore (bool i);
-      void set_field_list (printable *l);
+      void set_field_list (chain *l);
       void set_value_list (chain *l);
       void set_insert_update (printable *l);
-      void set_name (printable *l);
+      void set_name (identity *l);
       void set_eq_list (chain *l);
-      printable *get_field_list (void);
+      chain *get_field_list (void);
       chain *get_value_list (void);
       printable *get_insert_update (void);
-      printable *get_name (void);
+      identity *get_name (void);
       
     protected:
       virtual void _print (ostream &stream);
@@ -1218,7 +1217,7 @@ namespace shield
     {
     public:
       
-      drop_table( printable *name, bool if_exists);
+      drop_table( identity *name, bool if_exists);
       
     protected:
       
@@ -1244,12 +1243,12 @@ namespace shield
 
       printable *get_name (void)
       {
-	_get_child (CHILD_NAME);
+	return _get_child (CHILD_NAME);
       }
 
       printable *get_param (void)
       {
-	_get_child (CHILD_PARAM);
+	return _get_child (CHILD_PARAM);
       }
 
       /**
@@ -1356,7 +1355,7 @@ namespace shield
       : public printable
     {
     public:
-      field_spec (printable *name, type *type, printable *attribute)
+      field_spec (text *name, type *type, printable *attribute)
 	: __name (name), __type (type), __attrib (attribute)
       {
 	_set_child (CHILD_NAME, name);
@@ -1375,9 +1374,9 @@ namespace shield
 	return _get_child (CHILD_ATTRIBUTE);
       }
 
-      printable *get_name (void)
+      text *get_name (void)
       {
-	return _get_child (CHILD_NAME);
+	return _get_child<text> (CHILD_NAME);
       }
 
     protected:
@@ -1404,12 +1403,7 @@ namespace shield
       : public printable
     {
     public:
-      printable_alias (printable *item=0, text *alias=0, bool alias_implicit=false)
-	: __alias_implicit (alias_implicit)
-      {
-	_set_child (CHILD_ITEM, item);
-	_set_child (CHILD_ALIAS, alias);
-      }
+      printable_alias (printable *item, text *alias=0, bool alias_implicit=false);
 
       void set_item (text *item)
       {
@@ -1438,27 +1432,14 @@ namespace shield
       }
 
     protected:
-      virtual void _print (ostream &stream)
-      {
-	stream << *get_item ();
-
-	print_alias (stream);
-      }
-
-      void print_alias (ostream &stream)
-      {
-	if (!__alias_implicit)
-	  {
-	    text *alias = get_alias ();
-	    if( alias && alias->length () )
-	      stream << *alias;
-	  }
-      }
+      virtual void _print (ostream &stream);
+      
+    private:
+      void __print_alias (ostream &stream);
 
     private:
-
       bool __alias_implicit;
-
+      
     }
     ;
 
@@ -1466,11 +1447,10 @@ namespace shield
        A wildcarded field selection item for select queries.
     */
     class select_item_wild 
-      : public printable_alias
+      : public printable
     {
     public:
       select_item_wild (text *ns=0, text *table=0)
-	: printable_alias (0, 0)
       {
 	_set_child (CHILD_NAMESPACE, ns);
 	_set_child (CHILD_TABLE, table);
@@ -1490,18 +1470,19 @@ namespace shield
       virtual void _print (ostream &stream)
       {
 	stream << " ";
-
+	
 	if (get_namespace () && get_namespace ()->length ())
 	  {
 	    stream << *get_namespace () << ".";
 	  }
+	
 	if (get_table () && get_table ()->length ())
 	  {
 	    stream << *get_table () << ".";
 	  }
+	
 	stream << "*";
-
-	print_alias (stream);
+      
       }
 
     };
@@ -1543,6 +1524,11 @@ namespace shield
       cast (printable *p, int contexts);
 
       virtual data_type get_context (void);
+
+      printable *get_item ()
+      {
+	return _get_child (CHILD_ITEM);
+      }
 
     protected:
       virtual void _print (ostream &stream);

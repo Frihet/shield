@@ -21,7 +21,7 @@ namespace shield
   namespace transform
   {
     
-    drop_table::drop_table( printable *name, bool if_exists)
+    drop_table::drop_table( identity *name, bool if_exists)
       : __if_exists (if_exists)
     {
       _set_child (CHILD_NAME, name);
@@ -30,7 +30,7 @@ namespace shield
     void drop_table::
     _print (ostream &stream)
     {
-      printable *name = _get_child (CHILD_NAME);
+      identity *name = _get_child<identity> (CHILD_NAME);
 
       if (!name)
 	{
@@ -39,14 +39,14 @@ namespace shield
 
       if (__if_exists)
 	{
-	  introspection::table &t = introspection::get_table (name->str ());
+	  introspection::table &t = introspection::get_table (name->unmangled_str ());
 	  if (!t.exists ())
 	    {
 	      return;
 	    }
 	}
 
-      introspection::clear_table (name->str ());
+      introspection::clear_table (name->unmangled_str ());
       stream << "drop table" << *name << endl << endl << sep;
       stream << "delete from shield_table_column where table_name = " << util::oracle_escape (name->str ()) << endl << endl << sep;
     }

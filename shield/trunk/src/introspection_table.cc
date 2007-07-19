@@ -34,19 +34,19 @@ namespace shield
     void table::
     load_column ()
     {
-     
+      
       if (__is_col_init)
 	return;
       
       __is_col_init = true;
       
-      string q = "select a.column_name, a.column_type from shield_table_column a left join user_tab_columns b on upper(a.column_name)=b.column_name and upper(a.table_name)=b.table_name where a.table_name = % order by b.column_id";
+      string q = "select a.column_name, a.column_type \nfrom shield_table_column a \nleft join user_tab_columns b on upper(a.mangled_column_name)=b.column_name and upper(a.mangled_table_name)=b.table_name\nwhere lower (a.table_name) = lower (%)\n order by b.column_id";
       
-      result_set &rs = query (q) << __name;
+      result_set &rs = query (q) << identifier_unescape (__name);
 
       while (rs.next ())
 	{
-	  //debug << ( rs.get_string ("column_name") + " "+ rs.get_string ("column_type"));
+	  debug << ( rs.get_string ("column_name") + " "+ rs.get_string ("column_type"));
 	  __col.push_back (column (rs.get_string ("column_name"), rs.get_string ("column_type")));
 	}
       rs.close ();
@@ -58,7 +58,7 @@ namespace shield
       load_column ();
       column_const_iterator it;
 
-      string name2 = to_lower (name);
+      string name2 = name;
 
       for (it=column_begin (); it != column_end (); ++it)
 	{
@@ -89,13 +89,12 @@ namespace shield
     bool table::
     exists ()
     {
-      string q = "select table_name from user_tables where table_name = %";
+      string q = "select table_name from shield_table_column where table_name = %";
       
-      result_set &rs = query (q) << to_upper (__name);
+      result_set &rs = query (q) << __name;
 
       return rs.next ();
     }
-
 
   }
 

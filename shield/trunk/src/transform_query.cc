@@ -44,10 +44,9 @@ namespace shield
     {
       _make_condensed_table_list ();
       
-
-      vector<printable *> list = _condensed_table_list;
-      
+      vector<printable *> list = _condensed_table_list;      
       vector<printable *>::const_iterator i;
+
       for (i=list.begin (); i<list.end (); i++)
 	{
 	  
@@ -70,18 +69,20 @@ namespace shield
 	  if (!unaliased)
 	    throw exception::invalid_state ( string ("Could not unalias item ") + t->str ());
 
-	  introspection::table &table = introspection::get_table (unaliased->str ());
+	  introspection::table &table = introspection::get_table (unaliased->unmangled_str ());
 
 	  try
 	    {
-	      const introspection::column &col = table.get_column (field->str ());
+
+	      const introspection::column &col = table.get_column (field->unmangled_str ());
 	      
 	      /*
 		If that column didn't exist, an exception would have been thrown. We found it! Yay!
 
 		Note that we use \c t here, not \c unaliased. 
 	      */
-	      return new text(t->str ());
+	      
+	      return new text(t->unmangled_str (), IDENTIFIER);
 	    }
 	  catch (exception::not_found &e)
 	    {

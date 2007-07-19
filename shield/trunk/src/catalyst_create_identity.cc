@@ -39,8 +39,9 @@ namespace shield
 
       transform::printable *parent = t->get_parent ();
       bool parent_is_id = dynamic_cast<transform::identity *> (parent) != 0;
+      bool parent_is_item_wild = dynamic_cast<transform::select_item_wild *> (parent) != 0;
 
-      if (parent_is_id)
+      if (parent_is_id || parent_is_item_wild)
 	{
 	  return p;
 	}

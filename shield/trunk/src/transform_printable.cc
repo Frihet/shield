@@ -23,6 +23,8 @@ namespace shield
   namespace transform
   {
 
+    using namespace util;
+
     namespace
     {
       vector<printable *>all_printable;
@@ -81,6 +83,12 @@ namespace shield
     void printable::
     _set_child (child_type id, printable *value)
     {
+      /*
+      if (dynamic_cast <insert *> (this))
+	{
+	  debug << (string ("Set child of type ") + ENUM_TO_STRING (child_type, id) + " to value " + stringify (value));
+	}
+      */
       //      if (!value)
   //	throw exception::invalid_param ("Called set_child with null value");
 	__children[id] = value;
@@ -94,7 +102,12 @@ namespace shield
 
       map<int, printable *>::const_iterator i;
       i = __children.find (id);
-
+      /*
+      if (dynamic_cast <insert *> (this))
+	{
+	  debug << (string ("Get child of type ") + ENUM_TO_STRING (child_type, id) + " with value " + stringify (i == __children.end ()?0:i->second));
+	}
+      */
       if (i == __children.end ())
 	return 0;
 

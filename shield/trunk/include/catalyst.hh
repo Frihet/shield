@@ -71,6 +71,10 @@ namespace shield
       */
       transform::printable *operator () (transform::printable *node);
       virtual transform::printable *catalyze (transform::printable *node)=0;
+      virtual ~catalyst ()
+      {
+      }
+
     private:
       
       /**

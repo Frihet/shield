@@ -10,6 +10,8 @@
 
 */
 
+#include <string>
+#include <iostream>
 #include <cctype>
 #include <stdarg.h>
  
@@ -120,7 +122,7 @@ namespace util
 	      out += c;
 	      out += c;
 	    }
-	  else if (abs(c) >= 32 )
+	  else if (abs(c) >= 32 && c != '&')
 	    {
 	      count++;
 	  
@@ -226,6 +228,16 @@ namespace util
       }
 
     return res;
+  }
+
+  string identifier_unescape (const string &in)
+  {
+    string unescaped_name = in;
+    if (unescaped_name[unescaped_name.size ()-1] == '_')
+      unescaped_name = unescaped_name.substr (0, unescaped_name.size ()-1);
+    
+    //    std::cerr << in << " -> " << un
+    return unescaped_name;
   }
 
 }

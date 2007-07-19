@@ -58,15 +58,15 @@ namespace shield
 	*/
 	if (!p->get_query ())
 	  {
-
+	    string msg = "";
 	    transform::printable *i=p;
 	    while (i)
 	      {
-		cerr << typeid(*i).name () << endl;
-		//cerr << *i << endl;
+		msg += typeid(*i).name ();
+		msg += "\n";
 		i=i->get_parent ();
 	      }
-
+	    debug << msg;
 	    throw exception::invalid_state ("query-less node found");
 	  }
 	

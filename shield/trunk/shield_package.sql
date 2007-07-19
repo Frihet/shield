@@ -271,6 +271,9 @@ is
 	function to_date_ (date_in number, format varchar2) 
 		return date deterministic;
 
+	function to_char_ (date_in date, format varchar2) 
+		return varchar2 deterministic;
+
 end shield;
 /
 
@@ -400,11 +403,11 @@ is
 	begin
 		date_in2 := date_in;
 		if length(format) = 10 then
-			if date_in = '0000-00-00' or date_in = '0' then
+			if date_in = '0000-00-00' or date_in = '0' or date_in = '00:00:00' or date_in = '00000000' then
 				date_in2 := '0001-01-01';
 			end if;
 		else
-			if date_in = '0000-00-00 00:00:00' or date_in = '0' then
+			if date_in = '0000-00-00 00:00:00' or date_in = '0' or date_in = '00:00:00' or date_in = '00000000' or date_in = '00000000000000' then
 				date_in2 := '0001-01-01 00:00:00';
 			end if;
 
@@ -434,11 +437,24 @@ is
 		return to_date (date_in2, format);
 	end;
 
-
+	function to_char_ (date_in date, format varchar2) 
+		return varchar2 deterministic
+	is 
+		date_in2 date;
+	begin
+		date_in2 := date_in;
+		if to_char (date_in2,'yyyy-mm-dd hh24:mi:ss') = '0001-01-01 00:00:00' then
+			if length(format) = 10 then
+				return '0000-00-00';
+			end if;
+			return '0000-00-00 00:00:00';
+		end if;
+		
+		return to_char (date_in2, format);
+	end;
 
 end shield;
 /
-
 
 create or replace trigger after_logon
 	after logon 
@@ -457,7 +473,9 @@ create table shield_table_column
 (
        	id number (14, 0),     
 	table_name varchar2 (64),     
+	mangled_table_name varchar2 (32),    
 	column_name varchar2 (64),    
+	mangled_column_name varchar2 (32),    
 	column_type varchar2 (32)
 );
 
@@ -486,4 +504,15 @@ drop index shield_table_column_idx2;
 
 create index shield_table_column_idx2
 on shield_table_column (table_name, column_name);
+
+drop index shield_table_column_idx3;
+
+create index shield_table_column_idx3
+on shield_table_column (mangled_table_name);
+
+drop index shield_table_column_idx4;
+
+create index shield_table_column_idx4
+on shield_table_column (mangled_table_name, mangled_column_name);
+
 

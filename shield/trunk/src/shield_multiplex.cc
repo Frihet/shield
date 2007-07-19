@@ -517,7 +517,7 @@ int main (int argc, char **argv, char **envp)
   debug << "Tested multiplexer, shutting down";
   exit(0);
   */
-  while(1)
+  while(true)
     {
       t = sizeof (remote);
 

@@ -13,6 +13,7 @@
 #include "include/transform.hh"
 #include "include/exception.hh"
 #include "include/introspection.hh"
+#include "include/util.hh"
 
 using namespace shield;
 
@@ -21,6 +22,8 @@ namespace shield
 
   namespace transform
   {
+
+    using namespace util;
 
     insert::
     insert()
@@ -33,9 +36,9 @@ namespace shield
     {
       __ignore = i;
     }
-
+    
     void 
-    insert::set_field_list (printable *l)
+    insert::set_field_list (chain *l)
     {
       _set_child (CHILD_FIELD_LIST, l);
     }
@@ -47,7 +50,7 @@ namespace shield
     }
 
     void 
-    insert::set_name (printable *l)
+    insert::set_name (identity *l)
     {
       _set_child (CHILD_NAME, l);
     }
@@ -85,10 +88,10 @@ namespace shield
       set_value_list (new chain (val));
     }
 
-    printable *insert::
+    chain *insert::
     get_field_list ()
     {
-      return _get_child (CHILD_FIELD_LIST);
+      return _get_child<chain> (CHILD_FIELD_LIST);
     }
 
     chain *insert::
@@ -103,10 +106,10 @@ namespace shield
       return _get_child (CHILD_INSERT_UPDATE);
     }
 
-    printable *insert::
+    identity *insert::
     get_name ()
     {
-      return _get_child (CHILD_NAME);
+      return _get_child<identity> (CHILD_NAME);
     }
 
     void insert::
@@ -127,13 +130,16 @@ namespace shield
 	  fl->set_separator (",");
 
 	  using namespace introspection;
+
+	  debug << (string ("Field list for table ")+ get_name ()->str ()+ " is empty, filling it in!");
 	  
-	  table &t = introspection::get_table (get_name ()->str ());
+	  table &t = introspection::get_table (get_name ()->unmangled_str ());
 	  table::column_const_iterator i;
 	  for (i=t.column_begin (); i<t.column_end (); i++)
 	    {
 	      string n = (*i).get_name ();
-	      text *fld = new text (n);
+	      debug << (string ("Add field item ")+ n);
+	      text *fld = new text (n, IDENTIFIER);
 	      identity *id = new identity (0, 0, fld);
 	      fl->push (id);
 	    }
@@ -144,6 +150,7 @@ namespace shield
 
       chain::const_iterator i;  
 
+
       for (i=get_value_list ()->begin (); i<get_value_list ()->end (); i++)
 	{
 
@@ -153,24 +160,44 @@ namespace shield
 	  
 	  (*i)->set_skip_space (true);
 
-	  introspection::table &itable = introspection::get_table (get_name ()->str ());
+	  introspection::table &itable = introspection::get_table (get_name ()->unmangled_str ());
 	  
-	  stream << "values (";
+	  stream << "values \n(";
 
 	  chain *field_list = dynamic_cast<chain *> (get_field_list ());
 	  chain *value = dynamic_cast<chain *> (*i);
 	  chain::const_iterator j;
+
+	  if (field_list->size () != value->size ())
+	    {
+	      throw exception::invalid_state (string ("Field list has ") + stringify (field_list->size ()) + " items, but value list has " + stringify (value->size ()));
+	    }
+
 	  for (int j=0; j<value->size (); j++)
 	    {
-	      printable *column_name = (*field_list)[j];
+	      text *column_name = dynamic_cast<text *> ((*field_list)[j]);
+	      identity *column_name_id = dynamic_cast<identity *> ((*field_list)[j]);
 
-	      const introspection::column icolumn = itable.get_column (column_name->str ());
+	      if (column_name_id)
+		{
+		  column_name = column_name_id->get_field ();
+		}
 
+	      if (!column_name)
+		{
+		  throw exception::invalid_state ("Item in field list was not of type text or identity");
+		}
+	      
+	      const introspection::column icolumn = itable.get_column (column_name->unmangled_str ());
+	      
 	      if (j)
-		stream << ",";
+		stream << ",\n";
+
+	      stream << "\t";
 
 	      cast *c =new cast ((*value)[j], icolumn.get_type ().get_type ());
 	      c->set_parent (this);
+	      c->set_skip_space (true);
 	      stream << *c;
 	    }
 

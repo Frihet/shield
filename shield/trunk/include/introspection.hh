@@ -203,7 +203,7 @@ namespace shield
        Factory function for getting a table with a specific name
     */
     table &get_table (string table_name);
-  
+    
     /**
        Factory function for telling the introspection code that the
        specified table has been changed.

@@ -58,7 +58,8 @@ transform = env.Object(Split("""
 	transform_update.cc		
 	transform_fake_query.cc 
 	transform_type.cc
-	transform_default_value.cc"""))
+	transform_default_value.cc
+	transform_printable_alias.cc"""))
 
 catalyst = env.Object(Split("""
 	catalyst.cc

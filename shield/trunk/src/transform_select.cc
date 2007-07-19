@@ -74,7 +74,7 @@ namespace shield
 	string func_name;
 
 	introspection::table &t = introspection::get_table (table);
-	const introspection::column &c = t.get_column (field->str ());
+	const introspection::column &c = t.get_column (field->unmangled_str ());
 	introspection::column_type y = c.get_type ();
 
 	if (y.is_char ())
@@ -92,7 +92,7 @@ namespace shield
 	paran *p = new paran (new identity (0, new text (table_alias), field));
 	printable *val = new chain (new text (func_name), p);
 	printable *res = new printable_alias (val, alias);
-
+	
 	return res;
       }
 
@@ -154,18 +154,57 @@ namespace shield
 
 	  if (item->get_alias ())
 	    {
-	      stream << item->get_alias ()->str () << "\n";
+	      stream << item->get_alias ()->unmangled_str () << "\n";
 	    }
 	  else
 	    {
-	      stream << item->get_item ()->str () << "\n";
+	      printable *sub_item = item->get_item ();
+	      identity *sub_item_identity = dynamic_cast<identity *> (sub_item);
+	      if (sub_item_identity)
+		{
+		  sub_item = sub_item_identity->get_field ();
+		}
+	      
+	      stream << util::identifier_unescape (sub_item->str ()) << "\n";
 	    }
 	}
       stream << "*/\n";
 
 
       if (get_limit_clause ())
-	stream << "select"<< *get_item_list () <<" from (";
+	{
+	  stream << "select";
+
+	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
+	    {
+	      printable *pr = *it;
+	      
+	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
+	      if (!item)
+		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
+	      
+	      if (it != get_item_list ()->begin ())
+		stream << ",";
+
+	      if (item->get_alias ())
+		{
+		  stream << *item->get_alias ();
+		}
+	      else
+		{
+		  printable *sub_item = item->get_item ();
+		  identity *sub_item_identity = dynamic_cast<identity *> (sub_item);
+		  if (sub_item_identity)
+		    {
+		      sub_item = sub_item_identity->get_field ();
+		    }
+		  
+		  stream << *sub_item;
+		}
+	    }
+	  
+	  stream <<" from (\n";
+	}
 
       stream << "select";
 
@@ -300,41 +339,47 @@ namespace shield
 	  for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
 	    {
 	      bool handled = false;
-
+	      
 	      printable *pr = *it;
 	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
-	  
+	      
 	      /*
 		Try and locate all used fields. There are lots of
 		situataions where this is not good enough, e.g. when using
 		non-cumulative functions or math operators in select
 		items.
 	      */
-	  
-	      text *txt = dynamic_cast<text *> (item->get_item ());
-	      identity *id = dynamic_cast<identity *> (item->get_item ());
-
+	      
+	      cast *cast_item = dynamic_cast<cast *>(item->get_item ());
+	      if (!cast_item)
+		{
+		  throw exception::invalid_state ("Expected child of type cast");
+		}
+	      
+	      text *txt = dynamic_cast<text *> (cast_item->get_item ());
+	      identity *id = dynamic_cast<identity *> (cast_item->get_item ());
+	      
 	      if (txt)
 		{
 		  id = new identity (0, 0, txt);
 		}
-
+	      
 	      if (id)
 		{
 		  string table_name = get_table_list ()-> str ();
-
+		  
 		  if (id->get_namespace ())
 		    {
 		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. I'm lazy. Sorry.");
 		    }
-
+		  
 		  if (id->get_table ())
 		    {
 		      table_name = id->get_table ()->str ();
 		    }
-
+		  
 		  txt = id->get_field ();
-
+		  
 		  if (txt->get_type () == IDENTIFIER || 
 		      txt->get_type () == IDENTIFIER_QUOTED)
 		    {
@@ -352,10 +397,10 @@ namespace shield
 			  handled = true;
 			  
 			  text *alias = item->get_alias ();
-
-			  string unaliased_table_name = unalias_table(new text (table_name))->str ();
-
-			  item_list->push (aggregate (txt, alias, table_name, unaliased_table_name));
+			  
+			  string unaliased_table_name = unalias_table(new text (table_name))->unmangled_str ();
+			  
+			  item_list->push (new cast (aggregate (txt, alias, table_name, unaliased_table_name), DATA_TYPE_SELECTABLE));
 			  
 			}
 		      else
@@ -366,7 +411,7 @@ namespace shield
 		    }
 		}
 	      
-	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item);
+	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item->get_item ());
 	      
 	      if (wi)
 		{
@@ -380,13 +425,12 @@ namespace shield
 	      
 		  if (wi->get_table ())
 		    {
-		      le = wi->get_table ()->str ();
+		      le = wi->get_table ()->unmangled_str ();
 		    }
 		  else
 		    {
-		      le = get_table_list ()-> str ();
+		      le = util::identifier_unescape (get_table_list ()-> str ());
 		    }
-
 
 		  introspection::table &t = introspection::get_table (le);
 		  
@@ -398,7 +442,7 @@ namespace shield
 		      if (__group_field.find (name) == __group_field.end ())
 			{
 
-			  string unaliased_table_name = unalias_table(new text (le))->str ();
+			  string unaliased_table_name = unalias_table(new text (le, IDENTIFIER))->str ();
 
 			  item_list->push (aggregate (new text (name), 0, le, unaliased_table_name));
 			}
@@ -423,22 +467,22 @@ namespace shield
       else 
 	{
 
-
 	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
 	    {
 	      printable *pr = *it;
 	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
 
+
 	      if (!item)
 		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
-	      
-
-	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item);
+	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item->get_item ());
 	      
 	      if (wi)
 		{
-
+		  
 		  string le;
+
+		  text *aliased_table=0;
 
 		  if (wi->get_namespace ())
 		    {
@@ -447,7 +491,9 @@ namespace shield
 
 		  if (wi->get_table ())
 		    {
-		      le = wi->get_table ()->str ();
+		      aliased_table=wi->get_table ();
+		      debug << (string ("Table component is ")+ wi->get_table ()->str ());
+		      le = unalias_table (wi->get_table ())->str ();
 		    }
 		  else
 		    {
@@ -464,9 +510,16 @@ namespace shield
 
 		  introspection::table::column_const_iterator it;
 
+		  debug << (string ("Introspect table ") + le);
+ 
 		  for (it=t.column_begin (); it!=t.column_end (); ++it)
 		    {
-		      item_list->push (new printable_alias (new text ((*it).get_name (),IDENTIFIER), 0));
+		      string unescaped_name = it->get_name ();
+		      printable * id;
+
+		      id = new cast (new identity (0, aliased_table, new text (unescaped_name,IDENTIFIER)), 
+				     DATA_TYPE_SELECTABLE);
+		      item_list->push (new printable_alias (id, new text (unescaped_name, IDENTIFIER), true));
 		    }
 		}
 	      else
@@ -516,7 +569,7 @@ namespace shield
 	    {
 	      printable *pr = *it;
 	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
-	  
+	      
 	      if (item->get_alias ())
 		{
 		  __field_alias[item->get_alias ()->str ()] = new text (item->get_item ()->str ());

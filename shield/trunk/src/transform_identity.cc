@@ -22,6 +22,41 @@ namespace shield
   namespace transform
   {
 
+    string identity::
+    unmangled_str ()
+    {
+      string res;
+      bool printed = false;
+
+      if (get_namespace () && get_namespace ()->length ())
+	{
+	  res += get_namespace ()->unmangled_str ();
+	  printed = true;
+	}
+
+      if (get_table () && get_table ()->length ())
+	{
+	  if (printed)
+	    {	
+	      res += ".";
+	    }
+	  printed = true;
+	  res += get_table ()->unmangled_str ();
+	}
+    
+      if (get_field () && get_field ()->length ())
+	{
+	  if (printed)
+	    {
+	      res += ".";
+	    }
+	  res += get_field ()->unmangled_str ();
+	}
+
+      return res;
+    }
+	
+
     void identity::
     _print (ostream &stream)
     {
@@ -88,9 +123,10 @@ namespace shield
 
       query *q = get_query ();
       
+      debug << (string ("Query is of type ") + q->get_node_name ());
+
       if (!q)
 	{
-	  cerr << "parent = " << get_parent ()->get_node_name () << endl;
 	  throw exception::invalid_state ("No parent query in identity node " + get_path ());
 	}
 
@@ -105,9 +141,11 @@ namespace shield
 	throw exception::invalid_state ("Could not introspect table in identity::get_context ()");
 
       text *real_table = q->unalias_table (table);
+
+      debug << (string ("Table ")+ table->str ()+ " unaliased to " + real_table->str ());
  
-      introspection::table &itbl = introspection::get_table (real_table->str ());
-      const introspection::column &ic = itbl.get_column (get_field ()->str ());
+      introspection::table &itbl = introspection::get_table (real_table->unmangled_str ());
+      const introspection::column &ic = itbl.get_column (get_field ()->unmangled_str ());
       const introspection::column_type &tp = ic.get_type ();
       
       return tp.get_type ();

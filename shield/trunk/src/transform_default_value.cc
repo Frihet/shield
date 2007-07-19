@@ -33,8 +33,6 @@ namespace shield
       if (!grand_parent || !field)
 	throw exception::invalid_state ("invalid grandparent for default value");
 
-      cerr << "LALA " << ENUM_TO_STRING( data_type, field->get_type ()->get_type ());
-
       if (field->get_type ()->get_type () == DATA_TYPE_DATETIME)
 	{
 	  if (contains (inner.c_str (), "0", "'0'", "\"0\"", "'0000-00-00 00:00:00'", "\"0000-00-00 00:00:00\""))

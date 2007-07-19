@@ -134,7 +134,7 @@ namespace shield
       }
 
       /**
-	 Make an identifier name a valid under oracle
+	 Make an identifier name a valid oracle name
       */
       string identifier_escape (const string &in)
       { 
@@ -280,6 +280,26 @@ namespace shield
       res += suffix;
       return res;
     }
+
+    string text::
+    unmangled_str ()
+    {
+      switch (get_type ())
+	{
+	case IDENTIFIER:
+	  return __val;
+	  
+	case IDENTIFIER_QUOTED:
+	  return __val.substr (1, __val.size ()-2);
+
+	case LITERAL:
+	  return mysql_unescape (__val);
+	  
+	default:
+	  throw exception::invalid_state (string ("Called unmangled_str () on ")+get_node_name () + ", of type " + ENUM_TO_STRING (text_type, get_type ()));
+	}
+    }
+
 
   }
 

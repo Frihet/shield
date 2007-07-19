@@ -35,6 +35,7 @@ namespace shield
 	  if (a->get_alias ())
 	    {
 	      __res.push_back (a->get_alias ());
+	      debug << (string ("Found table alias ") + a->get_alias ()->str ());
 	    }
 	  else
 	    {
@@ -46,6 +47,7 @@ namespace shield
 		  if (print->get_query () == __query)
 		    {
 		      __res.push_back (print);
+		      debug << (string ("Found table ") + print->str ());
 		    }
 		}
 	    }
