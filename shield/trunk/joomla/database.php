@@ -32,6 +32,38 @@ $shield_query=array();
 global $shield_password;
 global $shield_username;
 global $shield_server;
+global $shield_verbose;
+$shield_verbose=0;
+
+function shield_begin_verbose()
+{
+  global $shield_verbose;
+  $shield_verbose++;
+}
+
+function shield_end_verbose()
+{
+  global $shield_verbose;
+  $shield_verbose--;
+}
+
+function shield_debug ($msg)
+{
+  global $shield_verbose;
+  if ($shield_verbose > 0)
+    {
+      echo $msg;
+    }
+}
+
+function var_describe ($arg)
+{
+  ob_start();
+  var_dump($arg);
+  $my_string = ob_get_contents();
+  ob_end_clean();
+  return $my_string;
+}
 
 function get_stack_trace ()
 {
@@ -237,7 +269,7 @@ function shield_translate_query ($q)
 
 function shield_query ($q, $resource=null)
 {
-  //echo "shield_query (<pre>$q</pre>, $resource);<br>\n";
+  shield_debug ("shield_query (<pre>$q</pre>, $resource);<br>\n");
 
   global $shield_query;
   
@@ -266,12 +298,15 @@ function shield_query ($q, $resource=null)
 	{
 	  return false;
 	}
+
+      shield_debug ("<pre>{$next_query}</pre><br>\n");
+
       if (!ociexecute ($stmt->oci_stmt))
 	{
 	  echo "in:<br>\n";
 	  echo "shield_query (<pre>$q</pre>, $resource);<br>\n";
 	  echo "-&gt;<br>\n";
-	  echo "Execute query <pre>{$next_query}</pre><br>\n";
+	  echo "<pre>{$next_query}</pre><br>\n";
 
 	  echo get_stack_trace ();
 
@@ -316,38 +351,12 @@ function shield_fetch_row ($stmt_arr)
 {
   $el = end ($stmt_arr);
   $res = array();
-  /*
-  if (!ocifetch($el->oci_stmt))
-    return false;
-
-  $i=0;
-  while (true)
-    {
-      $val = ociresult($el->oci_stmt, $i+1); 
-
-      if ($val === false)
-	break;
-      
-      if (is_object($val))
-	{
-	      $res2[] = $val->load ();
-	}
-      else
-	{
-	  $res2[] = $val;
-	}
-      $i++;
-    }
-
-  echo "\nGot " . $i . " rows of data<br>\n";
-
-  return $res;
-  */
   
   $status = ocifetchinto ($el->oci_stmt, $res, OCI_NUM);
-  //  echo "\nGot " . count ($res) . " rows of data<br>\n";
+
   if ($status)
     {
+
       $res2 = array ();
       foreach ($res as $i)
 	{
@@ -360,9 +369,14 @@ function shield_fetch_row ($stmt_arr)
 	      $res2[] = $i;
 	    }
 	}
+
+      shield_debug ("shield_fetch_row (<stmt>) = <pre>" . var_describe ($res2) . "</pre><br>\n");
+
       return $res2;
 
     }
+
+  shield_debug ("shield_fetch_row (<stmt>)=false<br>\n");
   
   return false;
 }
@@ -1278,7 +1292,8 @@ class mosDBTable {
    *	@param int $oid optional argument, if not specifed then the value of current key is used
    *	@return any result from the database operation
    */
-  function load( $oid=null ) {
+  function load_internal( $oid=null ) {
+
     $k = $this->_tbl_key;
 
     if ($oid !== null) {
@@ -1315,6 +1330,12 @@ class mosDBTable {
     $this->_db->setQuery( $query );
 
     return $this->_db->loadObject( $this );
+  }
+
+  function load( $oid=null ) {
+    //shield_begin_verbose ();
+    return $this->load_internal ($oid);
+    //shield_end_verbose ();
   }
 
   /**

@@ -100,8 +100,15 @@ namespace shield
       stream << "before insert on " << t_name << endl;
       stream << "for each row" << endl;
       stream << "begin" << endl;
-      stream << "\tselect " << name << "_s_.nextval into :new." << f_name << " from dual;" << endl;
-      stream << "\tselect " << name << "_s_.currval into shield.last_insert_id from dual;" << endl;
+      stream << "\tselect " << name << "_s_.nextval into shield.last_insert_id from dual;" << endl;
+      stream << "\tif :new." << f_name << " is null or :new." << f_name << " = 0 then" << endl;
+      stream << "\t\tselect " << name << "_s_.currval into :new." << f_name << " from dual;" << endl;
+      stream << "\telse" << endl; 
+      stream << "\t\twhile shield.last_insert_id < :new." << f_name << endl;
+      stream << "\t\tloop" << endl;
+      stream << "\t\t\tselect " << name << "_s_.nextval into shield.last_insert_id from dual;" << endl;
+      stream << "\t\tend loop;" <<endl;
+      stream << "\tend if;" <<endl;
       stream << "end;" <<endl;
       stream << "/" << endl << endl << sep;
   
