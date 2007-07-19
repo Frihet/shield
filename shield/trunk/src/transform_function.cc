@@ -20,8 +20,8 @@ namespace shield
   {
 
     function::
-    function (printable *name, data_type type, printable *param)
-      : __type (type)
+    function (printable *name, data_type type, printable *param, bool aggregate)
+      : __type (type), __aggregate (aggregate)
       {
 	if (!name)
 	  {
@@ -31,6 +31,12 @@ namespace shield
 	if (param)
 	  _set_child (CHILD_PARAM, param);
       }
+
+    bool function::
+    get_aggregate ()
+    {
+      return __aggregate;
+    }
 
     data_type function::
     get_context ()

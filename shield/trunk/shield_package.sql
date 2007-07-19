@@ -12,6 +12,71 @@ SET SERVEROUTPUT ON;
 /**
 	This type is the implementation of the shield_arb_agg_clob arbitrary aggregation function.
 */
+
+create or replace type shield_agg_arb_date_t as object (
+
+	str_agg date,
+
+	static function ODCIAggregateInitialize (sctx in out shield_agg_arb_date_t) 
+		return number,
+
+	member function ODCIAggregateIterate (self  in out shield_agg_arb_date_t, 
+	                                      value in     date ) 
+		return number,
+
+	member function ODCIAggregateTerminate (self         in  shield_agg_arb_date_t, 
+	                                        return_value out date, 
+	                                        flags        in  number)               
+		            return number,
+
+	member function ODCIAggregateMerge (self in out shield_agg_arb_date_t, 
+	                                    ctx2 in     shield_agg_arb_date_t) 
+		return number
+);
+/
+
+create or replace type body shield_agg_arb_date_t is 
+
+	static function ODCIAggregateInitialize (sctx in out shield_agg_arb_date_t) 
+		return number 
+	is 
+	begin
+		sctx := shield_agg_arb_date_t(null);
+		return ODCIConst.Success;
+	end;
+
+	member function ODCIAggregateIterate (self  in out shield_agg_arb_date_t,
+	                                      value in     date) 
+		return number 
+	is
+	begin
+		str_agg := value;
+		return ODCIConst.Success;
+	end;
+
+	member function ODCIAggregateTerminate (self         in  shield_agg_arb_date_t, 
+	                                        return_value out date, 
+	                                        flags        in  number) 
+		return number 
+	is
+	begin
+		return_value := str_agg;
+		return ODCIConst.Success;
+	end;
+
+	member function ODCIAggregateMerge (self in out shield_agg_arb_date_t, 
+	                                    ctx2 in     shield_agg_arb_date_t)
+		return number 
+	is
+	begin
+		return ODCIConst.Success;
+	end;
+end;
+/
+
+/**
+	This type is the implementation of the shield_arb_agg_clob arbitrary aggregation function.
+*/
 create or replace type shield_agg_arb_clob_t as object (
 
 	str_agg clob,
@@ -200,6 +265,16 @@ create or replace type body shield_agg_arb_num_t is
 		return ODCIConst.Success;
 	end;
 end;
+/
+
+/**
+	Aggregate function for picking an arbitrary element from a group. This is the date version.
+*/
+
+create or replace function shield_arb_agg_date (input date) 
+	return date
+	parallel_enable aggregate
+	using shield_agg_arb_date_t;
 /
 
 /**
@@ -456,19 +531,13 @@ is
 end shield;
 /
 
-create or replace trigger after_logon
-	after logon 
-	on database
-begin
-	execute immediate 'alter session set nls_date_format=''yyyymmddhh24miss''';
-end;
-/
+/*
+	Create lookup table for name mangling and type lookup on columns
+*/
+
 
 drop table shield_table_column;
 
-/*
-
-*/
 create table shield_table_column
 (
        	id number (14, 0),     

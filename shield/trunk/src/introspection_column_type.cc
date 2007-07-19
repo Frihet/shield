@@ -53,6 +53,12 @@ namespace shield
       return __type == DATA_TYPE_CLOB;
     }
 
+    bool column_type::
+    is_date () const
+    {
+      return (__type == DATA_TYPE_DATE) || (__type == DATA_TYPE_DATETIME) ;
+    }
+
     data_type column_type::
     get_type () const
     {

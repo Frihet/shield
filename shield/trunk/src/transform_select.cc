@@ -57,45 +57,6 @@ namespace shield
       stream << *t;
     }
 
-    namespace
-    {
-      /**
-	 This function uses introspection to find out what type a table
-	 column is of, and use the correct version of the arbitrary
-	 aggregation functions defined toghether with the shield
-	 package.
-      */
-      static printable *
-      aggregate (text *field, 
-		 text *alias,
-		 const string &table_alias,
-		 const string &table)
-      {
-	string func_name;
-
-	introspection::table &t = introspection::get_table (table);
-	const introspection::column &c = t.get_column (field->unmangled_str ());
-	introspection::column_type y = c.get_type ();
-
-	if (y.is_char ())
-	  {
-	    func_name = "shield_arb_agg_char";
-	  }
-	else if (y.is_lob ())
-	  {
-	    func_name = "shield_arb_agg_clob";
-	  } 
-	else if (y.is_number ())
-	  {
-	    func_name = "shield_arb_agg_num";
-	  }
-	paran *p = new paran (new identity (0, new text (table_alias), field));
-	printable *val = new chain (new text (func_name), p);
-	printable *res = new printable_alias (val, alias);
-	
-	return res;
-      }
-
       /**
 	 Search the specified tree searching for printable_alias objects
 	 and save their mapping
@@ -110,7 +71,6 @@ namespace shield
 	  {
 	    if (al->get_alias ())
 	      {
-		// cerr << "alias " << al->get_alias ()->str () << " -> " << al->get_item ()->str () << endl;
 		table_alias[al->get_alias ()->str ()] = al->get_item ();
 	      }
 	  }
@@ -123,8 +83,6 @@ namespace shield
 	      }
 	  }
       }
-
-    }
 
     void select::
     _print (ostream &stream)
@@ -141,7 +99,6 @@ namespace shield
 	{
 	  throw exception::syntax ("No item list for select");
 	}
-
 
       stream << "/*\n";
       for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
@@ -222,11 +179,20 @@ namespace shield
       */
       if (get_limit_clause ())
 	{
-	  stream << "," << *(new printable_alias (new text ("rownum", EXACT),
-						  new text ("shield_rownum", EXACT)));
+
+	  if (get_group_clause ())
+	    {
+	      stream << "," << *(new printable_alias (new text ("shield_arb_agg_num (rownum)", EXACT),
+						      new text ("shield_rownum", EXACT)));
+	    }
+	  else
+	    {
+	      stream << "," << *(new printable_alias (new text ("rownum", EXACT),
+						      new text ("shield_rownum", EXACT)));
+	    }
 	}
 
-      stream << "\nfrom";
+      stream << "\nfrom ";
 
       if (get_table_list () && !get_table_list ()->empty ())
 	{
@@ -317,7 +283,76 @@ namespace shield
       __resolve_item_list ();
 
       catalyst::create_identity id_catalyst (this);
-      return this->transform (id_catalyst);
+      printable *res= this->transform (id_catalyst);
+
+      if (get_group_clause ())
+	{
+	  catalyst::aggregate agg_catalyst (this, __group_field);
+	  
+	  set_item_list ( dynamic_cast<chain *> (get_item_list ()->transform (agg_catalyst)));
+	  if (get_order_clause ())
+	    set_order_clause ( get_order_clause ()->transform (agg_catalyst));
+	}
+
+      return res;
+    }
+
+
+
+    void select::
+    __resolve_item_wildcard (select_item_wild * wi, chain *item_list)
+    {
+      text *table = 0;
+      
+      if (wi->get_namespace ())
+	{
+	  throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. I'm lazy. Sorry.");
+	}
+      
+      if (wi->get_table ())
+	{
+	  table = wi->get_table ();
+	}
+      else
+	{
+	  vector<printable *>::const_iterator it;
+	  _make_condensed_table_list ();
+
+	  for (it = _condensed_table_list.begin (); it != _condensed_table_list.end (); ++it)
+	    {
+	      text *txt = dynamic_cast<text *> (*it);
+	      identity *id = dynamic_cast<identity *> (*it);
+
+	      if (txt)
+		{
+		  id = new identity (0, txt);
+		}
+	      if (!id)
+		{
+		  throw exception::invalid_state (string ("Table not of type identity or text:") + _condensed_table_list[0]->get_node_name ());
+		}
+
+	      select_item_wild *wi2 = new select_item_wild (0, id->get_table ());
+	      __resolve_item_wildcard (wi2, item_list);
+	    }
+
+	  if (_condensed_table_list.size () == 0)
+	    {
+	      throw exception::invalid_state (string ("Used table-less wildcard in select query with") + util::stringify (_condensed_table_list.size ()) + " items");
+	    }
+	  
+	  return;
+
+	}
+      
+      introspection::table &t = introspection::get_table (unalias_table (table)->unmangled_str ());
+      introspection::table::column_const_iterator it;
+      
+      for (it=t.column_begin (); it != t.column_end (); it++)
+	{
+	  string name = it->get_name ();
+	  item_list->push (new printable_alias (new cast (new identity (0, table, new text (name, IDENTIFIER)), DATA_TYPE_SELECTABLE), new text (name, IDENTIFIER) ) );
+	}
     }
 
     void select::
@@ -325,212 +360,45 @@ namespace shield
     {
 
       /*
-	 The new item list
+	The new item list
       */
       chain *item_list;
       chain::const_iterator it;
-
+      
       item_list = new chain ();
       item_list->set_separator (",");
-
-      if (get_group_clause ())
+      item_list->set_line_break (2);
+      
+      for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
 	{
-
-	  for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
+	  bool handled = false;
+	  
+	  printable *pr = *it;
+	  printable_alias *item = dynamic_cast<printable_alias *> (pr);
+	  
+	  if (!item)
 	    {
-	      bool handled = false;
-	      
-	      printable *pr = *it;
-	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
-	      
-	      /*
-		Try and locate all used fields. There are lots of
-		situataions where this is not good enough, e.g. when using
-		non-cumulative functions or math operators in select
-		items.
-	      */
-	      
-	      cast *cast_item = dynamic_cast<cast *>(item->get_item ());
-	      if (!cast_item)
-		{
-		  throw exception::invalid_state ("Expected child of type cast");
-		}
-	      
-	      text *txt = dynamic_cast<text *> (cast_item->get_item ());
-	      identity *id = dynamic_cast<identity *> (cast_item->get_item ());
-	      
-	      if (txt)
-		{
-		  id = new identity (0, 0, txt);
-		}
-	      
-	      if (id)
-		{
-		  string table_name = get_table_list ()-> str ();
-		  
-		  if (id->get_namespace ())
-		    {
-		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. I'm lazy. Sorry.");
-		    }
-		  
-		  if (id->get_table ())
-		    {
-		      table_name = id->get_table ()->str ();
-		    }
-		  
-		  txt = id->get_field ();
-		  
-		  if (txt->get_type () == IDENTIFIER || 
-		      txt->get_type () == IDENTIFIER_QUOTED)
-		    {
-		      if (__group_field.find (txt->str ()) == __group_field.end ())
-			{
-			  string le = oracle_escape (to_upper (txt->str ()));
-			  /*		      
-					     if (extra_group_list.length () )
-					     extra_group_list += ", ";
-					     else
-					     extra_group_list = "list (";
-		      
-					     extra_group_list += le;
-			  */
-			  handled = true;
-			  
-			  text *alias = item->get_alias ();
-			  
-			  string unaliased_table_name = unalias_table(new text (table_name))->unmangled_str ();
-			  
-			  item_list->push (new cast (aggregate (txt, alias, table_name, unaliased_table_name), DATA_TYPE_SELECTABLE));
-			  
-			}
-		      else
-			{
-			  item_list->push (item);
-			  handled = true;
-			}
-		    }
-		}
-	      
-	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item->get_item ());
-	      
-	      if (wi)
-		{
-	      
-		  string le = "";
-
-		  if (wi->get_namespace ())
-		    {
-		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and group clauses. Yes, this may seem like a pretty arbitrary limitation. I'm lazy. Sorry.");
-		    }
-	      
-		  if (wi->get_table ())
-		    {
-		      le = wi->get_table ()->unmangled_str ();
-		    }
-		  else
-		    {
-		      le = util::identifier_unescape (get_table_list ()-> str ());
-		    }
-
-		  introspection::table &t = introspection::get_table (le);
-		  
-		  introspection::table::column_const_iterator i;
-
-		  for (i=t.column_begin (); i<t.column_end (); i++)
-		    {
-		      string name = (*i).get_name ();
-		      if (__group_field.find (name) == __group_field.end ())
-			{
-
-			  string unaliased_table_name = unalias_table(new text (le, IDENTIFIER))->str ();
-
-			  item_list->push (aggregate (new text (name), 0, le, unaliased_table_name));
-			}
-		      else
-			{
-			  item_list->push (new printable_alias (new text (name)));
-			}
-		    }
-
-		  handled = true;
-		  
-		}
-
-	      if (!handled)
-		{
-		  item_list->push (*it);
-		}
-	      
+	      throw exception::invalid_state ("select item was not of expected type printable_alias");
 	    }
 	  
-	}
-      else 
-	{
-
-	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
+	  cast *cast_item = dynamic_cast<cast *>(item->get_item ());
+	  select_item_wild * wi = dynamic_cast<select_item_wild *> (item->get_item ());
+	  
+	  if (cast_item)
 	    {
-	      printable *pr = *it;
-	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
-
-
-	      if (!item)
-		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
-	      select_item_wild * wi = dynamic_cast<select_item_wild *> (item->get_item ());
-	      
-	      if (wi)
-		{
-		  
-		  string le;
-
-		  text *aliased_table=0;
-
-		  if (wi->get_namespace ())
-		    {
-		      throw exception::syntax ("Table namespaces not supported in combination with wildcards and limit clauses. Yes, this may seem like a pretty arbitrary limitation. Sorry.");
-		    }
-
-		  if (wi->get_table ())
-		    {
-		      aliased_table=wi->get_table ();
-		      debug << (string ("Table component is ")+ wi->get_table ()->str ());
-		      le = unalias_table (wi->get_table ())->str ();
-		    }
-		  else
-		    {
-		      catalyst::find_table cat (this);
-		      get_table_list ()->transform (cat);
-		      if (!cat.get_table_list ().size ())
-			{
-			  throw shield::exception::not_found ("Select query table");
-			}
-		      le = (*cat.get_table_list ().begin ())->str ();
-		    }
-
-		  introspection::table &t = introspection::get_table (le);
-
-		  introspection::table::column_const_iterator it;
-
-		  debug << (string ("Introspect table ") + le);
- 
-		  for (it=t.column_begin (); it!=t.column_end (); ++it)
-		    {
-		      string unescaped_name = it->get_name ();
-		      printable * id;
-
-		      id = new cast (new identity (0, aliased_table, new text (unescaped_name,IDENTIFIER)), 
-				     DATA_TYPE_SELECTABLE);
-		      item_list->push (new printable_alias (id, new text (unescaped_name, IDENTIFIER), true));
-		    }
-		}
-	      else
-		{
-		  item_list->push (item);
-		}
+	      item_list->push (pr);
 	    }
-	}
+	  else if (wi)
+	    {
+	      __resolve_item_wildcard (wi, item_list);
+	    }
+	  else
+	    {
+	      throw exception::invalid_state ("Expected child of type cast or type select_item_wild");
+	    }
 
+	}
       _set_child (CHILD_ITEM_LIST, item_list);
-      
     }
 
     void select::
@@ -560,9 +428,10 @@ namespace shield
 
 	      if (!ch->size ())
 		throw shield::exception::not_found ("Select query group by-item");
-
-	      string id = (*ch)[0]->str ();
-	      __group_field.insert (id);
+	      
+	      identity *id = dynamic_cast<identity *> ((*ch)[0]);
+	      
+	      __group_field.push_back (id);
 	    }
 
 	  for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
@@ -584,3 +453,4 @@ namespace shield
 
 }
 
+  

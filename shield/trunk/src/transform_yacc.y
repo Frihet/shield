@@ -2761,7 +2761,7 @@ bool_or_expr:
         | bool_or_expr or bool_term
           {
 	    if ($1)
-	      $$ = new paran ($1, new text ("\nor"), $3); 
+	      $$ = new chain ($1, new text ("\nor"), $3); 
 	    else
 	      $$ = new chain (new text ("\nor"), $3);
 	  }
@@ -3065,7 +3065,7 @@ simple_expr:
 	| DATABASE '(' ')'
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| DATE_SYM '(' expr ')'
-	  { $$ = new function (new text ("shield.date_"), DATA_TYPE_DATE, $3); }
+	  { $$ = new function (new text ("shield.date_"), DATA_TYPE_DATE, $3, false); }
 	| DAY_SYM '(' expr ')'
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| ELT_FUNC '(' expr ',' expr_list ')'
@@ -3218,7 +3218,7 @@ simple_expr:
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| TRUNCATE_SYM '(' expr ',' expr ')'
 	  { throw exception::unsupported (__FILE__, __LINE__); }
-	| ident '.' ident_any '(' opt_expr_list ')'
+ 	| ident '.' ident_any '(' opt_expr_list ')'
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| IDENT_sys '(' udf_expr_list ')'
           { 
@@ -3307,10 +3307,11 @@ simple_expr:
 	    else
 	      {
 
-		static map<string,pair<string,data_type> > func_translate;
+		static map<string,triplet<string,data_type,bool> > func_translate;
 
 		if (func_translate.size () == 0)
 		  {
+		    using namespace util;
 		    /*
 		      DATA_TYPE_UNDEFINED return type means same
 		      return type as input type of first argument.
@@ -3319,30 +3320,30 @@ simple_expr:
 		      parameters, an exception will be thrown whenever
 		      trying to access its type.
 		    */
-		    func_translate["char_length"] = make_pair ("length", DATA_TYPE_NUMBER);
-		    func_translate["length"] = make_pair ("lengthb", DATA_TYPE_NUMBER);
-		    func_translate["date_format"] = make_pair ("shield.date_format", DATA_TYPE_CHAR);
-		    func_translate["count"] = make_pair ("count", DATA_TYPE_NUMBER);
-		    func_translate["min"] = make_pair ("min", DATA_TYPE_UNDEFINED);
-		    func_translate["max"] = make_pair ("max", DATA_TYPE_UNDEFINED);
-		    func_translate["lower"] = make_pair ("lower", DATA_TYPE_CHAR);
-		    func_translate["upper"] = make_pair ("upper", DATA_TYPE_CHAR);
-		    func_translate["lpad"] = make_pair ("lpad", DATA_TYPE_CHAR);
-		    func_translate["now"] = make_pair ("current_date", DATA_TYPE_DATETIME);
+		    func_translate["char_length"] = make_triplet ("length", DATA_TYPE_NUMBER,false);
+		    func_translate["length"] = make_triplet ("lengthb", DATA_TYPE_NUMBER,false);
+		    func_translate["date_format"] = make_triplet ("shield.date_format", DATA_TYPE_CHAR,false);
+		    func_translate["count"] = make_triplet ("count", DATA_TYPE_NUMBER,true);
+		    func_translate["min"] = make_triplet ("min", DATA_TYPE_UNDEFINED,true);
+		    func_translate["max"] = make_triplet ("max", DATA_TYPE_UNDEFINED,true);
+		    func_translate["lower"] = make_triplet ("lower", DATA_TYPE_CHAR,false);
+		    func_translate["upper"] = make_triplet ("upper", DATA_TYPE_CHAR,false);
+		    func_translate["lpad"] = make_triplet ("lpad", DATA_TYPE_CHAR,false);
+		    func_translate["now"] = make_triplet ("current_date", DATA_TYPE_DATETIME,false);
 
 		    /*
 		      Functions implemented by the shield package
 		    */
-		    func_translate["date"] = make_pair ("shield.date_", DATA_TYPE_DATE);
-		    func_translate["curdate"] = make_pair ("shield.curdate", DATA_TYPE_DATE);
-		    func_translate["current_date"] = make_pair ("shield.curdate", DATA_TYPE_DATE);
+		    func_translate["date"] = make_triplet ("shield.date_", DATA_TYPE_DATE,false);
+		    func_translate["curdate"] = make_triplet ("shield.curdate", DATA_TYPE_DATE,false);
+		    func_translate["current_date"] = make_triplet ("shield.curdate", DATA_TYPE_DATE,false);
 		  }
 
-		map<string,pair<string,data_type> >::iterator i = func_translate.find (func_name);
+		map<string,triplet<string,data_type,bool> >::iterator i = func_translate.find (func_name);
 
 		if (i != func_translate.end ())
 		  {
-		    $$ = new function (new text (i->second.first), i->second.second, $3); 
+		    $$ = new function (new text (i->second.first), i->second.second, $3, i->second.third); 
 		  }
 		else
 		  {

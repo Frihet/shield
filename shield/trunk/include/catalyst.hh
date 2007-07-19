@@ -30,6 +30,7 @@ namespace shield
     class printable;
     class query;
     class chain;
+    class identity;
   }
 
   /**
@@ -58,6 +59,9 @@ namespace shield
        printable and returns it or another printable. It is used
        together with the \c printable::transform function of printables to perform
        transformations on the syntax tree.
+
+       When the transform function is called for a specific node, its
+       children have always all been transformed.
     */
     class catalyst
     {
@@ -192,6 +196,36 @@ namespace shield
       transform::query *__query;
     }
     ;
+
+    
+    /**
+       This catalyst aggregates any ungrouped, unaggregated fields. 
+    */
+    class aggregate
+      : public catalyst
+    {
+    public:
+      
+      aggregate (transform::query *q, const vector<transform::identity *> &group_field);
+      
+      /**
+	 The catalyst function. Detects printable_alias nodes and
+	 handles them.
+      */
+      virtual transform::printable *catalyze (transform::printable *node);
+      
+    private:
+
+      transform::printable *__aggregate (transform::text *field, transform::text *table_alias);
+
+    private:
+      vector<transform::identity *>__group_field;
+      transform::query *__query;
+
+    }
+    ;
+
+    
 
   }
 

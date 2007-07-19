@@ -17,7 +17,7 @@
 
 namespace shield
 {
-
+  
   namespace transform
   {
 
@@ -30,6 +30,12 @@ namespace shield
       printable *grand_parent = get_parent ()->get_parent ();
       field_spec *field = dynamic_cast<field_spec *> (grand_parent);
       
+      /*
+	We can't use the shield.to_date_ function in the default
+	clause because Oracle doesn't let you use non-builtin
+	functions in default values. Yet another one of those
+	arbitrary limitations that Oracle loves so much.
+      */
       if (!grand_parent || !field)
 	throw exception::invalid_state ("invalid grandparent for default value");
 
@@ -43,7 +49,7 @@ namespace shield
 	    {
 	      chain *param = new chain (_get_child (CHILD_INNER), new text ("'yyyy-mm-dd hh24:mi:ss'", LITERAL));
 	      param->set_separator (",");
-	      _set_child (CHILD_INNER, new function ( new text ("to_date"), DATA_TYPE_DATETIME, param));
+	      _set_child (CHILD_INNER, new function ( new text ("to_date"), DATA_TYPE_DATETIME, param, false));
 	    }
 	}
       else if (field->get_type ()->get_type () == DATA_TYPE_DATE)
@@ -56,10 +62,10 @@ namespace shield
 	    {
 	      chain *param = new chain (_get_child (CHILD_INNER), new text ("'yyyy-mm-dd'", LITERAL));
 	      param->set_separator (",");
-	      _set_child (CHILD_INNER, new function ( new text ("to_date"), DATA_TYPE_DATETIME, param));
+	      _set_child (CHILD_INNER, new function ( new text ("to_date"), DATA_TYPE_DATETIME, param, false));
 	    }
 	}
-
+      
       /*
 	This default cast should not be needed...
       */

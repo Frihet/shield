@@ -67,6 +67,9 @@
    the catalyst base class. The catalyst base class defines a functor
    that takes a AST node as argument and returns a node to replace it
    with. 
+   
+   When the transform function is called for a specific node, its
+   children have always all been transformed.
 
    @subsection output Output
 

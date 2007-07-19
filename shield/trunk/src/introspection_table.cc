@@ -46,7 +46,7 @@ namespace shield
 
       while (rs.next ())
 	{
-	  debug << ( rs.get_string ("column_name") + " "+ rs.get_string ("column_type"));
+	  //	  debug << ( rs.get_string ("column_name") + " "+ rs.get_string ("column_type"));
 	  __col.push_back (column (rs.get_string ("column_name"), rs.get_string ("column_type")));
 	}
       rs.close ();

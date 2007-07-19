@@ -30,6 +30,13 @@ namespace shield
       set_skip_space (!insert_whitespace);
     }
 
+    text::
+    text (text *t)
+      : __val (t->__val), __type (t->__type)
+    {
+      set_context (t->get_context ());
+    }
+
     namespace
     {
 

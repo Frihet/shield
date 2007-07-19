@@ -83,6 +83,11 @@ namespace shield
       bool is_lob () const;
   
       /**
+	 returns true of this type is of a date type
+      */
+      bool is_date () const;
+  
+      /**
 	 Returns the data_type representing this type
       */
       data_type get_type () const;

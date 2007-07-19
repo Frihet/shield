@@ -48,6 +48,49 @@ namespace util
     return out.str ();
   }
 
+  /**
+     Like std::pair but more...
+  */
+
+  template<typename T1, typename T2, typename T3> class triplet
+  {
+  public:
+    typedef T1 first_type;
+    typedef T2 second_type;
+    typedef T3 third_type;
+
+    triplet (const T1 &a, const T2 &b, const T3 &c)
+      : first (a), second (b), third (c)
+    {
+    }
+
+    triplet ()
+      : first (T1 ()), second (T2 ()), third (T3 ())
+    {
+    }
+    
+    template<typename U1, typename U2, typename U3>
+    triplet (const triplet<U1, U2, U3> &t)
+      : first (t.first), second (t.second), third (t.third)
+    {
+    }
+
+  public:
+    T1 first;
+    T2 second;
+    T3 third;
+  }
+  ;
+
+  /**
+     Like std::make_pair but more...
+  */
+  template<typename T1, typename T2, typename T3> 
+  inline triplet<T1, T2, T3> make_triplet(T1 a, T2 b, T3 c)
+  {
+    return triplet<T1, T2, T3> (a, b, c);
+  }
+
   bool contains_str( const char *, ... );
   
   /**

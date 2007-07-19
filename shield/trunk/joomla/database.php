@@ -32,6 +32,7 @@ $shield_query=array();
 global $shield_password;
 global $shield_username;
 global $shield_server;
+
 global $shield_verbose;
 $shield_verbose=0;
 
@@ -68,7 +69,8 @@ function var_describe ($arg)
 function get_stack_trace ()
 {
   $st = debug_backtrace ();
-  $res = "";
+  $res = "<table>
+<tr><th>Function</th><th>File</th><th>Line</th></tr>\n";
 
   $st = array_slice ($st, 1);
   
@@ -93,19 +95,23 @@ function get_stack_trace ()
 	    }
 	  else if (is_null ($arg))
 	    {
-	      $arg_str[] = "<null>";
+	      $arg_str[] = "&lt;null&gt;";
 	    }
 	  else if (is_array($arg))
 	    {
-	      $arg_str [] = "<array> (" . count ($arg) . ")";
+	      $arg_str [] = "&lt;array&gt;[" . count ($arg) . "]";
 	    }
 	  else if (is_object ($arg))
 	    {
-	      $arg_str [] = "<object>";
+	      $arg_str [] = "&lt;object&gt;";
+	    }
+	  else 
+	    {
+	      $arg_str [] = "&lt;unknown&gt;";
 	    }
 	}
 
-      $string = "<b>";
+      $string = "<tr><td><b>";
       if (isset ($i['class']))
 	$string .= $i['class']. "::";
 
@@ -113,13 +119,21 @@ function get_stack_trace ()
 	$string .= $i['function'];
       
       $string .=" (". implode (", ", $arg_str). ")</b>: ";
+      $string .= "</td><td>\n";
+
       if (isset ($i['file']))
 	$string .= basename ($i['file']);
+
+      $string .= "</td><td>\n";
+
       if (isset ($i['line']))
-	$string .= " (".$i['line'].")";
-      $string .= "<br>\n";
+	$string .= $i['line'];
+
+      $string .= "</td></tr>\n";
       $res  .= $string;
     }
+
+  $res .= "</table>\n";
 
   return $res;
 }
@@ -1333,9 +1347,7 @@ class mosDBTable {
   }
 
   function load( $oid=null ) {
-    //shield_begin_verbose ();
     return $this->load_internal ($oid);
-    //shield_end_verbose ();
   }
 
   /**

@@ -56,6 +56,7 @@ namespace shield
 	  text *alias = get_alias ();
 	  if( !__alias_implicit && alias && alias->length () )
 	    {
+	      alias->set_skip_space (false);
 	      stream << *alias;
 	    }
 	}

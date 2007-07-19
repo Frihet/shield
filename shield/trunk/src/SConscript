@@ -67,7 +67,8 @@ catalyst = env.Object(Split("""
 	catalyst_find_table.cc	
 	catalyst_internal.cc						
 	catalyst_replace_identifier.cc				
-	catalyst_validation.cc"""))
+	catalyst_validation.cc
+	catalyst_aggregate.cc"""))
 
 misc = env.Object(Split("""
 	util.cc logger.cc 

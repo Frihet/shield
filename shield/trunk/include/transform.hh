@@ -175,6 +175,8 @@ namespace shield
     class type;
     class text;
     class create_table;
+    class select_item_wild;
+    class identity;
 
     /**
        Check whether the specified string is a reserved word
@@ -263,8 +265,8 @@ namespace shield
       }
 
       /**
-	 Transform this node and all it's children in arbitrary order
-	 using the specified catalyst.
+	 Transform this node and all it's children. Children are
+	 transformed before the parent.
       */
       virtual printable *transform (shield::catalyst::catalyst &catalyst);
       
@@ -532,6 +534,8 @@ namespace shield
 	 @param insert_whitespace whether whitespace is needed before this token
       */
       text (unsigned long long val, text_type type = EXACT, bool insert_whitespace=true);
+
+      text (text *t);
 
       /**
 	 Returns the raw (unformated) length of this item. Use str
@@ -900,13 +904,16 @@ namespace shield
       
       void __resolve_item_list ();
       void __pre_calculate ();
+      bool __resolve_item_regular (printable *item, text *alias, chain *item_list);
+      void __resolve_item_wildcard (select_item_wild * wi, chain *item_list);
+      printable *__aggregate (text *field, text *alias, text *table_alias);
 
     private:
 
       /**
 	 Set of fields on which grouping is performed
       */
-      set<string> __group_field;
+      vector<identity *> __group_field;
 
       /**
 	Mappings from field aliases to the underlying field
@@ -1239,7 +1246,7 @@ namespace shield
 
     public:
 
-      function (printable *name, data_type type, printable *param);
+      function (printable *name, data_type type, printable *param, bool aggregate);
 
       printable *get_name (void)
       {
@@ -1266,11 +1273,17 @@ namespace shield
       */
       virtual data_type get_context (void);
 
+      /**
+	 Return true if this function aggregates a field in a group by query
+      */
+      bool get_aggregate ();
+
     protected:
       virtual void _print (ostream &stream);
 
     private:
       data_type __type;
+      bool __aggregate;
     }
     ;
 
