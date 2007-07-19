@@ -372,17 +372,20 @@ function shield_fetch_row ($stmt_arr)
     {
 
       $res2 = array ();
-      foreach ($res as $i)
+      foreach ($res as $key => $i)
 	{
 	  if (is_object($i))
 	    {
-	      $res2[] = $i->load ();
+	      $res2[$key] = $i->load ();
 	    }
 	  else
 	    {
-	      $res2[] = $i;
+	      $res2[$key] = $i;
 	    }
 	}
+
+      //      echo "count(res)=".count ($res)."<br>"; 
+      //echo "count(res2)=".count ($res2)."<br>"; 
 
       shield_debug ("shield_fetch_row (<stmt>) = <pre>" . var_describe ($res2) . "</pre><br>\n");
 
@@ -435,23 +438,26 @@ function shield_fetch_assoc ($stmt_arr)
     return false;
 
   $res = array();
-  /*
+  
   if (count ($stmt->arg_list) != count ($oci_row))
     {
-      echo "Wrong number of arguments (". count ($oci_row) . ", not " .count ($stmt->arg_list). ") returned from query <pre>";
-      print_r ($stmt->original_query);
+      /*echo "Wrong number of arguments (". count ($oci_row) . ", not " .count ($stmt->arg_list). ") returned from query <pre>";
+           print_r ($stmt->original_query);
       echo "</pre>-&gt;<pre>";
       print_r ($stmt->query);
       echo "</pre>";
-      return false;
+      return false;*/
     }
-  */
+  
   for ($i=0; $i < count ($stmt->arg_list); $i++)
     {
-      if (count ($oci_row) > $i)
+      if (isset($oci_row[$i]))
 	$res[$stmt->arg_list[$i]] = $oci_row[$i];
       else
 	$res[$stmt->arg_list[$i]] = null;
+
+      shield_debug ("res[".$stmt->arg_list[$i]."] = ".$res[$stmt->arg_list[$i]]."<br>");
+
     }
   return $res;
 }
