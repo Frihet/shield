@@ -7,7 +7,9 @@
 
 */
 
+/*
 SET SERVEROUTPUT ON;
+*/
 
 /**
 	This type is the implementation of the shield_arb_agg_clob arbitrary aggregation function.
@@ -326,6 +328,31 @@ is
 		return date deterministic;
 
 	/**
+		This is a workalike to the mysql length function
+	*/
+	function length_ (str varchar2)
+		return varchar2 deterministic;
+
+	/**
+		This is a workalike to the mysql char_length function
+	*/
+	function char_length_ (str varchar2)
+		return varchar2 deterministic;
+
+	/**
+		This is a workalike to the mysql concat function
+	*/
+	function concat_ (str1 varchar2, str2 varchar2)
+		return varchar2 deterministic;
+
+	/**
+		This is a workalike to the mysql lpad function
+	*/
+	function lpad_ (str varchar2, len number, pad varchar2)
+		return varchar2 deterministic;
+
+
+	/**
 		This is a workalike to the mysql date_format
 		function. It performs string formating on a date. Not
 		all formating commands are currently supported.
@@ -348,6 +375,12 @@ is
 
 	function to_char_ (date_in date, format varchar2) 
 		return varchar2 deterministic;
+
+	function to_number_ (str varchar2) 
+		return number deterministic;
+
+	function to_number_ (str clob) 
+		return number deterministic;
 
 end shield;
 /
@@ -376,93 +409,167 @@ is
 		return shield.date_ (current_date);
 	end;
 
+	function length_ (str varchar2)
+		return varchar2 deterministic
+	is
+	begin
+		if str is null then
+			return null;
+		end if;
+
+		if str = chr (1) then
+			return 0;
+		end if;
+
+		return lengthb (str);
+	end;
+
+        function char_length_ (str varchar2)
+                return varchar2 deterministic
+        is
+        begin
+                if str is null then
+                        return null;
+                end if;
+
+                if str = chr (1) then
+                        return 0;
+                end if;
+
+                return length (str);
+        end;
+	
+
+	function concat_ (str1 varchar2, str2 varchar2)
+		return varchar2 deterministic
+	is
+	begin
+                if str1 is null then
+                        return null;
+                end if;
+
+                if str2 is null then
+                        return null;
+                end if;
+
+                if str1 = chr (1) then
+	                if str2 = chr (1) then
+				return chr (1);
+			end if;
+			return str2;	
+                end if;
+
+                if str2 = chr (1) then
+			return str1;	
+		end if;
+
+                return str1 || str2;
+
+	end;
+
+
+	function lpad_ (str varchar2, len number, pad varchar2)
+		return varchar2 deterministic
+	is
+	begin
+                if str = chr (1) then
+			return substr (lpad ('a', len+1, pad),1, len);
+		end if;
+		
+		return lpad (str, len, pad);
+	end;
+
 	function date_format (da date, 
 	                      format varchar2)
 		return varchar2 deterministic
 	is 
 		pos integer;
 		res varchar2 (512);
-		chr varchar2 (1);
+		ch varchar2 (1);
 	begin
 		pos  := 1;
 		res  := '';
 
-		while pos <= length (format) loop
-			chr := substr (format,pos,1);
-			if chr = '%' then
-				pos := pos + 1;				
-				chr := substr (format,pos,1);
+		if format = chr (1) then
+			return format;
+		end if;
 
-				if chr = 'a' then
+		while pos <= length (format) loop
+			ch := substr (format,pos,1);
+			if ch = '%' then
+				pos := pos + 1;				
+				ch := substr (format,pos,1);
+
+				if ch = 'a' then
 					res := res || substr (to_char(da, 'Day'), 1, 3);
-				elsif chr = 'b' then
+				elsif ch = 'b' then
 					res := res || substr (to_char(da, 'month'), 1, 3);
-				elsif chr = 'c' then
+				elsif ch = 'c' then
 					res := res || to_char(da, 'fmmm');
-				elsif chr = 'D' then
+				elsif ch = 'D' then
 					res := res || to_char(da, 'ddth');
-				elsif chr = 'd' then
+				elsif ch = 'd' then
 					res := res || to_char(da, 'dd');
-				elsif chr = 'e' then
+				elsif ch = 'e' then
 					res := res || to_char(da, 'fmdd');
-				elsif chr = 'f' then
+				elsif ch = 'f' then
 					res := res || '000000';
-				elsif chr = 'H' then
+				elsif ch = 'H' then
 					res := res || to_char(da, 'hh24');
-				elsif chr = 'h' then
+				elsif ch = 'h' then
 					res := res || to_char(da, 'hh12');
-				elsif chr = 'I' then
+				elsif ch = 'I' then
 					res := res || to_char(da, 'hh12');
-				elsif chr = 'i' then
+				elsif ch = 'i' then
 					res := res || to_char(da, 'mi');
-				elsif chr = 'j' then
+				elsif ch = 'j' then
 					res := res || to_char(da, '');
-				elsif chr = 'k' then
+				elsif ch = 'k' then
 					res := res || to_char(da, 'hh24');
-				elsif chr = 'l' then
+				elsif ch = 'l' then
 					res := res || to_char(da, 'hh12');
-				elsif chr = 'M' then
+				elsif ch = 'M' then
 					res := res || to_char(da, 'Month');
-				elsif chr = 'm' then
+				elsif ch = 'm' then
 					res := res || to_char(da, 'mm');
-				elsif chr = 'p' then
+				elsif ch = 'p' then
 					res := res || to_char(da, '');
-				elsif chr = 'r' then
+				elsif ch = 'r' then
 					res := res || to_char(da, '');
-				elsif chr = 'S' then
+				elsif ch = 'S' then
 					res := res || to_char(da, 'ss');
-				elsif chr = 's' then
+				elsif ch = 's' then
 					res := res || to_char(da, 'ss');
-				elsif chr = 'T' then
+				elsif ch = 'T' then
 					res := res || to_char(da, 'hh24:mi:ss');
-				elsif chr = 'U' then
+				elsif ch = 'U' then
 					res := res || to_char(da, '');
-				elsif chr = 'u' then
+				elsif ch = 'u' then
 					res := res || to_char(da, '');
-				elsif chr = 'V' then
+				elsif ch = 'V' then
 					res := res || to_char(da, '');
-				elsif chr = 'v' then
+				elsif ch = 'v' then
 					res := res || to_char(da, '');
-				elsif chr = 'W' then
+				elsif ch = 'W' then
 					res := res || to_char(da, 'fmDay');
-				elsif chr = 'w' then
+				elsif ch = 'w' then
 					res := res || to_char(da, '');
-				elsif chr = 'X' then
+				elsif ch = 'X' then
 					res := res || to_char(da, '');
-				elsif chr = 'x' then
+				elsif ch = 'x' then
 					res := res || to_char(da, '');
-				elsif chr = 'Y' then
+				elsif ch = 'Y' then
 					res := res || to_char(da, 'yyyy');
-				elsif chr = 'y' then
+				elsif ch = 'y' then
 					res := res || to_char(da, 'yy');
-				elsif chr = '%' then
+				elsif ch = '%' then
 					res := res || '%';
 				else
-					res := res || chr;
+					res := res || ch;
 				end if;
 
 			else
-				res := res || chr;
+				res := res || ch;
 			end if;
 
 			pos := pos + 1;
@@ -474,16 +581,16 @@ is
 	function to_date_ (date_in varchar2, format varchar2) 
 		return date deterministic
 	is 
-		date_in2 varchar2 (512);
+		date_in2 varchar2 (64);
 	begin
 		date_in2 := date_in;
 		if length(format) = 10 then
-			if date_in = '0000-00-00' or date_in = '0' or date_in = '00:00:00' or date_in = '00000000' then
+			if date_in = '0000-00-00' or date_in = '0' or date_in = '00:00:00' or date_in = '00000000' or date_in = chr (1) then
 				date_in2 := '0001-01-01';
 			end if;
 		else
-			if date_in = '0000-00-00 00:00:00' or date_in = '0' or date_in = '00:00:00' or date_in = '00000000' or date_in = '00000000000000' then
-				date_in2 := '0001-01-01 00:00:00';
+			if date_in = '0000-00-00 00:00:00' or date_in = '0' or date_in = '00:00:00' or date_in = '00000000' or date_in = '00000000000000' or date_in = chr (1) then
+				date_in2 := '0001-01-01 01:01:01';
 			end if;
 
 		end if;
@@ -495,16 +602,16 @@ is
 	function to_date_ (date_in number, format varchar2) 
 		return date deterministic
 	is 
-		date_in2 varchar2 (512);
+		date_in2 number;
 	begin
 		date_in2 := date_in;
 		if length(format) = 8 then
-			if date_in = '00000000' or date_in = '0' then
+			if date_in = 0 then
 				date_in2 := '00010101';
 			end if;
 		else
-			if date_in = '00000000000000' or date_in = '0' then
-				date_in2 := '00010101000000';
+			if date_in = 0 then
+				date_in2 := '00010101010101';
 			end if;
 
 		end if;
@@ -514,28 +621,52 @@ is
 
 	function to_char_ (date_in date, format varchar2) 
 		return varchar2 deterministic
-	is 
-		date_in2 date;
+	is
 	begin
-		date_in2 := date_in;
-		if to_char (date_in2,'yyyy-mm-dd hh24:mi:ss') = '0001-01-01 00:00:00' then
-			if length(format) = 10 then
+		if length(format) = 10 then
+			if to_char (date_in, 'yyyy-mm-dd') = '0001-01-01' then
 				return '0000-00-00';
 			end if;
-			return '0000-00-00 00:00:00';
+		else
+			if to_char (date_in, 'yyyy-mm-dd hh24:mi:ss') = '0001-01-01 01:01:01' then
+				return '0000-00-00 00:00:00';
+			end if;
+		end if;
+		return to_char (date_in, format);
+	end;
+
+	function to_number_ (str varchar2) 
+		return number deterministic
+	is
+	begin
+                if str = chr (1) then
+			return 0;
 		end if;
 		
-		return to_char (date_in2, format);
+		return to_number (str);
 	end;
+
+	function to_number_ (str clob) 
+		return number deterministic
+	is
+	begin
+                if str = to_clob (chr (1)) then
+			return 0;
+		end if;
+		
+		return to_number (str);
+	end;
+
 
 end shield;
 /
+
 
 /*
 	Create lookup table for name mangling and type lookup on columns
 */
 
-
+/*
 drop table shield_table_column;
 
 create table shield_table_column
@@ -585,3 +716,5 @@ create index shield_table_column_idx4
 on shield_table_column (mangled_table_name, mangled_column_name);
 
 
+
+*/
