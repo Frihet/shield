@@ -121,10 +121,17 @@ function get_stack_trace ()
       $string .=" (". implode (", ", $arg_str). ")</b>: ";
       $string .= "</td><td>\n";
 
-      if (isset ($i['file']))
-	$string .= basename ($i['file']);
 
-      $string .= "</td><td>\n";
+      if (isset ($i['file']))
+	{
+	  $file = $i['file'];
+	  if (strlen ($file) > 30)
+	    {
+	      $file = "..." . substr ($file, strlen ($file)-27);
+	    }
+	  $string .= $file;
+	}
+      $string .= "</td><td style='text-align: right;'>\n";
 
       if (isset ($i['line']))
 	$string .= $i['line'];
@@ -317,13 +324,14 @@ function shield_query ($q, $resource=null)
 
       if (!ociexecute ($stmt->oci_stmt))
 	{
-	  echo "in:<br>\n";
+	  echo "<div style='text-align:left;'>in:<br>\n";
 	  echo "shield_query (<pre>$q</pre>, $resource);<br>\n";
 	  echo "-&gt;<br>\n";
 	  echo "<pre>{$next_query}</pre><br>\n";
 
 	  echo get_stack_trace ();
 
+	  echo "</div>";
 	  return false;
 	}
       
@@ -367,30 +375,50 @@ function shield_fetch_row ($stmt_arr)
   $res = array();
   
   $status = ocifetchinto ($el->oci_stmt, $res, OCI_NUM);
-
+  
   if ($status)
     {
-
+      
       $res2 = array ();
       foreach ($res as $key => $i)
 	{
+	  $val = 0;
 	  if (is_object($i))
 	    {
-	      $res2[$key] = $i->load ();
+	      $val = $i->load ();
 	    }
 	  else
 	    {
-	      $res2[$key] = $i;
+	      $val = $i;
 	    }
+	  
+	  if ($val == "\1")
+	    {
+	      $val = "";
+	    }
+	  $res2[$key] = $val;
 	}
-
-      //      echo "count(res)=".count ($res)."<br>"; 
+      
+      //echo "count(res)=".count ($res)."<br>"; 
       //echo "count(res2)=".count ($res2)."<br>"; 
-
+      
       shield_debug ("shield_fetch_row (<stmt>) = <pre>" . var_describe ($res2) . "</pre><br>\n");
-
+      
       return $res2;
-
+      
+    }
+  else
+    {
+      $e = ocierror ($el->oci_stmt);
+      if ($e)
+	{
+	  echo "<div style='text-align:left;'>in:<br>\n";
+	  echo "shield_query (<pre>".$el->original_query."</pre>, $resource);<br>\n";
+	  echo "-&gt;<br>\n";
+	  echo "<pre>".$el->query."</pre><br>\n";
+	  echo get_stack_trace ();
+	  echo "</div>";
+	}
     }
 
   shield_debug ("shield_fetch_row (<stmt>)=false<br>\n");
