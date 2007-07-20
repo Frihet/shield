@@ -551,8 +551,8 @@ year return YEAR_SYM;
 year_month return YEAR_MONTH_SYM;
 zerofill return ZEROFILL;
 
-'([^']|\\.)*' return TEXT_STRING;
-\"([^\"]|\\.)*\" return TEXT_STRING;
+'([^']|\\.|'')*' return TEXT_STRING;
+\"([^\"]|\\.|"")*\" return TEXT_STRING;
 
 `(``|[^`]|\\.)*` return IDENT_QUOTED;
 [a-zA-Z_][a-zA-Z0-9_]* return IDENT;

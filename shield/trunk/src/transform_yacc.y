@@ -2704,7 +2704,7 @@ select_item:
 		      }
 		  }
 		
-		if (txt && ((txt->get_type () == IDENTIFIER) || (txt->get_type () == IDENTIFIER_QUOTED) || (txt->get_type () == LITERAL)))
+		if (txt && ((txt->get_type () == IDENTIFIER) || (txt->get_type () == IDENTIFIER_QUOTED) ))
 		  {
 		    text *imp_alias;
 		    imp_alias = new text (txt->unmangled_str (), IDENTIFIER);

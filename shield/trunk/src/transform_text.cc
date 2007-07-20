@@ -70,10 +70,22 @@ namespace shield
 
 	    if (c == end)
 	      {
-		break;
+		++it;
+		if (it == in.end ())
+		  {
+		    break;
+		  }
+		else if (*it == end)
+		  {
+		    out += end;
+		  }
+		else
+		  {
+		    throw exception::syntax ("Malformed string");
+		  }
+		
 	      }
-      
-	    if (c == '\\')
+	    else if (c == '\\')
 	      {
 		++it;
 		if (it == in.end ())
@@ -117,6 +129,14 @@ namespace shield
 		    out += '\t';
 		    break;
 
+		  case '%':
+		    out += "!%";
+		    break;
+
+		  case '_':
+		    out += "!_";
+		    break;
+
 		  default:
 		    out += c;
 	      
@@ -129,8 +149,6 @@ namespace shield
 
 	    ++it;
 	  }
-
-	++it;
 
 	if (it != in.end () )
 	  {
