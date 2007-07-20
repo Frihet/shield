@@ -279,7 +279,7 @@ namespace
 	      }
 	  }
       }
-    catch (const shield::exception::exception &e)
+    catch (const shield::exception::traceback &e)
       {
 	error << e.what ();
 	cout << shield::transform::sep;

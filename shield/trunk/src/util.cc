@@ -1,12 +1,12 @@
 /**
 
-   @remark package: shield
-   @remark Copyright: FreeCode AS
-   @author Axel Liljencrantz
+@remark package: shield
+@remark Copyright: FreeCode AS
+@author Axel Liljencrantz
 
-   This file is free software; you can redistribute it and/or
-   modify it under the terms of the GNU General Public License
-   as published by the Free Software Foundation; version 3.
+This file is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; version 3.
 
 */
 
@@ -16,153 +16,259 @@
 #include <stdarg.h>
  
 #include "include/util.hh"
+#include "include/exception.hh"
 #include "include/demangle.h"
- 
 
 namespace util
 {
 
-    string to_lower (const string &in)
-    {
-      string lower = in;
+  string to_lower (const string &in)
+  {
+    string lower = in;
   
-      for (size_t i = 0; i<lower.size(); i++)
-	{
-	  lower[i] = tolower (lower[i]);
-	}
+    for (size_t i = 0; i<lower.size(); i++)
+      {
+	lower[i] = tolower (lower[i]);
+      }
 
-      return lower;
-    }
+    return lower;
+  }
 
 
-    string to_upper (const string &in)
-    {
-      string upper = in;
+  string to_upper (const string &in)
+  {
+    string upper = in;
   
-      for (size_t i = 0; i<upper.size(); i++)
-	{
-	  upper[i] = toupper (upper[i]);
-	}
+    for (size_t i = 0; i<upper.size(); i++)
+      {
+	upper[i] = toupper (upper[i]);
+      }
 
-      return upper;
-    }
+    return upper;
+  }
 
 
-    string trim (const string &in)
-    {
-      string::const_iterator b, e;
-      for (b = in.begin (); b<in.end (); b++ )
-	{
-	  if (!strchr( " \n\r", *b))
+  string trim (const string &in)
+  {
+    string::const_iterator b, e;
+    for (b = in.begin (); b<in.end (); b++ )
+      {
+	if (!strchr( " \n\r", *b))
+	  break;
+      }
+
+    for (e = in.end ()-1; e<=in.begin (); e-- )
+      {
+	if (!strchr( " \n\r", *e))
+	  break;
+      }
+    e++;
+
+    string out (b, e);
+    return out;
+  }
+
+
+  bool contains_str (const char *needle, ...)
+  {
+    char *arg;
+    va_list va;
+    bool res = false;
+  
+    va_start (va, needle);
+    while ((arg=va_arg (va, char *) )!= 0)
+      {
+	if (strcmp (needle, arg) == 0)
+	  {
+	    res = true;
 	    break;
-	}
+	  }
 
-      for (e = in.end ()-1; e<=in.begin (); e-- )
-	{
-	  if (!strchr( " \n\r", *e))
-	    break;
-	}
-      e++;
+      }
+    va_end (va);
 
-      string out (b, e);
-      return out;
-    }
+    return res;
+  }
 
-
-    bool contains_str (const char *needle, ...)
-    {
-      char *arg;
-      va_list va;
-      bool res = false;
+  string mysql_unescape (const string &in)
+  {
+    string out = "";
   
-      va_start (va, needle);
-      while ((arg=va_arg (va, char *) )!= 0)
-	{
-	  if (strcmp (needle, arg) == 0)
-	    {
-	      res = true;
-	      break;
-	    }
+    char end;
+    string::const_iterator it;
 
-	}
-      va_end (va);
+    it=in.begin (); 
+  
+    end = *it;
+    ++it;
 
-      return res;
-    }
+    while (true)
+      {
+	char c = *it;
 
-    string oracle_escape (const string &in1)
-    {
-      string in = in1;
-      string out = "'";
-      int count = 0;
-      bool is_clob = false;
-      string::const_iterator it;
+	if (c == end)
+	  {
+	    ++it;
+	    if (it == in.end ())
+	      {
+		break;
+	      }
+	    else if (*it == end)
+	      {
+		out += end;
+	      }
+	    else
+	      {
+		throw shield::exception::syntax (string ("Malformed string '")+in + "'");
+	      }
+		
+	  }
+	else if (c == '\\')
+	  {
+	    ++it;
+	    if (it == in.end ())
+	      {
+		throw shield::exception::syntax (string ("Malformed string '")+in + "'");
+	      }
 
-      if (in.length () == 0)
-	in = " ";
-
-      if (in.length () >= 4000)
-	{
-	  is_clob = true;
-	}
-
-      if (is_clob)
-	{
-	  out = "to_clob ('";
-	}
-
-
-      for (it=in.begin (); it != in.end (); ++it)
-	{
-     
-	  char c = *it;
-      
-	  if (c == '\'')
-	    {
-	      out += c;
-	      out += c;
-	    }
-	  else if (abs(c) >= 32 && c != '&')
-	    {
-	      count++;
+	    char c = *it;
 	  
-	      out += c;
-	    }
-	  else 
-	    {
-	      out += "'";
+	    switch (c)
+	      {
+	      case 'n':
+		out += '\n';
+		break;
+	      
+	      case 'r':
+		out += '\r';
+		break;
+	      
+	      case 'f':
+		out += '\f';
+		break;
+	      
+	      case 'v':
+		out += '\v';
+		break;
+	      
+	      case 'b':
+		out += '\b';
+		break;
+	      
+	      case 'e':
+		out += '\e';
+		break;
+	      
+	      case 'a':
+		out += '\a';
+		break;
+	      
+	      case 't':
+		out += '\t';
+		break;
 
-	      if (is_clob)
-		out += ")";
+	      case '%':
+		out += "!%";
+		break;
 
-	      out += " || chr (";
-	      out += stringify ((int)c);
-	      out += ") || ";
+	      case '_':
+		out += "!_";
+		break;
 
-	      if (is_clob)
-		out += "to_clob (";
-	      out += "'";
+	      default:
+		out += c;
+	      
+	      }
+	  }
+	else
+	  {
+	    out += c;
+	  }
 
-	      count += 20;
-	    }
+	++it;
+      }
 
-	  if (count >= 60)
-	    {
-	      out += "' ||\n";
-	      if (is_clob)
-		out += "to_clob (";
-	      out += "'";
-	      count = 0;
-	    }
-	}
+    if (it != in.end () )
+      {
+	throw shield::exception::syntax (string ("Malformed string '")+in + "'");
+      }
 
-      out += "'";
+    return out;
+  }
 
-      if (is_clob)
-	out += ")";
+  string oracle_escape (const string &in1)
+  {
+    string in = in1;
+    string out = "'";
+    int count = 0;
+    bool is_clob = false;
+    string::const_iterator it;
 
-      return out;
-    }
+    if (in.length () == 0)
+      return "chr (1)";
+
+    if (in.length () >= 4000)
+      {
+	is_clob = true;
+      }
+
+    if (is_clob)
+      {
+	out = "to_clob ('";
+      }
+
+
+    for (it=in.begin (); it != in.end (); ++it)
+      {
+     
+	char c = *it;
+      
+	if (c == '\'')
+	  {
+	    out += c;
+	    out += c;
+	  }
+	else if (abs(c) >= 32 && c != '&')
+	  {
+	    count++;
+	  
+	    out += c;
+	  }
+	else 
+	  {
+	    out += "'";
+
+	    if (is_clob)
+	      out += ")";
+
+	    out += " || chr (";
+	    out += stringify ((int)c);
+	    out += ") || ";
+
+	    if (is_clob)
+	      out += "to_clob (";
+	    out += "'";
+
+	    count += 20;
+	  }
+
+	if (count >= 60)
+	  {
+	    out += "' ||\n";
+	    if (is_clob)
+	      out += "to_clob (";
+	    out += "'";
+	    count = 0;
+	  }
+      }
+
+    out += "'";
+
+    if (is_clob)
+      out += ")";
+
+    return out;
+  }
 
   string cxx_demangle (const string &in)
   {

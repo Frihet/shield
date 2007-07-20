@@ -103,7 +103,7 @@ if conf.CheckGxx():
 	conf.env['CXXFLAGS']+=' -pipe -Woverloaded-virtual -Wnon-virtual-dtor -Wformat -Wimplicit-int -Wimplicit-function-declaration -Wmissing-braces -Wunused -Wreturn-type'
 	conf.env['LINKFLAGS']+=' -rdynamic'
 
-# Suggested warnings from Claes Næstén
+# Suggested warnings from Claes Naesten
 #
 #-fsyntax-only  -pedantic  -pedantic-errors -w  -Wextra  -Wall
 #           -Waddress  -Waggregate-return -Wno-attributes -Wc++-compat

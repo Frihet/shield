@@ -2683,7 +2683,7 @@ select_item:
 		text *txt=0;
 		identity *id;
 		printable *sub_item;
-
+		
 		/*
 		  The subitem of the printable_alias should be a cast
 		*/
@@ -2694,7 +2694,7 @@ select_item:
 		  {
 		    sub_item = item_cast->get_item ();
 		    //debug << (string ("MOPED ") + $1->get_item ()->get_node_name ());
-
+		    
 		    txt = dynamic_cast<text *> (sub_item);
 		    id = dynamic_cast<identity *> (sub_item);
 		    
@@ -2708,12 +2708,12 @@ select_item:
 		  {
 		    text *imp_alias;
 		    imp_alias = new text (txt->unmangled_str (), IDENTIFIER);
-		    $$->set_alias (imp_alias, false);
+		    $$->set_alias (imp_alias, true);
 		  }
 		else
 		  {
-		    text *imp_alias = new text (lex_get_string ().substr (pos1, pos2-pos1), IDENTIFIER);
-		    $$->set_alias (imp_alias, true);
+		    //		    text *imp_alias = new text (lex_get_string ().substr (pos1, pos2-pos1), IDENTIFIER);
+		    //$$->set_alias (imp_alias, true);
 		  }
 	      }
 	  };
@@ -2973,7 +2973,11 @@ simple_expr:
 	| variable
 	| sum_expr
 	| simple_expr OR_OR_SYM simple_expr
-	  { throw exception::unsupported (__FILE__, __LINE__); }
+	  {
+	    chain *param = new chain ($1, $3);
+	    param->set_separator (",");
+	    $$ = new function (new text ("shield.concat_"), DATA_TYPE_CHAR, param, false);
+	  }
 	| '+' simple_expr %prec NEG	
           { 
 	    $$ = new chain (new text ("+"), $2);
@@ -3232,60 +3236,62 @@ simple_expr:
 		  of arguments
 		*/
 		
-		if (!$3)
+		if (!$3 || !$3->size ())
 		  {
-		    $$ = new text ("''");
+		    $$ = new text ("chr (1)");
 		  }
 		else
 		  {
 		    vector<printable *>::const_iterator it;
-		    chain *res = new chain ();
 		    it=$3 -> begin (); 
+		    printable *res = *it;
+		    it++;
 		    while (it != $3 -> end ())
 		      {
-			if (it != $3 -> begin ())
-			  {
-			    res -> push (new text ("||"));
-			  }
-
-			res -> push (new paran (new cast (*it, DATA_TYPE_CHAR)));
-			
+			chain *param = new chain (res, *it);
+			param->set_separator (",");
+			res = new function (new text ("shield.concat_"), DATA_TYPE_CHAR, param, false);
 			++it;
 		      }
-		    $$ = new paran (res);
-		    $$ -> set_context (DATA_TYPE_CHAR);
+		    $$ = res;
 		  }
 	      }
 	    else if (func_name == "concat_ws")
 	      {
 		/*
-		  concat_ws is like concat, only the first arguemnt is used between every other argument
+		  concat_ws is like concat, only the first argument is used between every other argument
 		*/
 
 		if (!$3 || ($3->size () < 2))
 		  {
-		    $$ = new text ("''");
+		    $$ = new text ("chr (1)");
 		  }
 		else
 		  {
 		    vector<printable *>::const_iterator it;
-		    chain *res = new chain ();
 		    it=$3 -> begin (); 
 
-		    printable *sep = new cast (*it, DATA_TYPE_CHAR);
+		    printable *sep = *it;
 		    
+		    ++it;
+		    printable *res = *it;
 		    ++it;
 		    
 		    while (it < $3 -> end ())
 		      {
-			if (it != ($3 -> begin ()+1))
-			  {
-			    res -> push (new text ("||"));
-			    res -> push (sep);
-			    res -> push (new text ("||"));			
-			  }
+			chain *param1;
+			chain *param2;
+			printable *midpoint;
 
-			res -> push (new paran (new cast (*it, DATA_TYPE_CHAR)));
+			param1= new chain (res, sep);
+			param1->set_separator (",");
+
+			midpoint = new function (new text ("shield.concat_"), DATA_TYPE_CHAR, param1, false);
+
+			param2= new chain (midpoint, *it);
+			param2->set_separator (",");
+
+			res = new function (new text ("shield.concat_"), DATA_TYPE_CHAR, param2, false);
 			
 			++it;
 		      }
@@ -3298,8 +3304,7 @@ simple_expr:
 		string op = (func_name == "date_add")?"+":"-";
 		printable *date = (*$3)[0];
 		printable *interval = (*$3)[1];
-		printable *p = new paran (new text ("shield.date_parse"),
-					  new paran (date),
+		printable *p = new paran (date,
 					  new text (op),
 					  interval );
 		$$ = new chain (new text ("shield.date_char"), p);
@@ -3320,15 +3325,15 @@ simple_expr:
 		      parameters, an exception will be thrown whenever
 		      trying to access its type.
 		    */
-		    func_translate["char_length"] = make_triplet ("length", DATA_TYPE_NUMBER,false);
-		    func_translate["length"] = make_triplet ("lengthb", DATA_TYPE_NUMBER,false);
+		    func_translate["char_length"] = make_triplet ("shield.char_length_", DATA_TYPE_NUMBER,false);
+		    func_translate["length"] = make_triplet ("shield.length_", DATA_TYPE_NUMBER,false);
 		    func_translate["date_format"] = make_triplet ("shield.date_format", DATA_TYPE_CHAR,false);
 		    func_translate["count"] = make_triplet ("count", DATA_TYPE_NUMBER,true);
 		    func_translate["min"] = make_triplet ("min", DATA_TYPE_UNDEFINED,true);
 		    func_translate["max"] = make_triplet ("max", DATA_TYPE_UNDEFINED,true);
 		    func_translate["lower"] = make_triplet ("lower", DATA_TYPE_CHAR,false);
 		    func_translate["upper"] = make_triplet ("upper", DATA_TYPE_CHAR,false);
-		    func_translate["lpad"] = make_triplet ("lpad", DATA_TYPE_CHAR,false);
+		    func_translate["lpad"] = make_triplet ("shield.lpad_", DATA_TYPE_CHAR,false);
 		    func_translate["now"] = make_triplet ("current_date", DATA_TYPE_DATETIME,false);
 
 		    /*
@@ -5197,7 +5202,9 @@ TEXT_STRING_literal:
 
 TEXT_STRING_filesystem:
 	TEXT_STRING
-{ $$ = new text(yytext, LITERAL); }
+	{
+	  $$ = new text(yytext, LITERAL); 
+	}
 	;
 
 ident:

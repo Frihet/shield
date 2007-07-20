@@ -57,32 +57,32 @@ namespace shield
       stream << *t;
     }
 
-      /**
-	 Search the specified tree searching for printable_alias objects
-	 and save their mapping
-      */
-      static void 
-      get_table_alias (printable *it, map<string, printable *> &table_alias)
-      {
-	chain *ch = dynamic_cast<chain *> (it);
-	printable_alias *al = dynamic_cast<printable_alias *> (it);
+    /**
+       Search the specified tree searching for printable_alias objects
+       and save their mapping
+    */
+    static void 
+    get_table_alias (printable *it, map<string, printable *> &table_alias)
+    {
+      chain *ch = dynamic_cast<chain *> (it);
+      printable_alias *al = dynamic_cast<printable_alias *> (it);
 
-	if (al)
-	  {
-	    if (al->get_alias ())
-	      {
-		table_alias[al->get_alias ()->str ()] = al->get_item ();
-	      }
-	  }
-	else if (ch)
-	  {
-	    chain::const_iterator it;
-	    for (it=ch->begin (); it != ch->end (); ++it)
-	      {
-		get_table_alias (*it, table_alias);
-	      }
-	  }
-      }
+      if (al)
+	{
+	  if (al->get_alias ())
+	    {
+	      table_alias[al->get_alias ()->str ()] = al->get_item ();
+	    }
+	}
+      else if (ch)
+	{
+	  chain::const_iterator it;
+	  for (it=ch->begin (); it != ch->end (); ++it)
+	    {
+	      get_table_alias (*it, table_alias);
+	    }
+	}
+    }
 
     void select::
     _print (ostream &stream)
@@ -90,48 +90,47 @@ namespace shield
   
       chain::const_iterator it;
 
-      bool is_subselect=false;
-      printable *parent;
-      query *parent_query;
-      
+      bool is_sub= is_subselect ();
 
       if (!get_item_list ())
 	{
 	  throw exception::syntax ("No item list for select");
 	}
 
-      stream << "/*\n";
-      for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
+      if (!is_sub)
 	{
-	  printable *pr = *it;
-
-	  printable_alias *item = dynamic_cast<printable_alias *> (pr);
-	  if (!item)
-	    throw shield::exception::invalid_type ("Select query item list", "printable_alias");
-
-	  if (item->get_alias ())
+	  stream << "/*\n";
+	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
 	    {
-	      stream << item->get_alias ()->unmangled_str () << "\n";
-	    }
-	  else
-	    {
-	      printable *sub_item = item->get_item ();
-	      identity *sub_item_identity = dynamic_cast<identity *> (sub_item);
-	      if (sub_item_identity)
+	      printable *pr = *it;
+
+	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
+	      if (!item)
+		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
+
+	      if (item->get_alias ())
 		{
-		  sub_item = sub_item_identity->get_field ();
+		  stream << item->get_alias ()->unmangled_str () << "\n";
 		}
-	      
-	      stream << util::identifier_unescape (sub_item->str ()) << "\n";
+	      else
+		{
+		  printable *sub_item = item->get_item ();
+		  identity *sub_item_identity = dynamic_cast<identity *> (sub_item);
+		  if (sub_item_identity)
+		    {
+		      sub_item = sub_item_identity->get_field ();
+		    }
+		  
+		  stream << util::identifier_unescape (sub_item->str ()) << "\n";
+		}
 	    }
+	  stream << "*/\n";
 	}
-      stream << "*/\n";
-
 
       if (get_limit_clause ())
 	{
 	  stream << "select";
-
+	  
 	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
 	    {
 	      printable *pr = *it;
@@ -143,6 +142,8 @@ namespace shield
 	      if (it != get_item_list ()->begin ())
 		stream << ",";
 
+	      stream << " " << item->get_internal_alias ();
+	      /*
 	      if (item->get_alias ())
 		{
 		  stream << *item->get_alias ();
@@ -158,6 +159,8 @@ namespace shield
 		  
 		  stream << *sub_item;
 		}
+	      */
+
 	    }
 	  
 	  stream <<" from (\n";
@@ -227,15 +230,8 @@ namespace shield
       if (get_limit_clause () )
 	stream << ") where" << *get_limit_clause ();
 
-      parent = get_parent ();
-      if (parent)
-	{
-	  parent_query = parent->get_query ();
-	  if( dynamic_cast<select *> (parent_query))
-	    is_subselect = true;
-	}
 
-      if (!is_subselect)
+      if (!is_sub)
 	{
 	  stream << endl << endl << sep;
 	}
@@ -351,7 +347,10 @@ namespace shield
       for (it=t.column_begin (); it != t.column_end (); it++)
 	{
 	  string name = it->get_name ();
-	  item_list->push (new printable_alias (new cast (new identity (0, table, new text (name, IDENTIFIER)), DATA_TYPE_SELECTABLE), new text (name, IDENTIFIER) ) );
+	  identity *new_id = new identity (0, table, new text (name, IDENTIFIER));
+	  text *new_alias = new text (name, IDENTIFIER);
+	  cast *new_cast = new cast (new_id, DATA_TYPE_SELECTABLE);
+	  item_list->push (new printable_alias (new_id, new_alias, true ));
 	}
     }
 
@@ -371,7 +370,6 @@ namespace shield
       
       for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
 	{
-	  bool handled = false;
 	  
 	  printable *pr = *it;
 	  printable_alias *item = dynamic_cast<printable_alias *> (pr);
@@ -431,7 +429,10 @@ namespace shield
 	      
 	      identity *id = dynamic_cast<identity *> ((*ch)[0]);
 	      
-	      __group_field.push_back (id);
+	      if (id)
+		{
+		  __group_field.push_back (id);
+		}
 	    }
 
 	  for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
@@ -449,8 +450,26 @@ namespace shield
 
     }
 
+    bool select::
+    is_subselect ()
+    {
+      query *parent_query;
+      printable *parent = get_parent ();
+      
+      if (parent)
+	{
+	  parent_query = parent->get_query ();
+	  if( dynamic_cast<select *> (parent_query))
+	    {
+	      return true;
+	    }
+	}
+      return false;
+    }
+
   }
 
 }
 
+  
   

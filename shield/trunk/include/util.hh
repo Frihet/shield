@@ -109,6 +109,12 @@ namespace util
   string to_upper (const string &in);
 
   /**
+     Unescaped quoted mysql strings. Wildly incomplete, e.g. character
+     set specifications and numeric escapes are not yet supported.
+  */
+  string mysql_unescape (const string &in);
+
+  /**
      Escape strings in an oracle compatible fashion.
      
      Non-printables use the chr function, and long lines are

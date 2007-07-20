@@ -25,23 +25,49 @@ namespace shield
     internal_transform (void)
     {
       bool handled = false;
-      string inner = _get_child (CHILD_INNER)->str ();
+      string inner;
+
+      printable *def = _get_child (CHILD_INNER);
+      text *txt;
+
+      txt = dynamic_cast<text *> (def);
+
+      if (txt)
+	{
+	  if (txt->get_type () == LITERAL)
+	    {
+	      inner = txt->unmangled_str ();
+	    }
+	  else if (txt->get_type () == EXACT)
+	    {
+	      inner = txt->str ();
+	    }
+	  else
+	    {
+	      return this;
+	    }
+	}
+      else
+	{
+	  return this;
+	}
+
 
       printable *grand_parent = get_parent ()->get_parent ();
       field_spec *field = dynamic_cast<field_spec *> (grand_parent);
       
       /*
-	We can't use the shield.to_date_ function in the default
-	clause because Oracle doesn't let you use non-builtin
-	functions in default values. Yet another one of those
-	arbitrary limitations that Oracle loves so much.
+	We can't use the shield.to_date_ or sheild.to_number_
+	functions in the default clause because Oracle doesn't let you
+	use non-builtin functions in default values. Yet another one
+	of those arbitrary limitations that Oracle loves so much.
       */
       if (!grand_parent || !field)
 	throw exception::invalid_state ("invalid grandparent for default value");
 
       if (field->get_type ()->get_type () == DATA_TYPE_DATETIME)
 	{
-	  if (contains (inner.c_str (), "0", "'0'", "\"0\"", "'0000-00-00 00:00:00'", "\"0000-00-00 00:00:00\""))
+	  if (contains (inner.c_str (), "0", "0000-00-00 00:00:00", "0000-00-00 00:00:00", ""))
 	    {
 	      _set_child (CHILD_INNER, new text ("to_date ('0001-01-01 00:00:00','yyyy-mm-dd hh24:mi:ss')"));
 	    }
@@ -54,7 +80,7 @@ namespace shield
 	}
       else if (field->get_type ()->get_type () == DATA_TYPE_DATE)
 	{
-	  if (contains (inner.c_str (), "0", "'0'", "\"0\"", "'0000-00-00'", "\"0000-00-00\""))
+	  if (contains (inner.c_str (), "0", "0000-00-00", "0000-00-00"))
 	    {
 	      _set_child (CHILD_INNER, new text ("to_date ('0001-01-01','yyyy-mm-dd')"));
 	    }
@@ -65,6 +91,19 @@ namespace shield
 	      _set_child (CHILD_INNER, new function ( new text ("to_date"), DATA_TYPE_DATETIME, param, false));
 	    }
 	}
+      else if (field->get_type ()->get_type () & (DATA_TYPE_NUMBER | DATA_TYPE_FLOAT) )
+	{
+	  if (contains (inner.c_str (), ""))
+	    {
+	      _set_child (CHILD_INNER, new text ("0"));
+	    }
+	  else
+	    {
+	      _set_child (CHILD_INNER, new function ( new text ("to_number"), DATA_TYPE_DATETIME, _get_child (CHILD_INNER), false));
+	    }
+	  
+	}
+
       
       /*
 	This default cast should not be needed...

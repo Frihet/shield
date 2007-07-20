@@ -44,21 +44,31 @@ namespace shield
 	}
       
       stream << *get_item ();
-      
       __print_alias (stream);
     }
 
     void printable_alias::
     __print_alias (ostream &stream)
     {
-      if (!__alias_implicit)
+      text *alias = get_alias ();
+      if( alias && alias->length () )
 	{
-	  text *alias = get_alias ();
-	  if( !__alias_implicit && alias && alias->length () )
-	    {
-	      alias->set_skip_space (false);
-	      stream << *alias;
-	    }
+	  stream << " " << get_internal_alias ();
+	}
+      
+    }
+
+    string printable_alias::
+    get_internal_alias ()
+    {
+      text *alias = get_alias ();
+      if( alias && alias->length () )
+	{
+	  return alias->str () + (__alias_implicit ? "_" + util::stringify (this): "");
+	}
+      else 
+	{
+	  throw exception::invalid_state ("Tried to print null alias");
 	}
     }
     

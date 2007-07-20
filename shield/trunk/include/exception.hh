@@ -38,7 +38,7 @@ namespace shield
 
      All Shield exceptions. All exceptions in this namespace inherit
      the ability to to print a stack trace from
-     shield::exception::exception. On platforms where the function
+     shield::exception::traceback. On platforms where the function
      calls in the stack trace are mangled, the names are autometically
      unmangled to make the trace significantly easier to read.
   */
@@ -51,12 +51,12 @@ namespace shield
        The base class for all shield exceptions. Contains convenience
        methods for easily printing out an error message and an associated stack trace.
     */
-    class exception
+    class traceback
       : public std::exception
     {
     public:
 
-      exception (const exception &e)
+      traceback (const traceback &e)
       {
 	__what = strdup (e.__what);
       }
@@ -72,7 +72,7 @@ namespace shield
 	 trace, but there does not seem to be any method of obtaining
 	 that. 
       */
-      exception (void);
+      traceback (void);
 
       /**
 	 Returns the string specified using \c _set_what () and a human readable stack trace.
@@ -82,7 +82,7 @@ namespace shield
 	return __what;
       }
       
-      virtual ~exception (void) throw ()
+      virtual ~traceback (void) throw ()
       {
 	free (__what);
       }
@@ -118,7 +118,7 @@ namespace shield
        This is thrown in lots and lots of places in the parser, since only a very small subset of the entire syntax tree is supported.       
     */
     class unsupported
-      : public exception
+      : public traceback
     {
     public:
 
@@ -135,7 +135,7 @@ namespace shield
        communicated using th yyerror function.
     */
     class syntax
-      : public exception
+      : public traceback
     {
     public:
   
@@ -152,7 +152,7 @@ namespace shield
        have a child node of a specific type, but it was not present.
     */
     class not_found
-      : public exception
+      : public traceback
     {
     public:
 
@@ -166,7 +166,7 @@ namespace shield
        This exception is thrown when data (usually an AST node) was of an unexpected class.
     */
     class invalid_type
-      : public exception
+      : public traceback
     {
     public:
 
@@ -184,7 +184,7 @@ namespace shield
        or if a node is of an unexpected type. 
     */
     class invalid_state
-      : public exception
+      : public traceback
     {
     public:
 
@@ -200,7 +200,7 @@ namespace shield
        Exception for an invalid input parameter to a method or function. 
     */
     class invalid_param
-      : public exception
+      : public traceback
     {
     public:
 
@@ -216,7 +216,7 @@ namespace shield
        Exception for database errors.
     */
     class database
-      : public exception
+      : public traceback
     {
     public:
 

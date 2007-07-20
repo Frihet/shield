@@ -28,7 +28,7 @@ introspection = env.Object(Split("""
 
 exception = env.Object(Split("""
 	exception_unsupported.cc			
-	exception.cc""")) 
+	exception_traceback.cc""")) 
 
 database = env.Object(Split("""
 	database.cc					
@@ -87,6 +87,6 @@ introspection_test = env.Object(Split('''introspection_test.cc''')) + introspect
 
 database_test = env.Object(Split('''database_test.cc''')) + database + exception + misc
 
-shield_multiplex = env.Object(Split('''shield_multiplex.cc''')) + misc
+shield_multiplex = env.Object(Split('''shield_multiplex.cc''')) + misc + exception
 
 Export('shield shield_make_package_string transform_lex_test introspection_test database_test shield_multiplex')

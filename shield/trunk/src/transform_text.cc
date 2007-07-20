@@ -22,10 +22,24 @@ namespace shield
 
     using namespace util;
 
+      text::
+      text (const string &text, text_type type, bool insert_whitespace)
+	: __val (text), __type (type)
+      {
+	cerr << "Create new text item with value " << text << " and type " << ENUM_TO_STRING (text_type, type) << endl;
+
+	if (type == LITERAL)
+	  set_context (DATA_TYPE_CHAR);
+
+	set_skip_space (!insert_whitespace);
+      }
+
+
     text::
     text (unsigned long long val, text_type type, bool insert_whitespace)
       : __val (stringify (val)), __type (type)
     {
+      cerr << "Create new text item with value " << val << " and type " << ENUM_TO_STRING (text_type, type) << endl;
       set_context (DATA_TYPE_NUMBER);
       set_skip_space (!insert_whitespace);
     }
@@ -34,6 +48,7 @@ namespace shield
     text (text *t)
       : __val (t->__val), __type (t->__type)
     {
+      cerr << "Clone text item with value " << __val << " and type " << ENUM_TO_STRING (text_type, __type) << endl;
       set_context (t->get_context ());
     }
 
@@ -48,115 +63,6 @@ namespace shield
 	return in.substr (1, in.length ()-2);
       }
 
-      /**
-	 Unescaped quoted mysql strings. Wildly incomplete, e.g. character
-	 set specifications and numeric escapes are not yet supported.
-      */
-      string mysql_unescape (const string &in)
-      {
-	string out = "";
-  
-	char end;
-	string::const_iterator it;
-
-	it=in.begin (); 
-  
-	end = *it;
-	++it;
-
-	while (true)
-	  {
-	    char c = *it;
-
-	    if (c == end)
-	      {
-		++it;
-		if (it == in.end ())
-		  {
-		    break;
-		  }
-		else if (*it == end)
-		  {
-		    out += end;
-		  }
-		else
-		  {
-		    throw exception::syntax ("Malformed string");
-		  }
-		
-	      }
-	    else if (c == '\\')
-	      {
-		++it;
-		if (it == in.end ())
-		  {
-		    throw exception::syntax ("Malformed string");
-		  }
-
-		char c = *it;
-	  
-		switch (c)
-		  {
-		  case 'n':
-		    out += '\n';
-		    break;
-	      
-		  case 'r':
-		    out += '\r';
-		    break;
-	      
-		  case 'f':
-		    out += '\f';
-		    break;
-	      
-		  case 'v':
-		    out += '\v';
-		    break;
-	      
-		  case 'b':
-		    out += '\b';
-		    break;
-	      
-		  case 'e':
-		    out += '\e';
-		    break;
-	      
-		  case 'a':
-		    out += '\a';
-		    break;
-	      
-		  case 't':
-		    out += '\t';
-		    break;
-
-		  case '%':
-		    out += "!%";
-		    break;
-
-		  case '_':
-		    out += "!_";
-		    break;
-
-		  default:
-		    out += c;
-	      
-		  }
-	      }
-	    else
-	      {
-		out += c;
-	      }
-
-	    ++it;
-	  }
-
-	if (it != in.end () )
-	  {
-	    throw exception::syntax ("Malformed string");
-	  }
-
-	return out;
-      }
 
       /**
 	 Make an identifier name a valid oracle name

@@ -517,14 +517,8 @@ namespace shield
 	 @param type is the type of message
 	 @param insert_whitespace whether whitespace is needed before this token
       */
-      text (const string &text, text_type type = EXACT, bool insert_whitespace=true)
-	: __val (text), __type (type)
-      {
-	if (type == LITERAL)
-	  set_context (DATA_TYPE_CHAR);
+      text (const string &text, text_type type = EXACT, bool insert_whitespace=true);
 
-	set_skip_space (!insert_whitespace);
-      }
 
       /**
 	 Construct a new text object using a number as the initial definition.
@@ -670,6 +664,12 @@ namespace shield
       printable *operator [] (int idx)
       {
 	return __chain[idx];
+      }
+
+      void set (int idx, printable *value)
+      {
+	__chain[idx]=value;
+	value->set_parent (this);
       }
 
       /**
@@ -888,6 +888,8 @@ namespace shield
 	 Use the identity_catalyst.
       */
       virtual printable *internal_transform (void);
+
+      bool is_subselect ();
 
     protected:
     
@@ -1444,8 +1446,11 @@ namespace shield
 	return get_alias () != 0;
       }
 
+      string get_internal_alias ();
+      
     protected:
       virtual void _print (ostream &stream);
+
       
     private:
       void __print_alias (ostream &stream);
@@ -1605,7 +1610,7 @@ namespace shield
       /**
 	 Setter for the update list
       */
-      void set_update_list (printable *name)
+      void set_update_list (chain *name)
       {
 	_set_child (CHILD_UPDATE_LIST, name);
       }
@@ -1613,9 +1618,9 @@ namespace shield
       /**
 	 Getter for the update list
       */
-      printable *get_update_list (void)
+      chain *get_update_list (void)
       {
-	return _get_child (CHILD_UPDATE_LIST);
+	return _get_child<chain> (CHILD_UPDATE_LIST);
       }
 
       /**
@@ -1671,9 +1676,13 @@ namespace shield
       */
       virtual printable *internal_transform (void);
 
+
     protected:
       virtual void _print (ostream &stream);
       virtual void _make_condensed_table_list (void);
+
+    private:
+      void __cast_update_list ();
 
     }
     ;

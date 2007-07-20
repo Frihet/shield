@@ -47,6 +47,7 @@ namespace shield
 	}
 
       transform::printable_alias *parent_as_alias = dynamic_cast<transform::printable_alias *> (parent);
+
       if (parent_as_alias && p == parent_as_alias->get_alias ())
 	return p;
 
@@ -58,7 +59,11 @@ namespace shield
 
       if (!table)
 	{
-	  throw exception::invalid_state ("Could not find corresponding table for identity '" + p->str () + "'");
+	  //	  throw exception::invalid_state ("Could not find corresponding table for identity '" + p->get_path () + "'");
+	  /*
+	    This is probably an alias
+	  */
+	  return p;
 	}
 
       transform::identity *res = new transform::identity (0, 0, t);

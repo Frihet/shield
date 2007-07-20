@@ -28,8 +28,8 @@ namespace shield
       const int BACKTRACE_COUNT=128;
     }
     
-    exception::
-    exception ()
+    traceback::
+    traceback ()
     {
       void * array[BACKTRACE_COUNT];
       int nSize = backtrace(array, BACKTRACE_COUNT);
