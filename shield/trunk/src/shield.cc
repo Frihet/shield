@@ -332,7 +332,7 @@ main (int argc, char **argv)
       while( true )
 	{
 	  int c;
-	  
+
 	  c = cin.get ();
 	  
 	  if (c && c != EOF)
@@ -343,7 +343,7 @@ main (int argc, char **argv)
 	    {
 	      translate (str);
 	      str="";
-			      
+
 	      if (c==EOF)
 		{
 		  break;

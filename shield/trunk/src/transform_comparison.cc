@@ -48,7 +48,7 @@ namespace shield
       data_type c1_out = c1_in;
       data_type c2_out = c2_in;
       
-      if (c1_in != c2_in)
+      if (c1_in != c2_in || c1_in = DATA_TYPE_CLOB)
 	{
 	  typedef pair<data_type,data_type> pair_ctx;
 	  
@@ -56,6 +56,10 @@ namespace shield
 
 	  data_type mapping[][3] =
 	    {
+	      /*
+		Clobs always need to be converted, since they can't be compared...
+	      */
+	      {DATA_TYPE_CLOB, DATA_TYPE_CLOB, DATA_TYPE_VARCHAR },
 	      {DATA_TYPE_CLOB, DATA_TYPE_NUMBER, DATA_TYPE_VARCHAR },
 	      {DATA_TYPE_CLOB, DATA_TYPE_FLOAT, DATA_TYPE_VARCHAR },
 	      {DATA_TYPE_CLOB, DATA_TYPE_CHAR, DATA_TYPE_CHAR },
@@ -64,14 +68,24 @@ namespace shield
 	      {DATA_TYPE_CLOB, DATA_TYPE_DATETIME, DATA_TYPE_VARCHAR },
 	      {DATA_TYPE_CLOB, DATA_TYPE_UNDEFINED, DATA_TYPE_VARCHAR },
 
+	      /*
+		Upconvert numbers to strings, except when comparing dates
+	      */
 	      {DATA_TYPE_NUMBER, DATA_TYPE_DATE, DATA_TYPE_NUMBER },
 	      {DATA_TYPE_NUMBER, DATA_TYPE_DATETIME, DATA_TYPE_NUMBER },
+	      {DATA_TYPE_NUMBER, DATA_TYPE_CHAR, DATA_TYPE_CHAR },
+	      {DATA_TYPE_NUMBER, DATA_TYPE_VARCHAR, DATA_TYPE_VARCHAR },
 	      {DATA_TYPE_NUMBER, DATA_TYPE_UNDEFINED, DATA_TYPE_VARCHAR },
 
 	      {DATA_TYPE_FLOAT, DATA_TYPE_DATE, DATA_TYPE_NUMBER },
 	      {DATA_TYPE_FLOAT, DATA_TYPE_DATETIME, DATA_TYPE_NUMBER },
+	      {DATA_TYPE_FLOAT, DATA_TYPE_CHAR, DATA_TYPE_CHAR },
+	      {DATA_TYPE_FLOAT, DATA_TYPE_VARCHAR, DATA_TYPE_VARCHAR },
 	      {DATA_TYPE_FLOAT, DATA_TYPE_UNDEFINED, DATA_TYPE_VARCHAR },
 
+	      /*
+		Convert dates to strings when comparing
+	      */
 	      {DATA_TYPE_CHAR, DATA_TYPE_DATE, DATA_TYPE_CHAR },
 	      {DATA_TYPE_CHAR, DATA_TYPE_DATETIME, DATA_TYPE_CHAR },
 	      {DATA_TYPE_CHAR, DATA_TYPE_UNDEFINED, DATA_TYPE_CHAR },
@@ -80,6 +94,10 @@ namespace shield
 	      {DATA_TYPE_VARCHAR, DATA_TYPE_DATETIME, DATA_TYPE_CHAR },
 	      {DATA_TYPE_VARCHAR, DATA_TYPE_UNDEFINED, DATA_TYPE_VARCHAR },
 	      
+	      /*
+		Convert dates to datetimes when comapring. This should
+		really not be needed. Ok to remove?
+	      */
 	      {DATA_TYPE_DATE, DATA_TYPE_DATETIME, DATA_TYPE_DATE },
 	      {DATA_TYPE_DATE, DATA_TYPE_UNDEFINED, DATA_TYPE_DATE },
 

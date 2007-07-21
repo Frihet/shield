@@ -26,6 +26,10 @@ for name in ['CXX','CC','CFLAGS','CXXFLAGS']:
 	if os.getenv(name) != None:
 		env[name] = os.getenv(name)
 
+if os.getenv('LDFLAGS') != None:
+	env['LINKFLAGS'] += os.getenv('LDFLAGS')
+
+
 # Implementation of the 'OracleCheck' custom check
 def CheckOracleInclude(context, locs):
 	'''Check for a suitable oracle include directory
@@ -136,7 +140,7 @@ env = conf.Finish()
 #
 # Build the src subdirectory with a separate build dirctory called 'build'
 #
-SConscript('src/SConscript', build_dir='build')
+SConscript('src/SConscript', build_dir='build', duplicate=0)
 
 # Build the actual programs
 SConscript('bin/SConscript')

@@ -42,6 +42,8 @@ function shield_begin_verbose()
   $shield_verbose++;
 }
 
+//shield_begin_verbose ();
+
 function shield_end_verbose()
 {
   global $shield_verbose;
