@@ -112,12 +112,12 @@ namespace shield
 	      else if (real & DATA_TYPE_DATETIME)
 		{
 		  inner->set_skip_space (true);
-		  stream << "shield.to_char_ (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss')";
+		  stream << "shield.handle_zero_date (to_char (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss'))";
 		}
 	      else if (real & DATA_TYPE_DATE)
 		{
 		  inner->set_skip_space (true);
-		  stream << "shield.to_char_ (" << *inner << ", 'yyyy-mm-dd')";
+		  stream << "shield.handle_zero_date (to_char (" << *inner << ", 'yyyy-mm-dd'))";
 		}
 	      else
 		{
@@ -131,11 +131,11 @@ namespace shield
 
 	      if (real & DATA_TYPE_DATETIME)
 		{
-		  stream << "to_clob (shield.to_char_ (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss'))";
+		  stream << "to_clob (shield.handle_zero_date (to_char (" << *inner << ", 'yyyy-mm-dd hh24:mi:ss')))";
 		}
 	      else if (real & DATA_TYPE_DATE)
 		{
-		  stream << "to_clob (shield.to_char_ (" << *inner << ", 'yyyy-mm-dd'))";
+		  stream << "to_clob (shield.handle_zero_date (to_char (" << *inner << ", 'yyyy-mm-dd')))";
 		}
 	      else 
 		{

@@ -26,8 +26,6 @@ namespace shield
       text (const string &text, text_type type, bool insert_whitespace)
 	: __val (text), __type (type)
       {
-	cerr << "Create new text item with value " << text << " and type " << ENUM_TO_STRING (text_type, type) << endl;
-
 	if (type == LITERAL)
 	  set_context (DATA_TYPE_CHAR);
 
@@ -39,7 +37,6 @@ namespace shield
     text (unsigned long long val, text_type type, bool insert_whitespace)
       : __val (stringify (val)), __type (type)
     {
-      cerr << "Create new text item with value " << val << " and type " << ENUM_TO_STRING (text_type, type) << endl;
       set_context (DATA_TYPE_NUMBER);
       set_skip_space (!insert_whitespace);
     }
@@ -48,7 +45,6 @@ namespace shield
     text (text *t)
       : __val (t->__val), __type (t->__type)
     {
-      cerr << "Clone text item with value " << __val << " and type " << ENUM_TO_STRING (text_type, __type) << endl;
       set_context (t->get_context ());
     }
 

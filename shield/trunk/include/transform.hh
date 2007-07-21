@@ -341,6 +341,17 @@ namespace shield
       */
       virtual string get_tree (int level=0);
 
+      /**
+	 Noop. This function is called with a value of true to tell a
+	 node that its output type is expected to be selactable,
+	 i.e. it should output something that can be returned as the
+	 value of a field in a selact statement. Subclasses must
+	 override this method when applicable.
+      */
+      virtual void set_selectable (bool numeric_return)
+      {
+      }
+
     protected:
 
       /**
@@ -1712,6 +1723,56 @@ namespace shield
     }
     ;
 
+    class null_test
+      : public printable
+    {
+    public:
+      null_test (printable *inner, bool is_null)
+	: __is_null (is_null), __selectable (false)
+      {
+	_set_child (CHILD_INNER, inner);
+      }
+
+      virtual void set_selectable (bool selectable)
+      {
+	__selectable = selectable;
+      }
+
+    protected:
+
+      virtual void _print (ostream &stream)
+      {
+	if (__is_null)
+	  {
+	    if (__selectable)
+	      {
+		stream << (" shield.is_null (" + _get_child (CHILD_INNER)->str () + ")");
+	      }
+	    else
+	      {
+		stream << *_get_child (CHILD_INNER) << " is null";
+	      }
+	  }
+	else
+	  {
+	    if (__selectable)
+	      {
+		stream << (" shield.is_not_null (" + _get_child (CHILD_INNER)->str () + ")");
+	      }
+	    else
+	      {
+		stream << *_get_child (CHILD_INNER) << " is not null";
+	      }
+	  }
+      }
+
+    private:
+
+      bool __is_null; 
+      bool __selectable;
+
+    }
+    ;
 
 
     /**

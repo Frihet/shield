@@ -275,10 +275,13 @@ namespace shield
     printable *select::
     internal_transform ()
     {
+      catalyst::create_identity id_catalyst (this);
+      catalyst::set_selectable sel_catalyst (true);
+
+
       __pre_calculate ();
       __resolve_item_list ();
 
-      catalyst::create_identity id_catalyst (this);
       printable *res= this->transform (id_catalyst);
 
       if (get_group_clause ())
@@ -289,6 +292,9 @@ namespace shield
 	  if (get_order_clause ())
 	    set_order_clause ( get_order_clause ()->transform (agg_catalyst));
 	}
+
+
+      set_item_list ( dynamic_cast<chain *> (get_item_list ()->transform (sel_catalyst)));
 
       return res;
     }
@@ -350,7 +356,7 @@ namespace shield
 	  identity *new_id = new identity (0, table, new text (name, IDENTIFIER));
 	  text *new_alias = new text (name, IDENTIFIER);
 	  cast *new_cast = new cast (new_id, DATA_TYPE_SELECTABLE);
-	  item_list->push (new printable_alias (new_id, new_alias, true ));
+	  item_list->push (new printable_alias (new_cast, new_alias, true ));
 	}
     }
 

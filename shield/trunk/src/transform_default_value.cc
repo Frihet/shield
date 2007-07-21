@@ -57,7 +57,7 @@ namespace shield
       field_spec *field = dynamic_cast<field_spec *> (grand_parent);
       
       /*
-	We can't use the shield.to_date_ or sheild.to_number_
+	We can't use the shield.to_date_ or shield.to_number_
 	functions in the default clause because Oracle doesn't let you
 	use non-builtin functions in default values. Yet another one
 	of those arbitrary limitations that Oracle loves so much.

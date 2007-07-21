@@ -225,7 +225,25 @@ namespace shield
     }
     ;
 
-    
+    class set_selectable
+      : public catalyst
+    {
+    public:
+      set_selectable (bool selectable)
+	: __selectable (selectable)
+      {
+      }
+
+      virtual transform::printable *catalyze (transform::printable *node)
+      {
+	node->set_selectable (__selectable);
+	return node;
+      }
+
+    private:
+      bool __selectable;
+    }
+    ;
 
   }
 

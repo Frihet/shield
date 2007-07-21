@@ -373,13 +373,34 @@ is
 	function to_date_ (date_in number, format varchar2) 
 		return date deterministic;
 
-	function to_char_ (date_in date, format varchar2) 
+	/**
+		In MySQL, there are 'zero dates' of '0000-00-00 00:00:00'. Oracle does not have a zear zero, so Shield uses the date '0001-01-01 01:01:01' as a substitute.
+	*/
+	function handle_zero_date (date_in varchar2)
 		return varchar2 deterministic;
 
+	/**
+		Like the regular to_number function, but handles empty strings like mysql
+	*/
 	function to_number_ (str varchar2) 
 		return number deterministic;
 
+	/**
+		Like the regular to_number function, but handles empty strings like mysql
+	*/
 	function to_number_ (str clob) 
+		return number deterministic;
+
+	/**
+		Numeric null test. Returns 0 or 1 depending on whether the value is null. Needed in the select field spec, since regular sql does not have a boolean type like mysql
+	*/
+	function is_null (v char)
+		return number deterministic;
+
+	/**
+		Numeric null test. Returns 0 or 1 depending on whether the value is null. Needed in the select field spec, since regular sql does not have a boolean type like mysql
+	*/
+	function is_not_null (v char)
 		return number deterministic;
 
 end shield;
@@ -581,21 +602,28 @@ is
 	function to_date_ (date_in varchar2, format varchar2) 
 		return date deterministic
 	is 
-		date_in2 varchar2 (64);
 	begin
-		date_in2 := date_in;
-		if length(format) = 10 then
-			if date_in = '0000-00-00' or date_in = '0' or date_in = '00:00:00' or date_in = '00000000' or date_in = chr (1) then
-				date_in2 := '0001-01-01';
-			end if;
-		else
-			if date_in = '0000-00-00 00:00:00' or date_in = '0' or date_in = '00:00:00' or date_in = '00000000' or date_in = '00000000000000' or date_in = chr (1) then
-				date_in2 := '0001-01-01 01:01:01';
-			end if;
-
+		if date_in = '0000-00-00' or date_in = '0' or date_in = '00:00:00' or date_in = '00000000' or date_in = chr (1) or date_in = '0000-00-00 00:00:00' or  date_in = '00000000000000' then
+			return to_date ('0001-01-01 01:01:01','yyyy-mm-dd hh24:mi:ss');
 		end if;
-		
-		return to_date (date_in2, format);
+
+		if length(date_in) = 8 then
+			return to_date (date_in,'yyyymmdd');
+		end if;	
+
+		if length(date_in) = 10 then
+			return to_date (date_in,'yyyy-mm-dd');
+		end if;	
+
+		if length(date_in) = 14 then
+			return to_date (date_in,'yyyymmddhh24miss');
+		end if;	
+ 
+		if length(date_in) = 19 then
+			return to_date (date_in,'yyyy-mm-dd hh24:mi:ss');
+		end if;	
+
+		return to_date ('0001-01-01 01:01:01','yyyy-mm-dd hh24:mi:ss');
 	end;
 
 
@@ -619,20 +647,18 @@ is
 		return to_date (date_in2, format);
 	end;
 
-	function to_char_ (date_in date, format varchar2) 
+	function handle_zero_date (date_in varchar2) 
 		return varchar2 deterministic
 	is
 	begin
-		if length(format) = 10 then
-			if to_char (date_in, 'yyyy-mm-dd') = '0001-01-01' then
-				return '0000-00-00';
-			end if;
-		else
-			if to_char (date_in, 'yyyy-mm-dd hh24:mi:ss') = '0001-01-01 01:01:01' then
-				return '0000-00-00 00:00:00';
-			end if;
+		if date_in = '0001-01-01' then
+			return '0000-00-00';
 		end if;
-		return to_char (date_in, format);
+
+		if date_in = '0001-01-01 01:01:01' then
+			return '0000-00-00 00:00:00';
+		end if;
+		return date_in;
 	end;
 
 	function to_number_ (str varchar2) 
@@ -657,6 +683,25 @@ is
 		return to_number (str);
 	end;
 
+	function is_null (v char)
+		return number deterministic
+	is
+	begin
+		if v is null then
+			return 1;
+		end if;
+		return 0;
+	end;
+
+	function is_not_null (v char)
+		return number deterministic
+	is
+	begin
+		if v is not null then
+			return 1;
+		end if;
+		return 0;
+	end;
 
 end shield;
 /
@@ -666,7 +711,7 @@ end shield;
 	Create lookup table for name mangling and type lookup on columns
 */
 
-/*
+
 drop table shield_table_column;
 
 create table shield_table_column
@@ -716,5 +761,3 @@ create index shield_table_column_idx4
 on shield_table_column (mangled_table_name, mangled_column_name);
 
 
-
-*/

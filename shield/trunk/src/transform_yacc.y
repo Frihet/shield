@@ -2813,11 +2813,11 @@ bool_test:
 bool_pri:
 	bool_pri IS NULL_SYM	
           { 
-	    $$ = new chain ($1, new text ("is"), new text ("null"));
+	    $$ = new null_test ($1, true);
 	  }
 	| bool_pri IS not NULL_SYM
           { 
-	    $$ = new chain ($1, new text ("is"), new text ("not"), new text ("null"));
+	    $$ = new null_test ($1, false);
 	  }
 	| bool_pri EQUAL_SYM predicate
 	  { throw exception::unsupported (__FILE__, __LINE__); }

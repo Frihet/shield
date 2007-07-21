@@ -48,7 +48,7 @@ namespace shield
       data_type c1_out = c1_in;
       data_type c2_out = c2_in;
       
-      if (c1_in != c2_in || c1_in = DATA_TYPE_CLOB)
+      if (c1_in != c2_in || c1_in == DATA_TYPE_CLOB)
 	{
 	  typedef pair<data_type,data_type> pair_ctx;
 	  
