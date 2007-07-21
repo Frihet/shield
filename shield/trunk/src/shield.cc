@@ -250,11 +250,11 @@ namespace
 	    int sep_count=0;
 	    string res;
 
+	    shield::transform::output_stream.str ("");
 	    shield::transform::lex_set_string (str);
 	    shield::transform::yyparse ();
 	    
 	    res =  shield::transform::output_stream.str ();
-	    shield::transform::output_stream.str ("");
 	    
  	    for (it=res.begin (); it != res.end (); ++it)
 	      {
