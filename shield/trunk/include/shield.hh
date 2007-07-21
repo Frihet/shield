@@ -89,29 +89,32 @@
    and very few objects are dynamically allocated. Unfortunatly, bison
    requires all AST nodes to be inserted into a union, and C++ does
    not permit putting classes in union, so this is not possible in the
-   parser. Instead, Shield has an extremly simply allocation strategy:
-   The entire AST is allocated using a non-oveloaded new operator, and
-   each node is inserted into a vector. Once the tree has been
-   written, every element of the vector is deleted. This has a few
-   drawbacks:
+   parser. Instead, Shield has an extremly simple allocation strategy:
+   The entire AST inherits from the \c printable base class, and the
+   constructor of printable inserts every new element into a vector.
+   Once an AST tree has been written, every element of the vector is
+   deleted. This has a few drawbacks:
 
-   - Multiple inheritance is not allowed
+   - Multiple inheritance is not allowed. This can probably be worked around by overloading the new operator.
 
    - Multithreading in the parser is not allowed without some clever coding. In order to have multithreading, one would need to use Thread Local Storage for the allocation vector.
 
+   - All AST node elements _must_ be dnamically allocated, since there is no way for the printable constructor to know if it should be dynamically allocated or not. This can probably be worked around by overloading the new operator.
+
    The benefit of this memory model is that memory leaks in the parser
-   are extremely rare. The above limitations are not a serious
-   limitations, and both can be worked around with some work.
+   become extremely rare. The above limitations are not a serious
+   limitations, and can be worked around with some additional effort
+   if need be.
    
    @subsection style Coding style
 
-   Shield relies heavily on dynamic casting to perform its task. Most
+   Shield relies heavily on dynamic casting to perform its task. Many
    catalysts only work on one specific type of nodes, and test each
    node using dynamic casting.
 
    @subsection ast-structure AST structure
 
-   After finisheing the parsing phase, the parser creates a fake_root
+   After finishing the parsing phase, the parser creates a fake_root
    object containing a chian to be the root of the AST. That means
    that if any query wishes to add additional queries to the tree this
    can be done during the transformation phase. The _add_query ()
@@ -119,7 +122,127 @@
    _add_query during the parsing phase, or an exception will be
    thrown.
 
+   @section issues Known issues and differences between MySQL and Shield
 
+   In MySQL, adding a number to the output of the date function
+   results in mysql stripping the month and day part of the date and
+   performing arithmetic on the year. In shield, performing the same
+   operation results in the whole date value being converted to a
+   number, the same way as when performing arithmetic on e.g. the
+   output of the curdate function.
+
+   Shield only supports the parts of the MySQL syntax directly needed
+   to run Joomla under Oracle. Since Joomla is a relatively large and
+   complex system, this actually means that a pretty large part of the
+   MySQL syntax is covered, though.
+
+   Shield crops long table/index/field names since Oracle has
+   significantly shorter maximum name length than MySQL. Make sure
+   that the first 13 characters of each table, index and field name is
+   unique.
+
+   The order of fields in a select list can be changed when using the
+   limit clause or the group by clause in combination with wildcards
+   or unaggregated field values.
+
+   Here is an incomplete list of common features that are implemented:
+
+   - 'select ...' queries, inclding limit clauses, 'group by ...' clauses, 'having ...' clauses, etc.
+   - 'create table ...' queries, including primary keys, indices, dates, default values, nullable fields.
+   - 'show tables ...' queries on the current database
+   - 'delete from ...' queries
+   - 'drop table ...' queries, incling the 'if exists' caluse
+   - 'insert ...' queries
+   - 'update ...' queries
+
+   Here is an incomplete list of semi-common features that are missing
+   from shield:
+
+   - 'replace ...' queries
+   - 'insert ... on duplicate key ...' queries
+   - 'alter ...' queries
+
+   Some other shield limitations:
+
+   - Various information, such as storage engine, index type, etc. is ignored by shield
+   - Named primary keys and unnamed indexes are unsupported
+
+
+   @section type-mapping Type mapping
+
+   Short text fields (char and varchar) are mapped to chars and
+   varchar2s. Longer fields are mapped to clob.
+
+   All fix point number types are mapped to the number type.
+
+   All floating point number types are mapped to the double type.
+
+   The date and datetime types are mapped to the Oracle date
+   type. Shield uses an internal table to remember which fields should
+   be dates and which should be datetimes.
+
+
+   @section implementation-details Implementation details:
+
+   @subsection empty-string Handling empty strings
+
+   In Oracle, the empty string is the same thing as the null
+   value. This is not the case in MySQL. To work around this, shield
+   stores the empty string as a single character with binary value
+   1. The client needs to unconvert this.
+
+   @subsection limit Handling limit clauses
+
+   Shield implements the limit clause using a subselect, e.g. 'select
+   * from (select ...) where rownum < ...'. In oracle, subselects can
+   not be mixed with field wildcards, e.g 'select *'. There are also
+   many limitations on how wildcards can be used with group by
+   clauses, as well as differences in how fields are named. In the
+   end, this all means that Shield expands any and all wildcards in
+   the field selection list of select statements.
+
+   @subsection nameing Handling differences in naming
+   
+   In MySQL, index names live in a per-table namespace, so it is
+   possible to have two indices in two different tables with the same
+   name. In Oracle, that is not the case. To work around this, the
+   table name and an underscore is prepended to all index names. This
+   leads to another problem in Oracle - the 30 character name limit of
+   all tables, indices, fields, etc. When an index named would have
+   broken the 30 character limit, the name is shortened. Care is taken
+   to use a prefix of both the table and original index name in the
+   derived name, so as to minimize the collision risk, but this is far
+   from fool proof.
+
+   @subsection casting Handling the need for casting
+
+   MySQL dates can be implicitly converted to strings and the other
+   way around. Also, strings and numbers can be compared to each other
+   without manual conversion. This is not possible with Oracle dates,
+   you always need to use casting functions. For this reason, Shield
+   keeps track of the type of each exdpression and performs casting as
+   needed.
+   
+   It should be noted that it is not possible to directly compare to
+   clobs in Oracle. They need to be converted to chars, which have a
+   maximum length of 32000 characters. IF you need to compare fields
+   with a maximum langth of more than 32000 characters, you are in
+   trouble.
+
+   @section aliases Handling naming and aliases
+
+   Oracle converts all field names to upper case. 
+
+   @section shield-package The shield package
+
+   The shield program uses various shield specific PL/SQL functions,
+   tables and other data.  The source code for all this package is
+   given when shield is called with the --package switch. Ideally, all
+   functions and such would be contained in the package (which is very
+   cleverly named 'shield'), but it is impossible to make
+   e.g. aggregation functions into members of a package, so this is
+   not the case. In the end, all functions and tables outside of the
+   shield package have the 'shield_' prefix.
 
 */
 
