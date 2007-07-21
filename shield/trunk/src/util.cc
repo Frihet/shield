@@ -242,7 +242,7 @@ namespace util
 	      out += ")";
 
 	    out += " || chr (";
-	    out += stringify ((int)c);
+	    out += stringify ((unsigned int)(unsigned char)c);
 	    out += ") || ";
 
 	    if (is_clob)
