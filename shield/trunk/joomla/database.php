@@ -55,7 +55,7 @@ function shield_debug ($msg)
   global $shield_verbose;
   if ($shield_verbose > 0)
     {
-      echo $msg;
+      echo "<div style='text-align: left;'>$msg</div>";
     }
 }
 
@@ -188,7 +188,7 @@ function shield_select_db ($db, $resource=null)
 
   shield_get_resource ($resource);
 
-  $res = $shield_resource[$shield_current_resource-1] = ocilogon ($shield_username, $shield_password, "$shield_server/$db");
+  $res = $shield_resource[$shield_current_resource-1] = ocilogon ($shield_username, $shield_password, "$shield_server/$db","WE8ISO8859P1");
   //  echo "ocilogon ('$shield_username', '$shield_password', '$shield_server/$db') = $res<br>\n";
   return $res;
 }
