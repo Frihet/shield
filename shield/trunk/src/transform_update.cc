@@ -72,8 +72,6 @@ namespace shield
       chain::const_iterator it;
       chain *update_list = get_update_list ();
 
-      cerr << "LALALA" << endl;
-
       if (!update_list)
 	{
 	  throw exception::invalid_state ("Update list missing");
@@ -93,8 +91,6 @@ namespace shield
 	    {
 	      throw exception::invalid_state ("Update element id was not of type identity");	      
 	    }
-
-	  cerr << "LALALA2" << endl;
 
 	  elem->set(2, new cast ((*elem)[2], id->get_context ()));
 	  

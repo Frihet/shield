@@ -16,6 +16,7 @@
   everything even remotely cool.
 */
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 using namespace std;
@@ -34,6 +35,7 @@ using namespace std;
 #include "include/introspection.hh"
 #include "include/database.hh"
 #include "include/catalyst.hh"
+#include "include/cache.hh"
 
 namespace shield
 {
@@ -47,7 +49,7 @@ namespace shield
     */
 #include "build/transform_yacc.hh"
     
-    ostringstream output_stream;
+    printable *root;
   }
 
 }
@@ -56,10 +58,10 @@ namespace
 {
   
   logger::logger error ("shield: error");
-  
+
   vector<string> command;
 
-  const char *GETOPT_ARG = "c:u:p:h:PHd:w:";
+  const char *GETOPT_ARG = "c:u:p:h:PHd:w:o:";
 
 
     /**
@@ -239,44 +241,72 @@ namespace
       }
   }
 
-
-  void translate (const string &str) throw ()
+  void translate (const string &in) throw ()
   {
     try
       {
-	if (str != "")
+	if (in != "")
 	  {
+	    using namespace shield;
+
+	    string out;
 	    string::const_iterator it;
 	    int sep_count=0;
-	    string res;
+	    ostringstream output_stream;
+	    
+	    pair<bool, string> cache_res = cache::get (in);
 
-	    shield::transform::output_stream.str ("");
-	    shield::transform::lex_set_string (str);
-	    shield::transform::yyparse ();
+	    if (cache_res.first)
+	      {
+		out =cache_res.second;
+	      }
+	    else
+	      {
+		using namespace shield::transform;
+		
+		shield::catalyst::validation v;
+		shield::catalyst::validation v2;
+		shield::catalyst::internal i;
+		
+		lex_set_string (in);
+		yyparse ();
+
+		root = root->transform (v);
+		root = root->transform (i);	      
+		root = root->transform (v2);
+
+		output_stream << *root;
+
+		printable_delete ();
+
+		out =  output_stream.str ();
+		
+		cache::set (in, out);
+		
+	      }
 	    
-	    res =  shield::transform::output_stream.str ();
-	    
- 	    for (it=res.begin (); it != res.end (); ++it)
+ 	    for (it=out.begin (); it != out.end (); ++it)
 	      {
 		if (*it == shield::transform::sep)
 		  {
 		    if (!sep_count)
 		      {
-			cout << *it;
 			sep_count++;
 		      }
 		  }
 		else
 		  {
-		    cout << *it;
 		    sep_count = 0;
 		  }
 	      }
+
+	    cout << out;
 
 	    for (int i=sep_count; i<2; i++)
 	      {
 		cout << shield::transform::sep;
 	      }
+
 	  }
       }
     catch (const shield::exception::traceback &e)
@@ -304,12 +334,13 @@ namespace
 
 }
 
+
 int
 main (int argc, char **argv)
 {
-
+  int count = 0;
   string str="";
-
+  
   startup_test ();
 
   setlocale (LC_ALL, "");
@@ -343,7 +374,7 @@ main (int argc, char **argv)
 	    {
 	      translate (str);
 	      str="";
-
+	      
 	      if (c==EOF)
 		{
 		  break;
@@ -351,7 +382,7 @@ main (int argc, char **argv)
 	    }
 	}
     }
-  
+
   return 0;
 }
 

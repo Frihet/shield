@@ -54,10 +54,22 @@ namespace shield
 
     using namespace std;
 
+    class printable_alias;
+    class limit;
+    class chain;
+    class printable;
+    class query;
+    class type;
+    class text;
+    class create_table;
+    class select_item_wild;
+    class identity;
+    class default_value;
+
     extern const char sep;
     extern int yypos;
     extern char *yytext;
-    extern ostringstream output_stream;
+    extern printable * root;
     
     /**
        Logger object for transform warnings
@@ -128,56 +140,46 @@ namespace shield
        inherits nodes from its parent.
     */
     ENUM_STRING ( child_type,
-	CHILD_ITEM_LIST,
-	CHILD_TABLE_LIST,
-	CHILD_WHERE_CLAUSE,
-	CHILD_GROUP_CLAUSE,
-	CHILD_HAVING_CLAUSE,
-	CHILD_ORDER_CLAUSE,
-	CHILD_LIMIT_CLAUSE,
-	CHILD_PROCEDURE_CLAUSE,
-	CHILD_INTO_CLAUSE,
-	CHILD_OPTION_CLAUSE,
-	CHILD_RENDER,
-	CHILD_POST_RENDER,
-	CHILD_NAME,
-	CHILD_KEY_LIST,
-	CHILD_NAMESPACE,
-	CHILD_TABLE,
-	CHILD_FIELD,
-	CHILD_FIELD_LIST,
-	CHILD_VALUE_LIST,
-	CHILD_INSERT_UPDATE,
-	CHILD_EXPR,
-	CHILD_ITEM,
-	CHILD_ALIAS,
-	CHILD_OP,
-	CHILD_ARG1,
-	CHILD_ARG2,
-	CHILD_INNER,
-	CHILD_UPDATE_LIST,
-	CHILD_DELETE_LIMIT_CLAUSE,
-	CHILD_TYPE,
-	CHILD_ATTRIBUTE,
-	CHILD_CRATE_OPTIONS,
-	CHILD_TABLE_OPTIONS,
-	CHILD_CREATE_OPTIONS,
-	CHILD_INITIAL_DATA,
-	CHILD_LIKE_CLAUSE,
-	CHILD_PARAM
+		  CHILD_ITEM_LIST,
+		  CHILD_TABLE_LIST,
+		  CHILD_WHERE_CLAUSE,
+		  CHILD_GROUP_CLAUSE,
+		  CHILD_HAVING_CLAUSE,
+		  CHILD_ORDER_CLAUSE,
+		  CHILD_LIMIT_CLAUSE,
+		  CHILD_PROCEDURE_CLAUSE,
+		  CHILD_INTO_CLAUSE,
+		  CHILD_OPTION_CLAUSE,
+		  CHILD_RENDER,
+		  CHILD_POST_RENDER,
+		  CHILD_NAME,
+		  CHILD_KEY_LIST,
+		  CHILD_NAMESPACE,
+		  CHILD_TABLE,
+		  CHILD_FIELD,
+		  CHILD_FIELD_LIST,
+		  CHILD_VALUE_LIST,
+		  CHILD_INSERT_UPDATE,
+		  CHILD_EXPR,
+		  CHILD_ITEM,
+		  CHILD_ALIAS,
+		  CHILD_OP,
+		  CHILD_ARG1,
+		  CHILD_ARG2,
+		  CHILD_INNER,
+		  CHILD_UPDATE_LIST,
+		  CHILD_DELETE_LIMIT_CLAUSE,
+		  CHILD_TYPE,
+		  CHILD_ATTRIBUTE,
+		  CHILD_CRATE_OPTIONS,
+		  CHILD_TABLE_OPTIONS,
+		  CHILD_CREATE_OPTIONS,
+		  CHILD_INITIAL_DATA,
+		  CHILD_LIKE_CLAUSE,
+		  CHILD_PARAM,
+		  CHILD_DEFAULT
 		  );
     
-    class printable_alias;
-    class limit;
-    class chain;
-    class printable;
-    class query;
-    class type;
-    class text;
-    class create_table;
-    class select_item_wild;
-    class identity;
-
     /**
        Check whether the specified string is a reserved word
 
@@ -225,7 +227,7 @@ namespace shield
 	 printable. This is done by using the << operator and then
 	 calling trim on the resulting string result.
       */
-      string str (void);
+      virtual string str (void);
 
       /**
 	 Set the data_type of this printable to be the desired
@@ -563,6 +565,8 @@ namespace shield
 
       string unmangled_str ();
 
+      virtual string str (void);
+
     protected:
       
       /**
@@ -570,13 +574,23 @@ namespace shield
       */
       virtual void _print (ostream &stream);
 
+
+    private:
+
+      void __str_calc ();
+
     private:
 
       /**
 	 The value this object should represent
       */
       string __val;
-      
+
+      /**
+	 The precalculated output value
+      */
+      string __str;
+
       /**
 	 the type of message
       */
@@ -934,7 +948,15 @@ namespace shield
       */
       map<string, printable *> __field_alias;
 
+      /**
+	 Mappings from table alias to real underlying table
+      */
+      map<string, printable *> __table_alias;
 
+      /**
+	 Set to true after __table_alias has been calculated.
+      */
+      bool __table_alias_init;
 
     };
 
@@ -1086,6 +1108,9 @@ namespace shield
       virtual void _print (ostream &stream);
 
     private:
+      
+      void __calculate_context ();
+
       
     }
     ;
@@ -1375,29 +1400,48 @@ namespace shield
     ;
 
     /**
+       The default value of a column in a create table statement. 
+    */
+    class default_value
+      : public printable
+    {
+    public:
+
+      default_value (printable *val)
+      {
+	_set_child (CHILD_INNER, val);
+      }
+
+      virtual printable *internal_transform (void);
+
+    protected:
+
+      void _print (ostream &stream)
+      {
+	stream << " default" << *_get_child (CHILD_INNER);
+      }
+
+    }
+    ;
+
+
+    /**
        Node representing a field specification
     */
     class field_spec
       : public printable
     {
     public:
-      field_spec (text *name, type *type, printable *attribute)
-	: __name (name), __type (type), __attrib (attribute)
-      {
-	_set_child (CHILD_NAME, name);
-	_set_child (CHILD_TYPE, type);
-	_set_child (CHILD_ATTRIBUTE, attribute);
-	__name->set_skip_space (true);
-      }
+      field_spec (text *name, type *type, chain *attribute);
 
       type *get_type (void)
       {
 	return _get_child<type> (CHILD_TYPE);
       }
 
-      printable *get_attribute (void)
+      chain *get_attribute (void)
       {
-	return _get_child (CHILD_ATTRIBUTE);
+	return _get_child<chain> (CHILD_ATTRIBUTE);
       }
 
       text *get_name (void)
@@ -1405,20 +1449,23 @@ namespace shield
 	return _get_child<text> (CHILD_NAME);
       }
 
-    protected:
-      virtual void _print (ostream &stream)
+      default_value *get_default ()
       {
-	stream << "\t" << *__name << *__type;
-	if (__attrib)
-	  stream << *__attrib;
+	return _get_child<default_value> (CHILD_DEFAULT);
       }
+
+      void set_default (default_value *val)
+      {
+	_set_child (CHILD_DEFAULT, val);
+      }
+
+    protected:
+      virtual void _print (ostream &stream);
 
     private:
 
-      printable *__name;
-      type *__type;
-      printable *__attrib;
-  
+      bool __nullable;
+
     }
     ;
 
@@ -1699,30 +1746,12 @@ namespace shield
     ;
 
     /**
-       The default value of a column in a create table statement. 
+       Compares the inner node to null and returns the result. This
+       node can handle both is null and is not null tests, and can be
+       told to return an integer result by calling
+       null_test::set_selectable (true), in which case the output can
+       be safely used in a select field list.
     */
-    class default_value
-      : public printable
-    {
-    public:
-
-      default_value (printable *val)
-      {
-	_set_child (CHILD_INNER, val);
-      }
-
-      virtual printable *internal_transform (void);
-
-    protected:
-
-      void _print (ostream &stream)
-      {
-	stream << " default" << *_get_child (CHILD_INNER);
-      }
-
-    }
-    ;
-
     class null_test
       : public printable
     {
@@ -1774,6 +1803,38 @@ namespace shield
     }
     ;
 
+    /**
+       Tells whether the parent field can have a null value.
+    */
+    class nullable
+      : public printable
+    {
+    public:
+      nullable (bool nullable)
+	: __nullable (nullable)
+      {
+      }
+
+      bool is_nullable ()
+      {
+	return __nullable;
+      }
+
+    protected:
+
+      virtual void _print (ostream &stream)
+      {
+	if (!__nullable)
+	  stream << " not null";
+	else
+	  stream << " null";
+      }
+
+    private:
+      bool __nullable;
+            
+    }
+    ;
 
     /**
        Error callback for yyparse and yylex. Prints the specified error message.

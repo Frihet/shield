@@ -59,7 +59,8 @@ transform = env.Object(Split("""
 	transform_fake_query.cc 
 	transform_type.cc
 	transform_default_value.cc
-	transform_printable_alias.cc"""))
+	transform_printable_alias.cc
+	transform_field_spec.cc"""))
 
 catalyst = env.Object(Split("""
 	catalyst.cc
@@ -70,6 +71,9 @@ catalyst = env.Object(Split("""
 	catalyst_validation.cc
 	catalyst_aggregate.cc"""))
 
+cache = env.Object(Split("""
+	cache.cc"""))
+
 misc = env.Object(Split("""
 	util.cc logger.cc 
 	enum_char.cc 	
@@ -77,7 +81,7 @@ misc = env.Object(Split("""
 	cp-demangle.c
 	dyn-string.c"""))
 
-shield = env.Object('shield.cc')+introspection+exception+database+transform+catalyst+misc
+shield = env.Object('shield.cc')+introspection+exception+database+transform+catalyst+misc+cache
 
 shield_make_package_string = env.Object('shield_make_package_string.cc')
 

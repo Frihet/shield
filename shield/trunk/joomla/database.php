@@ -44,6 +44,8 @@ function shield_begin_verbose()
 
 //shield_begin_verbose ();
 
+
+
 function shield_end_verbose()
 {
   global $shield_verbose;
@@ -147,7 +149,7 @@ function get_stack_trace ()
   return $res;
 }
 
-function shield_get_resource ($r)
+function &shield_get_resource ($r)
 {
   global $shield_resource;
   global $shield_current_resource;
@@ -188,7 +190,7 @@ function shield_select_db ($db, $resource=null)
 
   shield_get_resource ($resource);
 
-  $res = $shield_resource[$shield_current_resource-1] = ocilogon ($shield_username, $shield_password, "$shield_server/$db","WE8ISO8859P1");
+  $res = $shield_resource[$shield_current_resource-1] = ociplogon ($shield_username, $shield_password, "$shield_server/$db","WE8ISO8859P1");
   //  echo "ocilogon ('$shield_username', '$shield_password', '$shield_server/$db') = $res<br>\n";
   return $res;
 }
@@ -243,7 +245,7 @@ function shield_translate_query ($q)
   //  echo "Reading response:\n\n";
 
   $res="";
-  while ($out = socket_read ($socket, 2048)) 
+  while ($out = socket_read ($socket, 4096)) 
     {
       $res .= $out;
     }  
@@ -292,7 +294,7 @@ function shield_translate_query ($q)
 
 function shield_query ($q, $resource=null)
 {
-  shield_debug ("shield_query (<pre>$q</pre>, $resource);<br>\n");
+  //  shield_debug ("shield_query (<pre>$q</pre>, $resource);<br>\n");
 
   global $shield_query;
   
@@ -322,7 +324,7 @@ function shield_query ($q, $resource=null)
 	  return false;
 	}
 
-      shield_debug ("<pre>{$next_query}</pre><br>\n");
+      //  shield_debug ("<pre>{$next_query}</pre><br>\n");
 
       if (!ociexecute ($stmt->oci_stmt))
 	{
@@ -371,7 +373,7 @@ function shield_get_server_info ($resource = null)
   return "4.0.0";
 }
 
-function shield_fetch_row ($stmt_arr)
+function shield_fetch_row (&$stmt_arr)
 {
   $el = end ($stmt_arr);
   $res = array();
@@ -380,12 +382,11 @@ function shield_fetch_row ($stmt_arr)
   
   if ($status)
     {
-      
       $res2 = array ();
       foreach ($res as $key => $i)
 	{
 	  $val = 0;
-	  if (is_object($i))
+	  if (!is_string($i))
 	    {
 	      $val = $i->load ();
 	    }
@@ -404,7 +405,7 @@ function shield_fetch_row ($stmt_arr)
       //echo "count(res)=".count ($res)."<br>"; 
       //echo "count(res2)=".count ($res2)."<br>"; 
       
-      shield_debug ("shield_fetch_row (<stmt>) = <pre>" . var_describe ($res2) . "</pre><br>\n");
+      //      shield_debug ("shield_fetch_row (<stmt>) = <pre>" . var_describe ($res2) . "</pre><br>\n");
       
       return $res2;
       
@@ -423,17 +424,17 @@ function shield_fetch_row ($stmt_arr)
 	}
     }
 
-  shield_debug ("shield_fetch_row (<stmt>)=false<br>\n");
+  //  shield_debug ("shield_fetch_row (<stmt>)=false<br>\n");
   
   return false;
 }
 
-function shield_fetch_assoc ($stmt_arr)
+function shield_fetch_assoc (&$stmt_arr)
 {
-  $stmt = end($stmt_arr);
+  $stmt = $stmt_arr[count($stmt_arr)-1];
 
-  //  echo "Called shield_fetch_assoc\n";
-  //print_r ($stmt_arr);
+  // echo "Called shield_fetch_assoc\n";
+  // print_r ($stmt_arr);
   
   if (!isset($stmt->arg_list))
     {
@@ -453,13 +454,12 @@ function shield_fetch_assoc ($stmt_arr)
 	    }
 	  else
 	    {
-	      //	      echo "Add argument $i<br>";
 	      $arg_list[] = $i;
 	    }
 	}
 
       $stmt->arg_list = $arg_list;
-      //      end($stmt_arr) = $stmt;
+      $stmt_arr[count($stmt_arr)-1] = $stmt;
     }
 
   $oci_row = shield_fetch_row($stmt_arr);
@@ -469,16 +469,6 @@ function shield_fetch_assoc ($stmt_arr)
 
   $res = array();
   
-  if (count ($stmt->arg_list) != count ($oci_row))
-    {
-      /*echo "Wrong number of arguments (". count ($oci_row) . ", not " .count ($stmt->arg_list). ") returned from query <pre>";
-           print_r ($stmt->original_query);
-      echo "</pre>-&gt;<pre>";
-      print_r ($stmt->query);
-      echo "</pre>";
-      return false;*/
-    }
-  
   for ($i=0; $i < count ($stmt->arg_list); $i++)
     {
       if (isset($oci_row[$i]))
@@ -486,7 +476,7 @@ function shield_fetch_assoc ($stmt_arr)
       else
 	$res[$stmt->arg_list[$i]] = null;
 
-      shield_debug ("res[".$stmt->arg_list[$i]."] = ".$res[$stmt->arg_list[$i]]."<br>");
+      //      shield_debug ("res[".$stmt->arg_list[$i]."] = ".$res[$stmt->arg_list[$i]]."<br>");
 
     }
   return $res;
@@ -509,7 +499,7 @@ function shield_num_rows ($stmt_arr)
   return ocirowcount ($el->oci_stmt);  
 }
 
-function shield_fetch_object ($stmt)
+function shield_fetch_object (&$stmt)
 {
   $arr = shield_fetch_assoc ($stmt);
 
@@ -647,6 +637,7 @@ class database {
   }
 
   function log( $sql ) {
+    return;
     $tm=explode(" ",microtime());
     $ssstr = substr($tm[0],2,4);
     $date = date( "Y-m-d_H:i:s" ).":".$ssstr;
@@ -1891,6 +1882,5 @@ class mosDBTable {
 
 	
 }
-
 
 ?>

@@ -231,7 +231,10 @@
 
    @section aliases Handling naming and aliases
 
-   Oracle converts all field names to upper case. 
+   MySQL and ORacle differ in how column names are returned in select
+   queries. To get something aproximating MySQL style field names from
+   Oracle, Shield returns all column names, one per line, in a comment
+   before every select query.
 
    @section shield-package The shield package
 
@@ -243,6 +246,31 @@
    e.g. aggregation functions into members of a package, so this is
    not the case. In the end, all functions and tables outside of the
    shield package have the 'shield_' prefix.
+
+   @section performance Performance
+
+   There are many possibilities for increasing the speed at which
+   Shield executes. At the time when this document was written, the
+   most obvious ways to this are:
+
+   - Rewrite the query cache to strip away the content of literals in
+     the cache to make all queries with the same structure but
+     different data use the same query cache item. This should enable
+     a noticablly higher cache hit rate. Currently, the cache hit rate
+     under Joomla is ~80 %.
+
+   - Integrate the multiplexer into shield and make the multiplexer
+     able to read/write multiple queries at once, in order to better
+     handle concurrent queries.
+
+  Both of these optimizations require significant amounts of work and
+  would significantly complicate the code base. Profiling done using
+  Joomla show that on a basline Joomla installation with only the
+  sample data installed, PHP spends 25 % of the time working on Joomla
+  code, 25 % either in the shield database abstraction or waiting for
+  shield, and 50 % waiting on Oracle. The fact that Oracle takes
+  roughly double the time shield takes implies that the possible
+  savings from optimizing shield are small.
 
 */
 

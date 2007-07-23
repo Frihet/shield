@@ -28,8 +28,9 @@ namespace shield
       {
 	if (type == LITERAL)
 	  set_context (DATA_TYPE_CHAR);
-
+	
 	set_skip_space (!insert_whitespace);
+	__str_calc ();
       }
 
 
@@ -39,12 +40,19 @@ namespace shield
     {
       set_context (DATA_TYPE_NUMBER);
       set_skip_space (!insert_whitespace);
+      __str_calc ();
     }
 
     text::
     text (text *t)
-      : __val (t->__val), __type (t->__type)
     {
+      if (!t)
+	throw exception::invalid_state ("Tried to copy null text");
+
+      __val = t->__val;
+      __type = t->__type;
+      __str = t->__str;
+
       set_context (t->get_context ());
     }
 
@@ -97,6 +105,22 @@ namespace shield
     void text::
     _print (ostream &stream)
     {
+      if (!get_skip_space ())
+	stream << " ";
+      stream << __str;
+    }
+
+    string text::
+    str (void)
+    {
+      return __str;
+    }
+
+
+    void text::
+    __str_calc ()
+    {
+
       switch (__type)
 	{
       
@@ -104,10 +128,7 @@ namespace shield
 	  {
 	    if (__val.length ())
 	      {
-		if (!get_skip_space ())
-		  stream << " ";
-
-		stream << __val;
+		__str = __val;
 	      }
 	    break;
 	  }
@@ -134,14 +155,8 @@ namespace shield
 		val = identifier_escape (val);
 	      }
 	
-	    if (val.length ())
-	      {
-		if (!get_skip_space ())
-		  stream << " ";
-
-		stream << to_lower (val);
-	      }
-
+	    __str = to_lower (val);
+	    
 	    break;
 	  }
 
@@ -152,20 +167,11 @@ namespace shield
 	  {
 	    if (__val.size () && __val[0] == ':')
 	      {
-		if (!get_skip_space ())
-		  stream << " ";
-
-		stream << __val;
+		__str = __val;
 	      }
 	    else
 	      {
-		string unescaped = mysql_unescape( __val );
-		string escaped = oracle_escape( unescaped );
-		
-		if (!get_skip_space ())
-		  stream << " ";
-		
-		stream << escaped;
+		__str = oracle_escape (mysql_unescape (__val));
 	      }
 	    break;
 	  }
@@ -218,7 +224,7 @@ namespace shield
 	  
 	case IDENTIFIER_QUOTED:
 	  return __val.substr (1, __val.size ()-2);
-
+	  
 	case LITERAL:
 	  return mysql_unescape (__val);
 	  

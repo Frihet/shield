@@ -44,7 +44,7 @@ namespace shield
     {
       _make_condensed_table_list ();
       
-      vector<printable *> list = _condensed_table_list;      
+      vector<printable *> &list = _condensed_table_list;      
       vector<printable *>::const_iterator i;
 
       for (i=list.begin (); i<list.end (); i++)

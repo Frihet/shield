@@ -60,7 +60,11 @@ namespace shield
     set_parent (printable *parent)
     {
       if (!parent)
-	throw exception::invalid_state ("Tried to reparent a node to a null pointer");
+	{
+	  throw exception::invalid_state ("Tried to reparent a node to a null pointer");
+	}
+
+      parent->get_node_name ();
 
       __parent = parent;
     }
@@ -80,6 +84,8 @@ namespace shield
       return stream;
     }
 
+
+
     void printable::
     _set_child (child_type id, printable *value)
     {
@@ -91,9 +97,15 @@ namespace shield
       */
       //      if (!value)
   //	throw exception::invalid_param ("Called set_child with null value");
-	__children[id] = value;
       if (value)
-	value->set_parent (this);
+	{
+	  __children[id] = value;
+	  value->set_parent (this);
+	}
+      else
+	{
+	  __children.erase (id);
+	}
     }
     
     printable *printable::
@@ -119,21 +131,28 @@ namespace shield
     transform (catalyst::catalyst &catalyst)
     {
       
-      map<int, printable *>::iterator i;
+      map<int, printable *>::iterator it;
       
-      for (i=__children.begin (); i!=__children.end (); ++i)
+      for (it=__children.begin (); it!=__children.end (); ++it)
 	{
-	  printable *p = i->second;
-
+	  printable *p = it->second;
+	  printable *p2;
 	  if (p)
 	    {	  
-	      p = p->transform (catalyst);
-	      if (p)
-		p->set_parent (this);
-	      i->second = p;
+	      p2 = p->transform (catalyst);
+	      if (p2 != p)
+		{
+		  p = p2;
+		  
+		  if (p)
+		    {
+		      p->set_parent (this);
+		    }
+		  it->second = p;
+		}
 	    }
 	}
-      
+
       return catalyst (this);
     }
 

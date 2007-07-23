@@ -12,6 +12,7 @@
 
 #include "include/transform.hh"
 #include "include/exception.hh"
+#include "include/cache.hh"
 
 namespace shield
 {
@@ -211,7 +212,7 @@ namespace shield
 	}
   
       stream  << endl << endl << sep;
-
+      cache::clear ();
     }
 
 

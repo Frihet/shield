@@ -13,6 +13,7 @@
 #include "include/transform.hh"
 #include "include/introspection.hh"
 #include "include/exception.hh"
+#include "include/util.hh"
 
 using namespace shield;
 
@@ -120,16 +121,31 @@ namespace shield
     data_type identity::
     get_context ()
     {
+      /*
+	We cache the actual lookup, since the get_context function is
+	called roughly 1.5 times on average, and the operation is
+	reasonably expensive.
+      */
 
+      if (printable::get_context () == DATA_TYPE_UNDEFINED)
+	{	  
+	  __calculate_context ();
+	}
+
+      return printable::get_context ();
+    }
+
+    void identity::
+    __calculate_context ()
+    {
       query *q = get_query ();
       
-      debug << (string ("Query is of type ") + q->get_node_name ());
+      //      debug << (string ("Query is of type ") + q->get_node_name ());
 
       if (!q)
 	{
 	  throw exception::invalid_state ("No parent query in identity node " + get_path ());
 	}
-
       text *table = get_table ();
 
       if (!table)
@@ -142,15 +158,16 @@ namespace shield
 
       text *real_table = q->unalias_table (table);
 
-      debug << (string ("Table ")+ table->str ()+ " unaliased to " + real_table->str ());
- 
       introspection::table &itbl = introspection::get_table (real_table->unmangled_str ());
+
       const introspection::column &ic = itbl.get_column (get_field ()->unmangled_str ());
       const introspection::column_type &tp = ic.get_type ();
-      
-      return tp.get_type ();
+
+      set_context (tp.get_type ());
       
     }
+
+    
 
   }
 

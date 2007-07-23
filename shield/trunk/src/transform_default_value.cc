@@ -52,9 +52,19 @@ namespace shield
 	  return this;
 	}
 
+      field_spec *field=0;
+      printable *ancestor = get_parent ();
+      while (true)
+	{
+	  if (!ancestor)
+	    break;
 
-      printable *grand_parent = get_parent ()->get_parent ();
-      field_spec *field = dynamic_cast<field_spec *> (grand_parent);
+	  field = dynamic_cast<field_spec *> (ancestor);
+	  if (field)
+	    break;
+
+	  ancestor = ancestor->get_parent ();
+	}
       
       /*
 	We can't use the shield.to_date_ or shield.to_number_
@@ -62,8 +72,8 @@ namespace shield
 	use non-builtin functions in default values. Yet another one
 	of those arbitrary limitations that Oracle loves so much.
       */
-      if (!grand_parent || !field)
-	throw exception::invalid_state ("invalid grandparent for default value");
+      if (!field)
+	throw exception::invalid_state ("Could not locate field_spec for default value");
 
       if (field->get_type ()->get_type () == DATA_TYPE_DATETIME)
 	{
@@ -100,6 +110,19 @@ namespace shield
 	  else
 	    {
 	      _set_child (CHILD_INNER, new function ( new text ("to_number"), DATA_TYPE_DATETIME, _get_child (CHILD_INNER), false));
+	    }
+	  
+	}
+
+      else if (field->get_type ()->get_type () & DATA_TYPE_CLOB )
+	{
+	  if (contains (inner.c_str (), ""))
+	    {
+	      _set_child (CHILD_INNER, new text ("to_clob (chr (1))"));
+	    }
+	  else
+	    {
+	      _set_child (CHILD_INNER, new function ( new text ("to_clob"), DATA_TYPE_CLOB, _get_child (CHILD_INNER), false));
 	    }
 	  
 	}

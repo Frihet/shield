@@ -58,7 +58,7 @@ namespace shield
       /*
 	Check if this field is aggregated using a function
       */
-      for (parent = parent->get_parent (); parent; parent = parent->get_parent ())
+      for (parent = node->get_parent (); parent; parent = parent->get_parent ())
 	{
 	  func = dynamic_cast<function *> (parent);
 	  if (func && func->get_aggregate ())

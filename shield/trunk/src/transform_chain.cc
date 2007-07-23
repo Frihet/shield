@@ -81,15 +81,20 @@ namespace shield
     {
       for (int i=0; i<__chain.size (); i++)
 	{
-	  __chain[i] = __chain[i]->transform (catalyst);
-	  if (!__chain[i])
+	  printable *p = __chain[i];
+	  printable *p2 = p->transform (catalyst);
+	  if (p2 != p)
 	    {
-	      __chain.erase(begin ()+i, begin()+i+1);
-	      i--;
-	    }
-	  else
-	    {
-	      __chain[i]->set_parent (this);
+	      __chain[i] = p2;
+	      if (!__chain[i])
+		{
+		  __chain.erase(begin ()+i, begin()+i+1);
+		  i--;
+		}
+	      else
+		{
+		  __chain[i]->set_parent (this);
+		}
 	    }
 	}
  

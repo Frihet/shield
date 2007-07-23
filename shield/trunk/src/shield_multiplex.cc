@@ -176,7 +176,7 @@ namespace
 	exit(1);
       }
 
-    debug << (string ("pipe 1 has fds ") + stringify (ctx.shield_send_pipe[0]) + " and " + stringify (ctx.shield_send_pipe[1] ));
+    //    debug << (string ("pipe 1 has fds ") + stringify (ctx.shield_send_pipe[0]) + " and " + stringify (ctx.shield_send_pipe[1] ));
     
     if (retry_pipe (ctx.shield_recive_pipe))
       {
@@ -184,7 +184,7 @@ namespace
 	exit(1);
       }
 
-    debug << (string ("pipe 2 has fds ") + stringify (ctx.shield_recive_pipe[0]) + " and " + stringify (ctx.shield_recive_pipe[1] ));
+    //    debug << (string ("pipe 2 has fds ") + stringify (ctx.shield_recive_pipe[0]) + " and " + stringify (ctx.shield_recive_pipe[1] ));
 
     
     pid = retry_fork ();
@@ -248,7 +248,7 @@ namespace
 	  And we're done. Lets execute this thing.
 	*/
 	argv[0] = "shield";
-	debug << "Calling execve in child - this is goodbye.";
+	//	debug << "Calling execve in child - this is goodbye.";
 	execve("./bin/shield", argv, envp);
 	error << (string("Function call 'execve' failed: ") + strerror (errno));
 	exit (1);
@@ -262,46 +262,55 @@ namespace
       }
   }
 
-  string translate_query (context &ctx, const string &query)
+  namespace
   {
+    const int BUFFER_SIZE = 4096;
+  }
 
+  string translate_query (context &ctx, string &query)
+  {
+    int i;
     char prev=1;
-    char buff[1];
-    buff[0] = '\0';
+    char buff[BUFFER_SIZE];
+
+    query += '\0';
 
     write (ctx.shield_send_pipe[1], query.c_str (), query.size () +1);
-    write (ctx.shield_send_pipe[1], buff, 1);
     fsync (ctx.shield_send_pipe[1]);
     
-    debug << "Wrote message to shield";
+    //    debug << (string ("Wrote message '")+query+"'to shield");
     
     string res="";
 
     while (true)
       {
-	if (read (ctx.shield_recive_pipe[0], buff, 1)<=0)
-	  break;
-	
-	res += buff[0];
-
-	if ( !buff[0] && !prev)
+	ssize_t count = read (ctx.shield_recive_pipe[0], buff, BUFFER_SIZE);
+	if (count <= 0)
 	  break;
 
-	prev = buff[0];
+	for( i=0; i<count; i++)
+	  {
+	    res += buff[i];
+
+	    if ( !buff[i] && !prev)
+	      return res;
+
+	    prev = buff[i];
+	  }
       }
 
     return res;
 
   }
 
-  void handle_query (context &ctx, int socket, const string &query)
+  void handle_query (context &ctx, int socket, string &query)
   {
     
     if (query != "")
       {
 	string query_out = translate_query (ctx, query);
-	debug << (string ("translate_query returned '") + query_out + "'");
-	debug << (string ("Write response to fd '") + stringify (socket) + "'");
+	//	debug << (string ("translate_query returned '") + query_out + "'");
+	//debug << (string ("Write response to fd '") + stringify (socket) + "'");
 	write (socket, query_out.c_str (), query_out.size ());
 	fsync(socket);
       }
@@ -315,25 +324,29 @@ namespace
     while (true)
       {
 	int c;
-	char buff[1];
-	ssize_t count = read (socket, buff, 1);
+	int pos;
+	char buff[BUFFER_SIZE];
+	ssize_t count = read (socket, buff, BUFFER_SIZE);
 	
-	if (count != 1)
+	if (count <=0)
 	  break;
-	
-	c = buff[0];
-	
-	if (c)
+
+	for (pos = 0; pos < count; pos++)
 	  {
-	    str += (char)c;
-	  }
-	else
-	  {
-	    debug << (string ("Read query '") + str + "' from socket");
-	    handle_query (ctx, socket, str);
-	    str="";
-	    
-	    return;
+	    c = buff[pos];
+	
+	    if (c)
+	      {
+		str += (char)c;
+	      }
+	    else
+	      {
+		//debug << (string ("Read query '") + str + "' from socket");
+		handle_query (ctx, socket, str);
+		str="";
+		return;
+	      
+	      }
 	  }
       }
 
@@ -482,7 +495,7 @@ namespace
   {
     error.enable ();
     error.set_pid (true);
-    debug.enable ();
+    //    debug.enable ();
     debug.set_pid (true);
     
 

@@ -27,6 +27,7 @@ namespace shield
     transform::printable *catalyst::
     operator () (transform::printable *node)
     {
+
       if (!node)
 	{
 	  throw exception::invalid_type ("catalyst::operator ()", "non-null");
@@ -41,13 +42,15 @@ namespace shield
 
       try
 	{
-	  return catalyze (node);
+	  transform::printable *res = catalyze (node);
+	  return res;
 	}
       catch (shield::exception::exception &e)
 	{
-	  warning << (string ("Error in catalyst of type " + util::cxx_demangle(typeid(*this).name ())+"node: ") + node->get_path ());
+	  //	  warning << (string ("Error in catalyst of type " + util::cxx_demangle(typeid(*this).name ())+"node: ") + node->get_path ());
 	  throw;
 	}
+
     }
 
   }

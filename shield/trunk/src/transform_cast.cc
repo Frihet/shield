@@ -152,6 +152,7 @@ namespace shield
 		{
 		  inner->set_skip_space (true);
 		  stream << "shield.to_number_ (" << *inner << ")";
+		  
 		}
 	    }
 	  else if (desired & DATA_TYPE_DATETIME)

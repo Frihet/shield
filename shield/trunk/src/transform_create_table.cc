@@ -16,6 +16,7 @@
 #include "include/introspection.hh"
 #include "include/enum_char.hh"
 #include "include/util.hh"
+#include "include/cache.hh"
 
 namespace shield
 {
@@ -60,7 +61,7 @@ namespace shield
       
       stream << endl << endl << sep;
       introspection::clear_table (get_name ()->unmangled_str ());
-
+      cache::clear ();
     }
 
     printable *create_table::

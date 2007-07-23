@@ -1,25 +1,25 @@
 /*
 
 /** \file shield_yacc.yy 
-   
-   The mysql parser definition. 
 
+   The mysql parser definition. 
+   
    Currently roughly 250 of 1300 language rules are correctly handled,
    enough to handle most select, insert, update, drop table, delete,
    and create table queries. This seems to be almost everything needed
    to run Joomla.
-
+   
    'replace' and 'update ... on duplicate key' queries are non-trivial
    to implement, luckily Joomla does not seem to use them.
-
+   
    @remark package: shield (Originally from the MySQL database server)
    @remark Copyright: MySQL AB, FreeCode AS
    @author MySQL AB, Axel Liljencrantz
-
+   
    This file is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published
    by the Free Software Foundation; version 3.
-
+   
 */
 
 %{
@@ -29,7 +29,6 @@
 
 #include "include/transform.hh"
 #include "include/exception.hh"
-#include "include/catalyst.hh"
 #include "include/util.hh"
 
   /**
@@ -798,26 +797,16 @@ query:
 	    if ($1)
 	    {
 	      chain *query_list = new chain ();
-	      printable *root = new fake_query (query_list);
+	      
+	      root = new fake_query (query_list);
+	      
 	      query_list->push ($1);
-	      shield::catalyst::validation v;
-	      root = root->transform (v);
-	      
-	      shield::catalyst::debug << "Validation catalyst pass 1 done";
-	      
-	      shield::catalyst::internal i;
-	      root = root->transform (i);	      
-	      shield::catalyst::debug << "Internal catalyst done";
-	      
-	      root = root->transform (v);
-	      
-	      shield::catalyst::debug << "Validation catalyst pass 2 done";
-	      
-	      shield::transform::debug << ("final tree:\n" + root->get_tree ());
-	      
-	      output_stream << *root;
+
 	    }
-	    printable_delete ();
+	    else
+	    {
+	      root = 0;
+	    }
 	  }
         ;
 
@@ -1920,15 +1909,17 @@ opt_attribute_list:
 	;
 
 attribute:
-	NULL_SYM	  { $$ = new text ("null"); }
+	NULL_SYM
+	  {
+	    $$ = new nullable (true);
+	  }
 	| not NULL_SYM	  
 	  {
-	    $$ = new chain( new text ("not"), new text ("null")); 
+	    $$ = new nullable (false);
 	  }
 	| DEFAULT now_or_signed_literal
 	  {
 	    $$ = new default_value ($2); 
-	    $$ -> set_push_front (true);
 	  }
 	| ON UPDATE_SYM NOW_SYM optional_braces 
           { throw exception::unsupported (__FILE__, __LINE__); }

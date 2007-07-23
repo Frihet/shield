@@ -38,6 +38,7 @@ namespace shield
 
     select::
     select()
+      : __table_alias_init (false)
     {
     }
 
@@ -62,24 +63,27 @@ namespace shield
        and save their mapping
     */
     static void 
-    get_table_alias (printable *it, map<string, printable *> &table_alias)
+    get_table_alias (chain *ch, map<string, printable *> &table_alias)
     {
-      chain *ch = dynamic_cast<chain *> (it);
-      printable_alias *al = dynamic_cast<printable_alias *> (it);
+      chain::const_iterator it;
+      printable_alias *al;      
+      chain *sub_ch;
 
-      if (al)
+      if (ch)
 	{
-	  if (al->get_alias ())
-	    {
-	      table_alias[al->get_alias ()->str ()] = al->get_item ();
-	    }
-	}
-      else if (ch)
-	{
-	  chain::const_iterator it;
 	  for (it=ch->begin (); it != ch->end (); ++it)
 	    {
-	      get_table_alias (*it, table_alias);
+	      al = dynamic_cast<printable_alias *> (*it);
+	      sub_ch = dynamic_cast<chain *> (*it);
+
+	      if (al && al->get_alias ())
+		{
+		  table_alias[al->get_alias ()->str ()] = al->get_item ();
+		}
+	      else if (sub_ch)
+		{
+		  get_table_alias (sub_ch, table_alias);
+		}
 	    }
 	}
     }
@@ -103,7 +107,7 @@ namespace shield
 	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
 	    {
 	      printable *pr = *it;
-
+	      
 	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
 	      if (!item)
 		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
@@ -143,31 +147,14 @@ namespace shield
 		stream << ",";
 
 	      stream << " " << item->get_internal_alias ();
-	      /*
-	      if (item->get_alias ())
-		{
-		  stream << *item->get_alias ();
-		}
-	      else
-		{
-		  printable *sub_item = item->get_item ();
-		  identity *sub_item_identity = dynamic_cast<identity *> (sub_item);
-		  if (sub_item_identity)
-		    {
-		      sub_item = sub_item_identity->get_field ();
-		    }
-		  
-		  stream << *sub_item;
-		}
-	      */
 
 	    }
 	  
 	  stream <<" from (\n";
 	}
-
+      
       stream << "select";
-
+      
       if (get_option_clause ())
 	stream << *get_option_clause ();
 
@@ -240,21 +227,29 @@ namespace shield
     void select::
     _make_condensed_table_list ()
     {
-      _condensed_table_list.clear ();
+      if (_condensed_table_list.size ())
+	return;
+
       catalyst::find_table cat (this);      
       get_table_list ()->transform (cat);
       _condensed_table_list = cat.get_table_list ();
     }
 
+    
+
     text *select::
     unalias_table (text *alias)
     {
-      map<string, printable *> table_alias;
-      get_table_alias (get_table_list (), table_alias);
-
-      if (table_alias.find (alias->str ()) != table_alias.end ())
+      if (!__table_alias_init)
 	{
-	  printable *res = table_alias[alias->str ()];
+	  __table_alias_init = true;
+	  get_table_alias (get_table_list (), __table_alias);
+	}
+
+      map<string, printable *>::const_iterator it = __table_alias.find (alias->str ());
+      if (it != __table_alias.end ())
+	{
+	  printable *res = it->second;
 	  
 	  text *txt = dynamic_cast<text *> (res);
 	  identity *id = dynamic_cast<identity *> (res);
@@ -266,7 +261,7 @@ namespace shield
 
 	  if (!id)
 	    throw shield::exception::invalid_type ("Unaliased table name", "text");
-
+	  
 	  return txt;
 	}
       return alias;
@@ -278,8 +273,8 @@ namespace shield
       catalyst::create_identity id_catalyst (this);
       catalyst::set_selectable sel_catalyst (true);
 
-
       __pre_calculate ();
+
       __resolve_item_list ();
 
       printable *res= this->transform (id_catalyst);
@@ -292,7 +287,6 @@ namespace shield
 	  if (get_order_clause ())
 	    set_order_clause ( get_order_clause ()->transform (agg_catalyst));
 	}
-
 
       set_item_list ( dynamic_cast<chain *> (get_item_list ()->transform (sel_catalyst)));
 
@@ -327,20 +321,21 @@ namespace shield
 
 	      if (txt)
 		{
-		  id = new identity (0, txt);
+		  id = new identity (0, txt, 0);
 		}
-	      if (!id)
+
+	      if (!id << !id->get_table ())
 		{
 		  throw exception::invalid_state (string ("Table not of type identity or text:") + _condensed_table_list[0]->get_node_name ());
 		}
 
-	      select_item_wild *wi2 = new select_item_wild (0, id->get_table ());
+	      select_item_wild *wi2 = new select_item_wild (0, new text (id->get_table ()));
 	      __resolve_item_wildcard (wi2, item_list);
 	    }
 
 	  if (_condensed_table_list.size () == 0)
 	    {
-	      throw exception::invalid_state (string ("Used table-less wildcard in select query with") + util::stringify (_condensed_table_list.size ()) + " items");
+	      throw exception::invalid_state (string ("Used table-less wildcard in select query with") + util::stringify (_condensed_table_list.size ()) + " items, got zero fields");
 	    }
 	  
 	  return;
@@ -353,7 +348,12 @@ namespace shield
       for (it=t.column_begin (); it != t.column_end (); it++)
 	{
 	  string name = it->get_name ();
-	  identity *new_id = new identity (0, table, new text (name, IDENTIFIER));
+	  text *table_copy = 0;
+
+	  if (table)
+	    table_copy = new text (table);
+
+	  identity *new_id = new identity (0, table_copy, new text (name, IDENTIFIER));
 	  text *new_alias = new text (name, IDENTIFIER);
 	  cast *new_cast = new cast (new_id, DATA_TYPE_SELECTABLE);
 	  item_list->push (new printable_alias (new_cast, new_alias, true ));

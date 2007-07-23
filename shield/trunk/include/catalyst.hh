@@ -67,6 +67,11 @@ namespace shield
     {
     public:
 
+      catalyst ()
+	: __called (false)
+      {
+      }
+
       /**
 	 The transformation operation. Takes a printable as an
 	 argument and returns another one, or possibly the same one.
@@ -74,7 +79,9 @@ namespace shield
 	 @param node The node to transform
       */
       transform::printable *operator () (transform::printable *node);
+
       virtual transform::printable *catalyze (transform::printable *node)=0;
+
       virtual ~catalyst ()
       {
       }
@@ -87,6 +94,7 @@ namespace shield
 	 once.
       */
       set<transform::printable *>__done;
+      bool __called;
     };
 
 
