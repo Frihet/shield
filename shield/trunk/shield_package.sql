@@ -602,8 +602,9 @@ is
 	function to_date_ (date_in varchar2, format varchar2) 
 		return date deterministic
 	is 
+		date_in2 varchar2(128);
 	begin
-		if date_in = '0000-00-00' or date_in = '0' or date_in = '00:00:00' or date_in = '00000000' or date_in = chr (1) or date_in = '0000-00-00 00:00:00' or  date_in = '00000000000000' then
+		if date_in = '0000-00-00' or date_in = '0' or date_in like '00_00_00' or date_in = '00000000' or date_in = chr (1) or date_in like '0000_00_00_00_00_0_' or  date_in = '00000000000000' then
 			return to_date ('0001-01-01 01:01:01','yyyy-mm-dd hh24:mi:ss');
 		end if;
 
@@ -612,7 +613,8 @@ is
 		end if;	
 
 		if length(date_in) = 10 then
-			return to_date (date_in,'yyyy-mm-dd');
+			date_in2 := substr (date_in, 1, 4) || '-' || substr (date_in, 6, 2) || '-' || substr (date_in, 9, 2);
+			return to_date (date_in2,'yyyy-mm-dd');
 		end if;	
 
 		if length(date_in) = 14 then
@@ -620,7 +622,9 @@ is
 		end if;	
  
 		if length(date_in) = 19 then
-			return to_date (date_in,'yyyy-mm-dd hh24:mi:ss');
+			date_in2 := substr (date_in, 1, 4) || '-' || substr (date_in, 6, 2) || '-' || substr (date_in, 9, 2);
+			date_in2 := date_in2 || ' ' || substr (date_in, 12, 2) || ':' || substr (date_in, 15, 2) || ':' || substr (date_in, 18, 2);
+			return to_date (date_in2,'yyyy-mm-dd hh24:mi:ss');
 		end if;	
 
 		return to_date ('0001-01-01 01:01:01','yyyy-mm-dd hh24:mi:ss');
@@ -703,6 +707,13 @@ is
 		return 0;
 	end;
 
+	function unix_timestamp (d date)
+		return number deterministic
+	is
+	begin
+		return (d - to_date('1970-01-01','yyyy-mm-dd')) * (86400);
+	end;
+
 end shield;
 /
 
@@ -711,7 +722,7 @@ end shield;
 	Create lookup table for name mangling and type lookup on columns
 */
 
-
+/*
 drop table shield_table_column;
 
 create table shield_table_column
@@ -761,3 +772,4 @@ create index shield_table_column_idx4
 on shield_table_column (mangled_table_name, mangled_column_name);
 
 
+*/
