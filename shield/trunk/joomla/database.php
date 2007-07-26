@@ -22,7 +22,6 @@
  See COPYRIGHT.php for copyright notices and details.
 
 */
-
 // no direct access
 defined( '_VALID_MOS' ) or die( 'Restricted access' );
 
@@ -254,8 +253,8 @@ function shield_translate_query ($q)
       echo "socket_create() failed: reason: " . socket_strerror (socket_last_error()) . "<br>\n";
       return false;
     }
-  else
 
+  
   $result = socket_connect ($socket, "/tmp/shield.socket");
   if ($result === false) 
     {
@@ -303,13 +302,14 @@ function shield_query ($q, $resource=null)
       return true;
     }
 
-  foreach ($q2 as $next_query)
+  for ($i = 0; $i < count($q2); $i++)
     {
-
+      $next_query = $q2[$i];
+      
       $pos = strpos ($next_query, "\n/\n");
       if ($pos)
 	$next_query = substr( $next_query, 0, $pos );
-
+      
       
       $stmt->oci_stmt = ociparse ($r, $next_query);
       if (!$stmt->oci_stmt)
@@ -319,18 +319,28 @@ function shield_query ($q, $resource=null)
 
       //  shield_debug ("<pre>{$next_query}</pre><br>\n");
 
-      if (!ociexecute ($stmt->oci_stmt))
+      $exec_res = ociexecute ($stmt->oci_stmt);
+
+      if ($i < count ($q2)-1 || !$exec_res)
 	{
+	  ocifreecursor ($stmt->oci_stmt);
+	}
+
+      if ($exec_res == false)
+	{
+
 	  echo "<div style='text-align:left;'>in:<br>\n";
-	  echo "shield_query (<pre>$q</pre>, $resource);<br>\n";
+	  echo "shield_query (<pre>" . htmlspecialchars ($q) . "</pre>, $resource);<br>\n";
 	  echo "-&gt;<br>\n";
-	  echo "<pre>{$next_query}</pre><br>\n";
-
+	  echo "<pre>" . htmlspecialchars ($next_query) . "</pre><br>\n";
+	  
 	  echo get_stack_trace ();
-
+	  
 	  echo "</div>";
+
 	  return false;
 	}
+
       
       $stmt->query = $next_query;
       $stmt->original_query = $q;
@@ -437,6 +447,12 @@ mysql_fetch_assoc workalike.
 */
 function shield_fetch_assoc (&$stmt_arr)
 {
+  if ($stmt_arr === true)
+    {
+      echo get_stack_trace ();
+
+    }
+
   $stmt = $stmt_arr[count($stmt_arr)-1];
 
   // echo "Called shield_fetch_assoc\n";
@@ -493,9 +509,9 @@ mysql_free_result workalike.
 */
 function shield_free_result ($stmt_arr)
 {
-  foreach ($stmt_arr as $stmt)
+  if ($stmt_arr && ($stmt_arr !== true) && (count ($stmt_arr) > 0))
     {
-      ocifreecursor ($stmt->oci_stmt);
+      ocifreecursor ($stmt_arr[count($stmt_arr)-1]->oci_stmt);
     }
 }
 
