@@ -55,7 +55,7 @@ namespace shield
 	    {
 	      throw exception::invalid_state ("Null item in _condensed_table_list");
 	    }
-	  
+
 	  text *t = dynamic_cast<text *> (*it);
 	  identity *id = dynamic_cast<identity *> (*it);
 	  
@@ -66,7 +66,7 @@ namespace shield
 	  
 	  if (!t)
 	    {
-	      throw exception::invalid_state (string ("Item of unknown type in _condensed_table_list: ") + (*i)->get_node_name ());
+	      throw exception::invalid_state (string ("Item of unknown type in _condensed_table_list: ") + (*it)->get_node_name ());
 	    }
 	  
 	  text *unaliased = unalias_table (t);

@@ -2014,7 +2014,7 @@ opt_binary:
 	}
 	| charset charset_name opt_bin_mod	
 	{
-	  throw exception::unsupported (__FILE__, __LINE__); 
+	  $$ = 0;
 	}
         | BINARY opt_bin_charset 
 	{
@@ -2833,9 +2833,16 @@ predicate:
 	    $$ = new chain ($1, new text ("in"), p);
 	  }
         | bit_expr not IN_SYM '(' expr ')'
-          { throw exception::unsupported (__FILE__, __LINE__); }
+          { 
+	    paran *p = new paran ($5);
+	    $$ = new chain ($1, new text ("not in"), p);
+	  }
 	| bit_expr not IN_SYM '(' expr ',' expr_list ')'
-          { throw exception::unsupported (__FILE__, __LINE__); }
+	  {
+	    paran *p = new paran ($5, $7);
+	    p->set_separator (",");
+	    $$ = new chain ($1, new text ("not in"), p);
+	  }
 	| bit_expr BETWEEN_SYM bit_expr AND_SYM predicate
 	  { 
 	    $$ = new chain ($1, new text ("between"),
@@ -3318,6 +3325,7 @@ simple_expr:
 		    func_translate["upper"] = make_triplet ("upper", DATA_TYPE_CHAR,false);
 		    func_translate["lpad"] = make_triplet ("shield.lpad_", DATA_TYPE_CHAR,false);
 		    func_translate["now"] = make_triplet ("current_date", DATA_TYPE_DATETIME,false);
+		    func_translate["unix_timestamp"] = make_triplet ("shield.unix_timestamp", DATA_TYPE_NUMBER,false);
 
 		    /*
 		      Functions implemented by the shield package

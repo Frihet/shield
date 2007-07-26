@@ -239,15 +239,10 @@ namespace util
 	  {
 	    out += "'";
 
-	    if (is_clob)
-	      out += ")";
-
 	    out += " || chr (";
 	    out += stringify ((unsigned int)(unsigned char)c);
 	    out += ") || ";
 
-	    if (is_clob)
-	      out += "to_clob (";
 	    out += "'";
 
 	    count += 20;
@@ -255,10 +250,19 @@ namespace util
 
 	if (count >= 60)
 	  {
-	    out += "' ||\n";
+	    
+	    out += "'";
+
+	    if (is_clob)
+	      out += ")";
+	    
+	    out += " ||\n";
+	    
 	    if (is_clob)
 	      out += "to_clob (";
+ 	    
 	    out += "'";
+	    
 	    count = 0;
 	  }
       }

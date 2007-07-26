@@ -1866,10 +1866,9 @@ namespace shield
     void yyerror (char const *s);
 
     /**
-       Parse the whole syntax tree, transform it and write it out to
-       standard output.
+       Parse the whole syntax tree, and insert the resulting AST to the variable transform::root.
        
-       If something happens, any subclass of shield::exception::exception may be thrown.
+       If something happens, any subclass of std::exception may be thrown.
     */
     int yyparse (void);
     

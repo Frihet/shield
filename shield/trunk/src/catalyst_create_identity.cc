@@ -45,7 +45,7 @@ namespace shield
 	{
 	  throw exception::invalid_state ("Parent-less text entry");
 	}
-      
+
       if (parent_is_id || parent_is_item_wild)
 	{
 	  return p;
