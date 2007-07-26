@@ -1,4 +1,5 @@
 /**
+   @file transform_create_table.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -90,11 +91,11 @@ namespace shield
 	      
 	      string str = "insert into shield_table_column (table_name, column_name, column_type, mangled_table_name, mangled_column_name) values (";
 	      
-	      str += oracle_escape (get_name ()->unmangled_str ())+", "
-		+ oracle_escape (spec->get_name ()->unmangled_str ()) + ", " 
-		+ oracle_escape (ENUM_TO_STRING (data_type, spec->get_type ()->get_type ())) + ", "
-		+ oracle_escape (get_name ()->str ()) + "," 
-		+ oracle_escape (spec->get_name ()->str ()) 
+	      str += oracle_escape (get_name ()->unmangled_str ()).first+", "
+		+ oracle_escape (spec->get_name ()->unmangled_str ()).first + ", " 
+		+ oracle_escape (ENUM_TO_STRING (data_type, spec->get_type ()->get_type ())).first + ", "
+		+ oracle_escape (get_name ()->str ()).first + "," 
+		+ oracle_escape (spec->get_name ()->str ()).first 
 		+ ")\n\n";
 	      
 	      str += sep;

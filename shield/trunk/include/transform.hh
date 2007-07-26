@@ -2,7 +2,7 @@
    @file transform.hh
 
    The transform namespace contains all code for parsing MySQL sql and
-   transforming it into Oracle sql.
+   creating the initial AST.
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -66,9 +66,29 @@ namespace shield
     class identity;
     class default_value;
 
-    extern const char sep;
+    /**
+       This string should be printed between every generated output
+       query resulting from a single input query. It is ok to print it
+       multiple times.
+
+       There may be, but does not have to be a trailing separator
+       after the last query.
+    */
+    extern const string sep;
+    
+    /**
+       The end position of the current lexer token
+    */
     extern int yypos;
+    
+    /**
+       The text of the last token from the lexer
+    */
     extern char *yytext;
+
+    /**
+       The root node of the output of yyparse
+    */
     extern printable * root;
     
     /**
@@ -81,29 +101,19 @@ namespace shield
     extern logger::logger debug;
     
    /**
-       The various types thet the text node can be of
+      Magical enum definition for the enum representing the various types that the text node can be of.
+
+      @param text_type Name of this enum
+      @param EXACT The text node represents an exect sequence of characters and should not be transformed
+      @param IDENTIFIER The text node is an identifier, and reserved names should be avoided.
+      @param IDENTIFIER_QUOTED The text node is a quoted identifier, the quotes should be stripped.
+      @param LITERAL The text node is a string literal, and should be converted to an oracle style string literal
     */
+
     ENUM_STRING (text_type,
-	/**
-	   The text node represents an exect sequence of characters and
-	   should not be transformed
-	*/
 	EXACT, 
-	
-	/**
-	   The text node is an identifier, and reserved names should be avoided.
-	*/
 	IDENTIFIER,
-	
-	/**
-	   The text node is a quoted identifier, the quotes should be stripped.
-	*/
 	IDENTIFIER_QUOTED,
-	
-	/**
-	   The text node is a string literal, and should be converted to
-	   an oracle style string literal
-	*/
 	LITERAL );
 
     /**
@@ -190,7 +200,7 @@ namespace shield
     /**
        Delete all existing printables and subclasses, e.g. all existing nodes.
     */
-    void printable_delete(void);
+    void printable_delete (void);
 
     /*
       This function emits the PL/SQL code needed to check if an item
@@ -228,6 +238,13 @@ namespace shield
 	 calling trim on the resulting string result.
       */
       virtual string str (void);
+
+      /**
+	 Returns the original text creating this node. Beware, only use
+	 this method when you know roughly what type of node you are
+	 dealing with, as most nodes will simply throw an exception.
+      */
+      virtual string unmangled_str ();
 
       /**
 	 Set the data_type of this printable to be the desired
@@ -360,7 +377,7 @@ namespace shield
 	 The constructor. It is protected to make sure that only
 	 subclasses are instantiated.
       */
-      printable(void);
+      printable (void);
       
       /**
 	 Print the query to the specified stream. This is only a
@@ -563,9 +580,11 @@ namespace shield
 
       virtual string get_node_name ();
 
-      string unmangled_str ();
+      virtual string unmangled_str ();
 
       virtual string str (void);
+
+      virtual data_type get_context (void);
 
     protected:
       
@@ -595,6 +614,11 @@ namespace shield
 	 the type of message
       */
       text_type __type;
+
+      /**
+	 Set to true at startup for clob literals
+      */
+      bool __is_clob;
     }
     ;
 
@@ -1101,7 +1125,7 @@ namespace shield
 
       virtual data_type get_context (void);
 
-      string unmangled_str ();
+      virtual string unmangled_str ();
 
     protected:
 
@@ -1844,7 +1868,7 @@ namespace shield
     /**
        Parse the whole syntax tree, transform it and write it out to
        standard output.
-
+       
        If something happens, any subclass of shield::exception::exception may be thrown.
     */
     int yyparse (void);
@@ -1868,6 +1892,8 @@ namespace shield
        Return the next token type
     */
     int lex_do (void);
+
+    string translate (const string &in) throw ();
 
   }
 

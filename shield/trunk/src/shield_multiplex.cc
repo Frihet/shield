@@ -57,6 +57,8 @@
 
 #include "include/logger.hh"
 #include "include/util.hh"
+#include "include/transform.hh"
+#include "include/shield.hh"
 
 using namespace std;
 
@@ -64,8 +66,8 @@ namespace
 {
 
   using namespace util;
+  using namespace shield;
 
-  logger::logger error ("shield_multiplex error");
   logger::logger debug ("shield_multiplex debug");
   logger::logger warning ("shield_multiplex warning");
   int listen_socket;
@@ -175,7 +177,7 @@ namespace
 	error << "Could not create pipe for communicating with child";
 	exit(1);
       }
-
+    
     //    debug << (string ("pipe 1 has fds ") + stringify (ctx.shield_send_pipe[0]) + " and " + stringify (ctx.shield_send_pipe[1] ));
     
     if (retry_pipe (ctx.shield_recive_pipe))
@@ -183,7 +185,7 @@ namespace
 	error << "Could not create pipe for communicating with child";
 	exit(1);
       }
-
+    
     //    debug << (string ("pipe 2 has fds ") + stringify (ctx.shield_recive_pipe[0]) + " and " + stringify (ctx.shield_recive_pipe[1] ));
 
     
@@ -267,8 +269,12 @@ namespace
     const int BUFFER_SIZE = 4096;
   }
 
+  /*
   string translate_query (context &ctx, string &query)
   {
+
+
+    
     int i;
     char prev=1;
     char buff[BUFFER_SIZE];
@@ -300,17 +306,18 @@ namespace
       }
 
     return res;
-
+  
   }
+  */
 
   void handle_query (context &ctx, int socket, string &query)
   {
     
     if (query != "")
       {
-	string query_out = translate_query (ctx, query);
-	//	debug << (string ("translate_query returned '") + query_out + "'");
-	//debug << (string ("Write response to fd '") + stringify (socket) + "'");
+	string query_out = shield::transform::translate (query);
+	debug << (string ("translate_query returned '") + query_out + "'");
+	debug << (string ("Write response to fd '") + stringify (socket) + "'");
 	write (socket, query_out.c_str (), query_out.size ());
 	fsync(socket);
       }
@@ -341,7 +348,7 @@ namespace
 	      }
 	    else
 	      {
-		//debug << (string ("Read query '") + str + "' from socket");
+		debug << (string ("Read query '") + str + "' from socket");
 		handle_query (ctx, socket, str);
 		str="";
 		return;
@@ -363,6 +370,7 @@ namespace
     struct sockaddr_un local;
     char *sock_name = "/tmp/shield.socket";
 
+   
     local.sun_family = AF_UNIX;
     strcpy (local.sun_path, sock_name);
     len = sizeof (local);
@@ -495,7 +503,7 @@ namespace
   {
     error.enable ();
     error.set_pid (true);
-    //    debug.enable ();
+    debug.enable ();
     debug.set_pid (true);
     
 
@@ -519,11 +527,15 @@ int main (int argc, char **argv, char **envp)
   socklen_t t;
   int max_fd;
   int res;
+
+  setlocale (LC_ALL, "");
   
   init ();  
-  create_child (argv, envp, ctx);
+  shield::parse_args (argc, argv);
 
-  debug << (string("main Read from fd ") + stringify (ctx.shield_recive_pipe[0]));
+  //create_child (argv, envp, ctx);
+  
+  //  debug << (string("main Read from fd ") + stringify (ctx.shield_recive_pipe[0]));
 
   /*  handle_query (ctx, 2, "select now ()");
 

@@ -1,5 +1,3 @@
-/*
-
 /** \file shield_yacc.yy 
 
    The mysql parser definition. 
@@ -52,6 +50,11 @@ namespace shield
 #include "build/transform_yacc.hh"
 
     int yylex ();
+    
+    namespace
+      {
+	int yylex_val;
+      }
 
 %}
 
@@ -73,8 +76,6 @@ namespace shield
 }
 
 %locations
-
-%token  END_OF_INPUT
 
 %token  NOTHING
 %token  ABORT_SYM
@@ -748,7 +749,7 @@ namespace shield
         view_algorithm view_or_trigger_or_sp view_or_trigger_or_sp_tail
 	view_suid view_tail view_list_opt view_list view_select
 	view_check_option trigger_tail sp_tail
-        case_stmt_specification simple_case_stmt searched_case_stmt END_OF_INPUT
+        case_stmt_specification simple_case_stmt searched_case_stmt 
 %type <printable_val>
 	'-' '+' '*' '/' '%' '(' ')'
 	',' '!' '{' '}' '&' '|' AND_SYM OR_SYM OR_OR_SYM BETWEEN_SYM CASE_SYM
@@ -792,33 +793,31 @@ namespace shield
 %%
 
 query: 
-	 verb_clause
+	 verb_clause opt_end
           { 
+	    
 	    if ($1)
 	    {
 	      chain *query_list = new chain ();
-	      
 	      root = new fake_query (query_list);
-	      
 	      query_list->push ($1);
-
 	    }
 	    else
 	    {
 	      root = 0;
 	    }
+	    
 	  }
         ;
 
 verb_clause:
-	  statement end_markers
-	| begin end_markers
+	  statement
+	| begin
 	;
 
-end_markers:
-	/* empty */
-	|
-	end_markers END_OF_INPUT
+opt_end:
+	  /* Empty */ 
+	| opt_end ';'
 	;
 
 /* Verb clauses, except begin */
@@ -1566,11 +1565,11 @@ create_table_option:
 
 default_charset:
         opt_default charset opt_equal charset_name_or_default
-        { throw exception::unsupported (__FILE__, __LINE__); };
+	{ $$ = 0; /* Unsupported */ }
 
 default_collation:
         opt_default COLLATE_SYM opt_equal collation_name_or_default
-        { throw exception::unsupported (__FILE__, __LINE__); };
+	{ $$ = 0; /* unsupportedd */ };
 
 storage_engines:
 	ident_or_text
@@ -1944,7 +1943,7 @@ attribute:
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| COMMENT_SYM TEXT_STRING_sys { throw exception::unsupported (__FILE__, __LINE__); }
 	| COLLATE_SYM collation_name
-	  { throw exception::unsupported (__FILE__, __LINE__); }
+	  { $$ = 0; /* Unsupported - do nothing */ }
 	;
 
 now_or_signed_literal:
@@ -1959,13 +1958,13 @@ charset:
 
 charset_name:
 	ident_or_text
-	{ throw exception::unsupported (__FILE__, __LINE__); }
+	{ $$ = 0; }
 	| BINARY { throw exception::unsupported (__FILE__, __LINE__); }
 	;
 
 charset_name_or_default:
-	charset_name { throw exception::unsupported (__FILE__, __LINE__); }
-	| DEFAULT    { throw exception::unsupported (__FILE__, __LINE__); } ;
+	charset_name { $$ = 0; }
+	| DEFAULT    { $$ = 0; }
 
 
 old_or_new_charset_name:
@@ -1980,7 +1979,8 @@ old_or_new_charset_name_or_default:
 
 collation_name:
 	ident_or_text
-	{ throw exception::unsupported (__FILE__, __LINE__); };
+	{ $$ = 0; /* Unsupported - do nothing */ }
+	;
 
 opt_collate:
 	/* empty */	{ throw exception::unsupported (__FILE__, __LINE__); }
@@ -1988,8 +1988,8 @@ opt_collate:
 	;
 
 collation_name_or_default:
-	collation_name { throw exception::unsupported (__FILE__, __LINE__); }
-	| DEFAULT    { throw exception::unsupported (__FILE__, __LINE__); } ;
+	collation_name { $$=0; /* Unsupported - do nothing */ }
+	| DEFAULT    { $$=0; /* Unsupported - do nothing */ }
 
 opt_default:
 	/* empty */	{}
@@ -2668,9 +2668,6 @@ select_item:
 	      }
 	    else
 	      {
-		int pos1 = @1.first_column;
-		int pos2 = @1.last_column;
-
 		text *txt=0;
 		identity *id;
 		printable *sub_item;
@@ -2695,16 +2692,11 @@ select_item:
 		      }
 		  }
 		
-		if (txt && ((txt->get_type () == IDENTIFIER) || (txt->get_type () == IDENTIFIER_QUOTED) ))
+		if (txt && ((txt->get_type () & (IDENTIFIER) | IDENTIFIER_QUOTED) ))
 		  {
 		    text *imp_alias;
 		    imp_alias = new text (txt->unmangled_str (), IDENTIFIER);
 		    $$->set_alias (imp_alias, true);
-		  }
-		else
-		  {
-		    //		    text *imp_alias = new text (lex_get_string ().substr (pos1, pos2-pos1), IDENTIFIER);
-		    //$$->set_alias (imp_alias, true);
 		  }
 	      }
 	  };
@@ -6216,23 +6208,22 @@ int yylex ()
 {
 
   int pos;
-  int res;
   int pos2;
-
+  
   while (true)
     {
       pos = yypos;
-      res = lex_do ();
+      yylex_val = lex_do ();
 
-      if (res != NOTHING)
+      if (yylex_val != NOTHING)
 	break;
     }
   pos2 = yypos;
-
+  
   yylloc.first_column = pos;
   yylloc.last_column = pos2;
-
-  return res;
+  
+  return yylex_val;
 }
 
 }

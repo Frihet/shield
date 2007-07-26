@@ -1,4 +1,5 @@
 /**
+   @file catalyst_find_table.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -34,7 +35,7 @@ namespace shield
 	{
 	  if (a->get_alias ())
 	    {
-	      __res.push_back (a->get_alias ());
+	      __res.push_back (new transform::text (a->get_alias ()));
 	      debug << (string ("Found table alias ") + a->get_alias ()->str ());
 	    }
 	  else

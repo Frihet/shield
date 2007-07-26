@@ -1,4 +1,5 @@
 /**
+   @file transform_create_index.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -13,6 +14,7 @@
 #include "include/transform.hh"
 #include "include/exception.hh"
 #include "include/cache.hh"
+#include "include/util.hh"
 
 namespace shield
 {
@@ -180,6 +182,7 @@ namespace shield
 	    }
 
 	  stream << "alter table" << *table_name << " add primary key (" << *key_list << ")";
+	  stream  << endl << endl << sep;
 
 	}
       else
@@ -189,9 +192,16 @@ namespace shield
 	    {
 	      throw exception::syntax ("Unnamed non-primary keys are not supported!");
 	    }
-      
-	  string t_name = table_name->str ();
-	  string f_name = _get_child (CHILD_NAME)->str ();
+	  
+	  string t_name = table_name->unmangled_str ();
+	  printable *field_name = _get_child (CHILD_NAME);
+	  
+	  if (!field_name)
+	    {
+	      throw exception::invalid_state ("Field for index is not of type text");
+	    }
+
+	  string f_name = field_name->unmangled_str ();
 	  string name = t_name + "_" + f_name;
       
 	  if (name.length () > 30)
@@ -199,7 +209,7 @@ namespace shield
 	      name = t_name.substr(0, 15) + "_" + f_name;
 	      name = name.substr(0, 30);
 	    }
-	  
+
 	  drop_item (stream, "index", name );
 	  
 	  stream << "create";
@@ -209,9 +219,23 @@ namespace shield
 
 	  stream << " index " << name << endl;
 	  stream << "on" << *table_name << " (" << *key_list << ")";
+	  stream  << endl << endl << sep;
+
+	  string str = "insert into shield_table_column (table_name, column_name, column_type, mangled_table_name, mangled_column_name) values (";
+      
+	  str += util::oracle_escape (table_name->unmangled_str ()).first+", "
+	    + util::oracle_escape (field_name->unmangled_str ()).first + ", " 
+	    + util::oracle_escape ("DATA_TYPE_INDEX").first + ", "
+	    + util::oracle_escape (table_name->str ()).first + "," 
+	    + util::oracle_escape (name).first 
+	    + ")\n\n";
+	  
+	  stream << str << sep;
+
 	}
   
-      stream  << endl << endl << sep;
+
+
       cache::clear ();
     }
 

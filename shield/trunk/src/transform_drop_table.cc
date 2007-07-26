@@ -1,4 +1,5 @@
 /**
+   @file transform_drop_table.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -49,7 +50,7 @@ namespace shield
       
       introspection::clear_table (name->unmangled_str ());
       stream << "drop table" << *name << endl << endl << sep;
-      stream << "delete from shield_table_column where lower (table_name) = lower (" << util::oracle_escape (name->str ()) << ")" << endl << endl << sep;
+      stream << "delete from shield_table_column where lower (table_name) = lower (" << util::oracle_escape (name->str ()).first << ")" << endl << endl << sep;
       cache::clear ();
     }
     

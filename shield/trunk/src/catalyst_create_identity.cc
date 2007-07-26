@@ -1,4 +1,5 @@
 /**
+   @file catalyst_create_identity.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -35,9 +36,15 @@ namespace shield
 	{
 	  return p;
 	}
+
       transform::printable *parent = t->get_parent ();
       bool parent_is_id = dynamic_cast<transform::identity *> (parent) != 0;
       bool parent_is_item_wild = dynamic_cast<transform::select_item_wild *> (parent) != 0;
+
+      if (!parent)
+	{
+	  throw exception::invalid_state ("Parent-less text entry");
+	}
       
       if (parent_is_id || parent_is_item_wild)
 	{
@@ -63,7 +70,7 @@ namespace shield
 	  return p;
 	}
 
-      transform::identity *res = new transform::identity (0, 0, t);
+      transform::identity *res = new transform::identity (0, table, t);
       
       return res;
     }

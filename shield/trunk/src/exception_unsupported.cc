@@ -1,4 +1,5 @@
 /**
+   @file exception_unsupported.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS

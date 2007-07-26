@@ -716,12 +716,12 @@ drop table shield_table_column;
 
 create table shield_table_column
 (
-       	id number (14, 0),     
-	table_name varchar2 (64),     
-	mangled_table_name varchar2 (32),    
-	column_name varchar2 (64),    
-	mangled_column_name varchar2 (32),    
-	column_type varchar2 (32)
+       	id number (14, 0) not null,     
+	table_name varchar2 (64) not null,     
+	mangled_table_name varchar2 (32) not null,    
+	column_name varchar2 (64) not null,    
+	mangled_column_name varchar2 (32) not null,    
+	column_type varchar2 (32) not null
 );
 
 drop sequence shield_table_column_id_s_;

@@ -61,7 +61,7 @@ as published by the Free Software Foundation; version 3.
    used directly, but it is used internally by the magic
    ENUM_TO_STRING and STRING_TO_ENUM macros.
 */
-#define ENUM_STRING(name, ...) enum name {__VA_ARGS__}; const static char *name ## _str = #__VA_ARGS__
+#define ENUM_STRING(name, ...) enum name {__VA_ARGS__}; static inline char *name ## _str_get () { return #__VA_ARGS__; }
 
 /**
    Get a string representation of the specified enum value
@@ -72,7 +72,7 @@ as published by the Free Software Foundation; version 3.
    May throw a enum_char::bad_enum
    exception.
 */
-#define ENUM_TO_STRING(enum_name, idx) enum_char::enum_to_string_internal( #enum_name, enum_name ## _str, idx)
+#define ENUM_TO_STRING(enum_name, idx) enum_char::enum_to_string_internal( #enum_name, enum_name ## _str_get (), idx)
 
 /**
    Get the value of an enum string representation
@@ -83,7 +83,7 @@ as published by the Free Software Foundation; version 3.
    May throw a enum_char::bad_enum
    exception.
 */
-#define STRING_TO_ENUM(enum_name, string_name) (enum_name) enum_char::string_to_enum_internal( #enum_name, enum_name ## _str, string_name)
+#define STRING_TO_ENUM(enum_name, string_name) (enum_name) enum_char::string_to_enum_internal( #enum_name, enum_name ## _str_get (), string_name)
 
 /**
    @namespace enum_char

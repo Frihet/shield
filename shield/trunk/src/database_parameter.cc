@@ -1,4 +1,5 @@
 /**
+   @file database_parameter.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -23,14 +24,14 @@ namespace shield
 
     parameter::
     parameter (const string &s)
-      : __val (oracle_escape (s))
+      : __val (oracle_escape (s).first)
     {
     }
 
 
     parameter::
     parameter (const char *s)
-      : __val (oracle_escape (s))
+      : __val (oracle_escape (s).first)
     {
     }
 

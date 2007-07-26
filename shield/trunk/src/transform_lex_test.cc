@@ -1,4 +1,5 @@
 /**
+   @file transform_lex_test.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -67,7 +68,7 @@ main (void)
       DISTINCT,
       AS,
       ASC,
-      END_OF_INPUT,
+      ';',
       ',',
       '.',
       '|',

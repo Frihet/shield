@@ -1,4 +1,5 @@
 /**
+   @file catalyst_internal.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS

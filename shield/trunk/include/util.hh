@@ -120,8 +120,10 @@ namespace util
      Non-printables use the chr function, and long lines are
      automatically broken into multiple lines to avoid the hardcoded
      maximum line lengths in oracle.
+
+     @return A pair, the first element of which is the resulting string, the second is a boolean flag which is set to true if this string is too long to fit into a char-style string literal and has been converted to a clob.
   */
-  string oracle_escape (const string &in);
+  pair<string,bool> oracle_escape (const string &in);
 
   /**
      Attempt to demangle the supplied C++ class/function name. If this

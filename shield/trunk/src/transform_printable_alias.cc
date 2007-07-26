@@ -1,4 +1,5 @@
 /**
+   @file transform_printable_alias.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -34,6 +35,7 @@ namespace shield
       _set_child (CHILD_ITEM, item);
       _set_child (CHILD_ALIAS, alias);
     }
+
     void printable_alias::
     _print (ostream &stream)
     {

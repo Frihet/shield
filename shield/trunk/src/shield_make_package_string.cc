@@ -1,4 +1,5 @@
 /**
+   @file shield_make_package_string.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS

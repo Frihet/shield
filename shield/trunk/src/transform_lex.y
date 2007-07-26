@@ -43,7 +43,7 @@ using shield::transform::yypos;
 @ return '@';
 ! return '!'; /* Should this be NOT_SYM? */
 
-; return END_OF_INPUT;
+; return ';';
 && return AND_AND_SYM;
 \< return LT;
 \<= return LE;
@@ -563,6 +563,8 @@ zerofill return ZEROFILL;
 
 [ \t\n\r] return NOTHING;
 \#[^\n]*\n return NOTHING;
+^--[^\n]*\n return NOTHING;
+\/\*([^\*]|\**[^\/\*])*\**\/ return NOTHING; /*  This catcher C-style comments, but it's really ugly. There must be some better way, right? */
 
 :[a-zA-Z0-9_]+ return TEXT_STRING;
 

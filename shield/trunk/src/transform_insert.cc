@@ -1,4 +1,5 @@
 /**
+   @file transform_insert.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -124,7 +125,7 @@ namespace shield
 
 	Needed since we need to know what type every column has
       */
-      if (!get_field_list ())
+      if (!get_field_list () )
 	{
 	  chain *fl = new chain ();
 	  fl->set_separator (",");
@@ -166,7 +167,6 @@ namespace shield
 
 	  chain *field_list = dynamic_cast<chain *> (get_field_list ());
 	  chain *value = dynamic_cast<chain *> (*i);
-	  chain::const_iterator j;
 
 	  if (field_list->size () != value->size ())
 	    {

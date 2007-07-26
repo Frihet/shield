@@ -1,20 +1,30 @@
 <?php
 /**
- * @version $Id: database.php 5903 2006-12-01 02:01:55Z friesengeist $
- * @package Joomla
- * @subpackage Database
- * @copyright Copyright (C) 2005 Open Source Matters. All rights reserved.
- * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
- * Joomla! is free software. This version may have been modified pursuant
- * to the GNU General Public License, and as distributed it includes or
- * is derivative of works licensed under the GNU General Public License or
- * other free or open source software licenses.
- * See COPYRIGHT.php for copyright notices and details.
- */
+ @file database.php
+
+ This is a modified version of the default database.php file of Joomla!.
+ It contains wrapper scripts that let you use the Shield program in
+ order to use Oracle as the database backend for Joomla!.
+
+ @version $Id$
+
+ @package Joomla
+
+ @subpackage Database
+
+ @copyright Copyright (C) 2005 Open Source Matters. All rights reserved.
+
+ @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
+ Joomla! is free software. This version may have been modified pursuant
+ to the GNU General Public License, and as distributed it includes or
+ is derivative of works licensed under the GNU General Public License or
+ other free or open source software licenses.
+ See COPYRIGHT.php for copyright notices and details.
+
+*/
 
 // no direct access
 defined( '_VALID_MOS' ) or die( 'Restricted access' );
-
 
 putenv('LD_LIBRARY_PATH=/usr/lib/oracle/xe/app/oracle/product/10.2.0/server/lib');
 #putenv('ORACLE_SID=XE');
@@ -36,15 +46,18 @@ global $shield_server;
 global $shield_verbose;
 $shield_verbose=0;
 
+/**
+Debug function. Call this in order to enable lots of debug messages from shield
+*/
 function shield_begin_verbose()
 {
   global $shield_verbose;
   $shield_verbose++;
 }
 
-//shield_begin_verbose ();
-
-
+/**
+Debug function. Call this in order to stop debug messages from shield
+*/
 
 function shield_end_verbose()
 {
@@ -52,6 +65,9 @@ function shield_end_verbose()
   $shield_verbose--;
 }
 
+/**
+Write a debug message if they are enabled
+*/
 function shield_debug ($msg)
 {
   global $shield_verbose;
@@ -61,6 +77,9 @@ function shield_debug ($msg)
     }
 }
 
+/**
+Like var_dump, but returns value as string instead of printing it
+*/
 function var_describe ($arg)
 {
   ob_start();
@@ -70,6 +89,9 @@ function var_describe ($arg)
   return $my_string;
 }
 
+/**
+Returns a html-formated stack trace
+*/
 function get_stack_trace ()
 {
   $st = debug_backtrace ();
@@ -149,6 +171,9 @@ function get_stack_trace ()
   return $res;
 }
 
+/**
+Internal shield function for looking up resource data
+*/
 function &shield_get_resource ($r)
 {
   global $shield_resource;
@@ -162,6 +187,9 @@ function &shield_get_resource ($r)
   return $shield_resource[$shield_current_resource-1];
 }
 
+/**
+mysql_connect workalike. 
+*/
 function shield_connect ($server, $username, $password)
 {
   global $shield_password;
@@ -180,6 +208,9 @@ function shield_connect ($server, $username, $password)
   return $shield_current_resource;
 }
 
+/**
+mysql_select_db workalike. 
+*/
 function shield_select_db ($db, $resource=null)
 {
   global $shield_password;
@@ -195,21 +226,27 @@ function shield_select_db ($db, $resource=null)
   return $res;
 }
 
+/**
+mysql_escape_string workalike. 
+*/
 function shield_escape_string ($s, $resource=0)
 {
   return mysql_escape_string ($s);
 }
 
+/**
+mysql_real_escape_string workalike. 
+*/
 function shield_real_escape_string ($s, $resource=0)
 {
   return mysql_real_escape_string ($s);
 }
 
+/**
+mysql_translate_query workalike. 
+*/
 function shield_translate_query ($q)
 {
-
-  //  echo "Attempting to create socket...<br>\n";
-
   $socket = socket_create (AF_UNIX, SOCK_STREAM, 0);
 
   if ($socket === false) 
@@ -218,43 +255,24 @@ function shield_translate_query ($q)
       return false;
     }
   else
-    {
-      //      echo "OK.<br>\n";
-    }
-  
-  //  echo "Attempting to connect to socket...";
+
   $result = socket_connect ($socket, "/tmp/shield.socket");
   if ($result === false) 
     {
       echo "socket_connect() failed.\nReason: ($result) " . socket_strerror (socket_last_error ($socket)) . "\n<br>";
       return false;
     } 
-  else 
-    {
-      //  echo "OK.\n<br>";
-    }
-  
-  //  echo "Sending information to socket...";
 
   $q .= "\0";
   socket_write ($socket, $q, strlen ($q));
   
-  //  echo "OK.\n";
-
-
-  //  echo "Reading response:\n\n";
-
   $res="";
   while ($out = socket_read ($socket, 4096)) 
     {
       $res .= $out;
     }  
 
-  //echo "Response: $res";
-
-  //echo "Closing socket...";
   socket_close($socket);
-  //  echo "OK.\n\n";
 
   $res =  explode("\0", $res);
   
@@ -263,35 +281,12 @@ function shield_translate_query ($q)
       array_pop($res);
     }
 
-  //array_pop($res);
-
   return $res;
-  /*
-  $q_escaped = escapeshellarg ($q);
-
-  $output = array ();
-  $ret_val=0;
-  
-  $cmd = "shield -u system -p changeme " . $q_escaped;
-  
-  $res = array ();
-  
-  $foo = shell_exec ($cmd);
-  
-  $res =  explode("\0", $foo);
-  
-  // echo $cmd . " -> " . count($res) . " queries\n\n";
-  
-  array_pop($res);
-  array_pop($res);
-  return $res;
-  */
-
 }
 
-//$arr = shield_translate_query ("create table test3 (id int auto_increment)");
-//echo "Woot '<pre>" . $arr[4] ."</pre>'<br>\n";
-
+/**
+mysql_query workalike. 
+*/
 function shield_query ($q, $resource=null)
 {
   //  shield_debug ("shield_query (<pre>$q</pre>, $resource);<br>\n");
@@ -303,13 +298,11 @@ function shield_query ($q, $resource=null)
   
   $res = array ();
 
-  if (!count ($q2))
+  if (!$q2)
     {
-      //      echo "Query $q resulted in null array of queries!!!<br>\n";
+      return true;
     }
 
-  //  echo "bla bla into " . count($q2) . " queries\n\n";
-  
   foreach ($q2 as $next_query)
     {
 
@@ -344,27 +337,37 @@ function shield_query ($q, $resource=null)
       $res[] = $stmt;
       
     }
-  //  echo "End of shield_query, return statement array:\n";
-  //print_r ($res);
   
   return $res;
 }
 
+/**
+mysql_errno workalike. Currently a no-op.
+*/
 function shield_errno ($resource =null)
 {
   return 0;
 }
 
+/**
+mysql_error workalike. 
+*/
 function shield_error ($resource = null)
 {
   return ocierror (shield_get_resource ($resource));
 }
 
+/**
+mysql_affected_rows workalike. 
+*/
 function shield_affected_rows ($resource = null)
 {
   return ocirowcount (shield_get_resource ($resource));
 }
 
+/**
+mysql_get_server_info workalike. 
+*/
 function shield_get_server_info ($resource = null)
 {
   /*
@@ -373,6 +376,9 @@ function shield_get_server_info ($resource = null)
   return "4.0.0";
 }
 
+/**
+mysql_fetch_row workalike. 
+*/
 function shield_fetch_row (&$stmt_arr)
 {
   $el = end ($stmt_arr);
@@ -402,10 +408,7 @@ function shield_fetch_row (&$stmt_arr)
 	  $res2[$key] = $val;
 	}
       
-      //echo "count(res)=".count ($res)."<br>"; 
-      //echo "count(res2)=".count ($res2)."<br>"; 
-      
-      //      shield_debug ("shield_fetch_row (<stmt>) = <pre>" . var_describe ($res2) . "</pre><br>\n");
+      //shield_debug ("shield_fetch_row (<stmt>) = <pre>" . var_describe ($res2) . "</pre><br>\n");
       
       return $res2;
       
@@ -429,6 +432,9 @@ function shield_fetch_row (&$stmt_arr)
   return false;
 }
 
+/**
+mysql_fetch_assoc workalike. 
+*/
 function shield_fetch_assoc (&$stmt_arr)
 {
   $stmt = $stmt_arr[count($stmt_arr)-1];
@@ -482,6 +488,9 @@ function shield_fetch_assoc (&$stmt_arr)
   return $res;
 }
 
+/**
+mysql_free_result workalike. 
+*/
 function shield_free_result ($stmt_arr)
 {
   foreach ($stmt_arr as $stmt)
@@ -489,6 +498,11 @@ function shield_free_result ($stmt_arr)
       ocifreecursor ($stmt->oci_stmt);
     }
 }
+
+/**
+mysql_num_rows workalike. 
+*/
+
 function shield_num_rows ($stmt_arr)
 {
   /*
@@ -499,6 +513,9 @@ function shield_num_rows ($stmt_arr)
   return ocirowcount ($el->oci_stmt);  
 }
 
+/**
+mysql_fetch_object workalike. 
+*/
 function shield_fetch_object (&$stmt)
 {
   $arr = shield_fetch_assoc ($stmt);
@@ -515,6 +532,9 @@ function shield_fetch_object (&$stmt)
     
 }
 
+/**
+mysql_insert_id workalike. 
+*/
 function shield_insert_id ($resource=null)
 {
   $r = shield_get_resource ($resource);
@@ -1879,8 +1899,7 @@ class mosDBTable {
 
     return $xml;
   }
-
-	
+  
 }
 
 ?>

@@ -1,4 +1,5 @@
 /**
+   @file catalyst.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -27,7 +28,6 @@ namespace shield
     transform::printable *catalyst::
     operator () (transform::printable *node)
     {
-
       if (!node)
 	{
 	  throw exception::invalid_type ("catalyst::operator ()", "non-null");

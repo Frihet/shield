@@ -279,6 +279,11 @@
 
 #include "enum_char.hh"
 
+
+namespace logger
+{
+  class logger;
+}
 /**
    @namespace shield
 
@@ -292,6 +297,7 @@
 
 namespace shield
 {
+
   /**
      This is not a function, it is a magical enum whose members can be
      converted to strings. 
@@ -333,6 +339,9 @@ namespace shield
   */
   const int DATA_TYPE_SELECTABLE = DATA_TYPE_CLOB | DATA_TYPE_UNDEFINED | DATA_TYPE_NUMBER | DATA_TYPE_FLOAT | DATA_TYPE_CHAR | DATA_TYPE_VARCHAR;
 
+  extern logger::logger error;
+
+  int parse_args (int argc, char **argv);
 
 }
 

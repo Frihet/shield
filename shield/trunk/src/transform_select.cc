@@ -262,7 +262,7 @@ namespace shield
 	  if (!id)
 	    throw shield::exception::invalid_type ("Unaliased table name", "text");
 	  
-	  return txt;
+	  return new text (txt);
 	}
       return alias;
     }
@@ -270,15 +270,16 @@ namespace shield
     printable *select::
     internal_transform ()
     {
+
       catalyst::create_identity id_catalyst (this);
       catalyst::set_selectable sel_catalyst (true);
 
       __pre_calculate ();
-
+      
       __resolve_item_list ();
-
+      
       printable *res= this->transform (id_catalyst);
-
+      
       if (get_group_clause ())
 	{
 	  catalyst::aggregate agg_catalyst (this, __group_field);

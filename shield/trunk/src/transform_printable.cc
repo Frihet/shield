@@ -1,4 +1,5 @@
 /**
+   @file transform_printable.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -163,6 +164,12 @@ namespace shield
       if (!(out << *this))
 	throw shield::exception::syntax ("stringify called on invalid type");
       return util::trim (out.str());
+    }
+
+    string printable::
+    unmangled_str (void)
+    {
+      throw exception::invalid_state ("Called unmangled_str on node which does not support this operation");
     }
 
     void printable::invalid_type (const string &what, const string &type)

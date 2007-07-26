@@ -1,4 +1,5 @@
 /**
+   @file transform_auto_increment.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -70,10 +71,12 @@ namespace shield
       if (!__field_name)
 	throw exception::invalid_state ("auto_increment column has no field name");
       
-      string t_name = __table_query->get_name ()->str ();
-      string f_name = __field_name->str ();
+      string t_name = __table_query->get_name ()->unmangled_str ();
+      string f_name = __field_name->unmangled_str ();
 
       string name = t_name + "_" + f_name;
+      string sequence_name;
+      string trigger_name;
 
       /*
 	FIXME:
@@ -87,26 +90,30 @@ namespace shield
 	  name = name.substr(0, 27);
 	}
 
-      drop_item (stream, "sequence", name + "_s_");
+      sequence_name = name + "_s_";
+      trigger_name = name + "_t_";
+      
 
-      stream << "create sequence " << name << "_s_" << endl;
+      drop_item (stream, "sequence", sequence_name);
+
+      stream << "create sequence " << sequence_name << endl;
       stream << "start with 1" << endl;
       stream << "increment by 1" << endl;
       stream << "nomaxvalue" << endl << endl;
   
       stream << sep;
   
-      stream << "create or replace trigger " << name << "_t_" << endl;
-      stream << "before insert on " << t_name << endl;
+      stream << "create or replace trigger " << trigger_name << endl;
+      stream << "before insert on " << __table_query->get_name ()->str () << endl;
       stream << "for each row" << endl;
       stream << "begin" << endl;
-      stream << "\tselect " << name << "_s_.nextval into shield.last_insert_id from dual;" << endl;
-      stream << "\tif :new." << f_name << " is null or :new." << f_name << " = 0 then" << endl;
-      stream << "\t\tselect " << name << "_s_.currval into :new." << f_name << " from dual;" << endl;
+      stream << "\tselect " << sequence_name << ".nextval into shield.last_insert_id from dual;" << endl;
+      stream << "\tif :new." <<  __field_name->str () << " is null or :new." << __field_name->str () << " = 0 then" << endl;
+      stream << "\t\tselect " << sequence_name << ".currval into :new." << __field_name->str () << " from dual;" << endl;
       stream << "\telse" << endl; 
-      stream << "\t\twhile shield.last_insert_id < :new." << f_name << endl;
+      stream << "\t\twhile shield.last_insert_id < :new." << __field_name->str () << endl;
       stream << "\t\tloop" << endl;
-      stream << "\t\t\tselect " << name << "_s_.nextval into shield.last_insert_id from dual;" << endl;
+      stream << "\t\t\tselect " << sequence_name << ".nextval into shield.last_insert_id from dual;" << endl;
       stream << "\t\tend loop;" <<endl;
       stream << "\tend if;" <<endl;
       stream << "end;" <<endl;

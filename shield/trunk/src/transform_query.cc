@@ -1,4 +1,5 @@
 /**
+   @file transform_query.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -45,40 +46,45 @@ namespace shield
       _make_condensed_table_list ();
       
       vector<printable *> &list = _condensed_table_list;      
-      vector<printable *>::const_iterator i;
+      vector<printable *>::const_iterator it;
 
-      for (i=list.begin (); i<list.end (); i++)
+      for (it=list.begin (); it<list.end (); it++)
 	{
 	  
-	  if (!*i)
-	    throw exception::invalid_state ("Null item in _condensed_table_list");
+	  if (!*it)
+	    {
+	      throw exception::invalid_state ("Null item in _condensed_table_list");
+	    }
 	  
-	  text *t = dynamic_cast<text *> (*i);
-	  identity *id = dynamic_cast<identity *> (*i);
+	  text *t = dynamic_cast<text *> (*it);
+	  identity *id = dynamic_cast<identity *> (*it);
 	  
 	  if (id)
 	    {
 	      t = id->get_table ();
 	    }
-
+	  
 	  if (!t)
-	    throw exception::invalid_state (string ("Item of unknown type in _condensed_table_list: ") + (*i)->get_node_name ());
-
+	    {
+	      throw exception::invalid_state (string ("Item of unknown type in _condensed_table_list: ") + (*i)->get_node_name ());
+	    }
+	  
 	  text *unaliased = unalias_table (t);
 	  
 	  if (!unaliased)
-	    throw exception::invalid_state ( string ("Could not unalias item ") + t->str ());
+	    {
+	      throw exception::invalid_state ( string ("Could not unalias item ") + t->str ());
+	    }
 
 	  introspection::table &table = introspection::get_table (unaliased->unmangled_str ());
 
 	  try
 	    {
+	      table.get_column (field->unmangled_str ());
 
-	      const introspection::column &col = table.get_column (field->unmangled_str ());
-	      
 	      /*
 		If that column didn't exist, an exception would have been thrown. We found it! Yay!
-
+		
 		Note that we use \c t here, not \c unaliased. 
 	      */
 	      

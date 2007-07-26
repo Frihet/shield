@@ -1,4 +1,5 @@
 /**
+   @file transform_text.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -58,7 +59,12 @@ namespace shield
 
     namespace
     {
-
+      /**
+	Limit is one less than actual oracle limit because we might
+	need to add a trailing slash...
+      */
+      const int ORACLE_MAX_CHARS = 29;
+      
       /**
 	 Remove quoting from quoted identifier
       */
@@ -67,30 +73,26 @@ namespace shield
 	return in.substr (1, in.length ()-2);
       }
 
-
       /**
 	 Make an identifier name a valid oracle name
       */
       string identifier_escape (const string &in)
       { 
+	
 	string out = "";
-	string::const_iterator it;
-  
-	for (it=in.begin (); it != in.end (); ++it)
-	  {
-	    switch (*it)
-	      {
-	      case '_':
-		out += *it;
-		if ((it+1) == in.end ())
-		  out += "_";
-		break;
+	
+	if (in.size () > ORACLE_MAX_CHARS )
+	  out += in.substr (0, ORACLE_MAX_CHARS);
+	else
+	  out += in;
 
-	      default:
-		out += *it;
-		break;
-	      }
-	  }
+	/*
+	  The 'shield' prefix is used internally by Shield, we escape
+	  all such instances with a trailing '_'. That also means we
+	  must escape trailing slashes with another trailing slash...
+	*/
+	if (in.substr(0,6) == "shield" || in[in.size ()-1] == '_' || is_reserved (in))
+	  out += "_";
 
 	return out;
       }
@@ -123,16 +125,13 @@ namespace shield
 
       switch (__type)
 	{
-      
+	  
 	case EXACT:    
 	  {
-	    if (__val.length ())
-	      {
-		__str = __val;
-	      }
+	    __str = __val;
 	    break;
 	  }
-
+	  
 	case IDENTIFIER:    
 	case IDENTIFIER_QUOTED:    
 	  {
@@ -145,23 +144,14 @@ namespace shield
 	      {
 		val = __val;
 	      }
-
-	    if (is_reserved (val))
-	      {
-		val = val+"_";
-	      }
-	    else
-	      {
-		val = identifier_escape (val);
-	      }
-	
-	    __str = to_lower (val);
 	    
+	    __str = to_lower (identifier_escape (val));
+
 	    break;
 	  }
-
+	  
 	  /**
-	     This token is of literal type, i.e. it is literal data that is suppied by the user
+	     This token is of literal type, i.e. it is literal data that is suppied by the user. It should be escaped.
 	  */
 	case LITERAL:
 	  {
@@ -171,15 +161,17 @@ namespace shield
 	      }
 	    else
 	      {
-		__str = oracle_escape (mysql_unescape (__val));
+		pair<string, bool> escaped = oracle_escape (mysql_unescape (__val));
+		__str = escaped.first;
+		__is_clob = escaped.second;
 	      }
 	    break;
 	  }
-      
+	  
 	}
-
+      
     }
-    
+
     string text::
     get_node_name ()
     {
@@ -233,7 +225,48 @@ namespace shield
 	}
     }
 
+    data_type text::
+    get_context (void)
+    {
+      if (get_type () != LITERAL)
+	{
+	  return printable::get_context ();
+	}
 
+      switch (__val[0])
+	{
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+	  if (__val.find ('.') != __val.npos)
+	    {
+	      return DATA_TYPE_FLOAT;
+	    }
+	  return DATA_TYPE_NUMBER;
+
+	case '"':
+	case '\'':
+	  if (__is_clob)
+	    {
+	      return DATA_TYPE_CLOB;
+	    }
+	  return DATA_TYPE_CHAR;
+	  
+	default:
+	  return printable::get_context ();
+
+	}
+
+      
+    }
+    
   }
 
 }

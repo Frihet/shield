@@ -1,9 +1,10 @@
 /**
+   @file transform_common.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
    @author Axel Liljencrantz
-
+   
    This file is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
    as published by the Free Software Foundation; version 3.
@@ -11,8 +12,13 @@
 */
 
 
+#include <set>
+
 #include "include/transform.hh"
 #include "include/util.hh"
+#include "include/cache.hh"
+#include "include/exception.hh"
+#include "include/catalyst.hh"
 
 namespace shield
 {
@@ -22,7 +28,14 @@ namespace shield
 
     using namespace util;
 
-    const char sep = '\0';
+    namespace
+    {
+      bool parse_error;
+    }
+
+    const string sep = string () + '\0';
+
+    printable *root;
 
     logger::logger warning ("shield: transform warning");
     logger::logger debug ("shield: transform debug");
@@ -30,10 +43,12 @@ namespace shield
     bool is_reserved (const string &in)
     {
 
+      static set<string> reserved;
+
       /*
-	 Mind you, these are the _oracle_ reserved words, not MySQL reserved words.
+	Mind you, these are the _oracle_ reserved words, not MySQL reserved words.
       */
-      string reserved[] = 
+      static string reserved_arr[] = 
 	{
 	  "access", "else", "modify", "start",
 	  "add", "exclusive", "noaudit", "select",
@@ -62,21 +77,21 @@ namespace shield
 	  "delete", "long", "rowid", "view",
 	  "desc", "maxextents", "rowlabel", "whenever",
 	  "distinct", "minus", "rownum", "where",
-	  "drop", "mode", "rows", "with", "shield",
-	  "shield_rownum"
+	  "drop", "mode", "rows", "with",
 	}
       ;
-
-      string lower = to_lower (in);
-
-      for (int i = 0; i<(sizeof (reserved)/sizeof (string)); i++ )
+      
+      if (reserved.size () == 0)
 	{
-	  if (lower == reserved[i])
+	  for (int i = 0; i<(sizeof (reserved_arr)/sizeof (reserved_arr[0])); i++ )
 	    {
-	      return true;
+	      reserved.insert (reserved_arr[i]);
 	    }
 	}
-      return false;
+      
+      string lower = to_lower (in);
+      
+      return reserved.find (lower) != reserved.end ();
     }
 
     void drop_item (ostream &stream, const string &item_type_external, const string &item_name)
@@ -96,10 +111,10 @@ namespace shield
       stream << "\tcursor_handle integer;" << endl;
       stream << "\tfeedback integer;" << endl;
       stream << "begin" << endl;
-      stream << "\tselect count ("+item_type+"_name) into "+item_type+"_count from user_"+plural+" where "+item_type+"_name=" << oracle_escape (upcase_name) << ";" << endl;
+      stream << "\tselect count ("+item_type+"_name) into "+item_type+"_count from user_"+plural+" where "+item_type+"_name=" << oracle_escape (upcase_name).first << ";" << endl;
       stream << "\tif "+item_type+"_count = 1 then" << endl;
       stream << "\t\tcursor_handle := dbms_sql.open_cursor;" << endl;
-      stream << "\t\tdbms_sql.parse (cursor_handle, "<< oracle_escape (string ("drop "+item_type+" ") + item_name) << ", dbms_sql.native);" << endl;
+      stream << "\t\tdbms_sql.parse (cursor_handle, "<< oracle_escape (string ("drop "+item_type+" ") + item_name).first << ", dbms_sql.native);" << endl;
       stream << "\t\tfeedback := dbms_sql.execute (cursor_handle);" << endl;
       stream << "\t\tdbms_sql.close_cursor (cursor_handle);" << endl;
       stream << "\tend if;" << endl;
@@ -111,10 +126,110 @@ namespace shield
     /* Called by yyparse on error.  */
     void yyerror (char const *s)
     {
+      parse_error = true;
       cerr << "shield: " << s << "\n";
     }
 
+    string translate (const string &in) throw ()
+    {
+      try
+	{
+	  if (in == "")
+	    {
+	      return shield::transform::sep+shield::transform::sep;
+	    }
 
+
+	  using namespace shield;
+
+	  string out="";
+	  string::const_iterator it;
+	  int sep_count=0;
+	  ostringstream output_stream;
+	    
+	  pair<bool, string> cache_res = cache::get (in);
+
+	  if (cache_res.first)
+	    {
+	      out =cache_res.second;
+	    }
+	  else
+	    {
+	      using namespace shield::transform;
+
+	      root = 0;
+	      lex_set_string (in);
+	      parse_error = false;
+	      if (yyparse ())
+		{
+		  return shield::transform::sep+shield::transform::sep;
+		}
+	      
+	      if (root)
+		{
+		  catalyst::validation validate1;
+		  catalyst::internal intern;
+		  catalyst::validation validate2;
+		  root = root->transform (validate1);
+		  root = root->transform (intern);	      
+		  root = root->transform (validate2);
+		  
+		  output_stream << *root;
+		}
+	      
+	      printable_delete ();
+	      
+	      out =  output_stream.str ();
+	      
+	      cache::set (in, out);
+	      
+	    }
+	    
+	  for (it=out.begin (); it != out.end (); ++it)
+	    {
+	      if (shield::transform::sep[0] == *it)
+		{
+		  if (!sep_count)
+		    {
+		      sep_count++;
+		    }
+		}
+	      else
+		{
+		  sep_count = 0;
+		}
+	    }
+
+	  for (int i=sep_count; i<2; i++)
+	    {
+	      out += shield::transform::sep;
+	    }
+	  return out;
+	}
+      catch (const shield::exception::traceback &e)
+	{
+	  error << e.what ();
+	  return string ()+shield::transform::sep+shield::transform::sep;
+	}
+      catch(const bad_alloc& x)
+	{
+	  printable_delete ();
+	  error << (string ("Out of memory: ") + x.what()) << "on query:" <<  in;
+	  return string ()+shield::transform::sep+shield::transform::sep;
+	}
+      catch (const std::exception &e)
+	{
+	  error << string("Non-shield exception thrown: ")+e.what ();
+	  return string ()+shield::transform::sep+shield::transform::sep;
+	}
+      catch (...)
+	{
+	  error << "Unknown error was thrown.";
+	  return string ()+shield::transform::sep+shield::transform::sep;
+	}
+      
+    }
+    
   }
 
 }

@@ -1,4 +1,5 @@
 /**
+   @file util.cc
 
 @remark package: shield
 @remark Copyright: FreeCode AS
@@ -196,7 +197,7 @@ namespace util
     return out;
   }
 
-  string oracle_escape (const string &in1)
+  pair<string,bool> oracle_escape (const string &in1)
   {
     string in = in1;
     string out = "'";
@@ -205,7 +206,7 @@ namespace util
     string::const_iterator it;
 
     if (in.length () == 0)
-      return "chr (1)";
+      return make_pair (string ("chr (1)"), false);
 
     if (in.length () >= 4000)
       {
@@ -267,7 +268,7 @@ namespace util
     if (is_clob)
       out += ")";
 
-    return out;
+    return make_pair (out, is_clob);
   }
 
   string cxx_demangle (const string &in)

@@ -1,4 +1,5 @@
 /**
+   @file catalyst_validation.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -59,15 +60,20 @@ namespace shield
 	if (!p->get_query ())
 	  {
 	    string msg = "";
+	    transform::printable *pi=p;
 	    transform::printable *i=p;
 	    while (i)
 	      {
 		msg += typeid(*i).name ();
 		msg += "\n";
-		i=i->get_parent ();
+		pi = i;
+		i=i->get_parent ();		
 	      }
 	    debug << msg;
-	    throw exception::invalid_state ("query-less node found");
+	    
+	    //error << (string ("query-less tree found:\n") + pi->get_tree ());
+	    
+	    throw exception::invalid_state (string ("query-less tree found:\n") + pi->get_tree ());
 	  }
 	
 	return p;

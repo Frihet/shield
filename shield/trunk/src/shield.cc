@@ -1,4 +1,5 @@
 /**
+   @file shield.cc
 
    @remark package: shield
    @remark Copyright: FreeCode AS
@@ -21,21 +22,9 @@
 
 using namespace std;
 
-#include <locale.h>
-
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
-
-#include <unistd.h>
-
 #include "include/util.hh"
 #include "include/exception.hh"
 #include "include/transform.hh"
-#include "include/introspection.hh"
-#include "include/database.hh"
-#include "include/catalyst.hh"
-#include "include/cache.hh"
 
 namespace shield
 {
@@ -49,7 +38,6 @@ namespace shield
     */
 #include "build/transform_yacc.hh"
     
-    printable *root;
   }
 
 }
@@ -57,279 +45,7 @@ namespace shield
 namespace
 {
   
-  logger::logger error ("shield: error");
-
   vector<string> command;
-
-  const char *GETOPT_ARG = "c:u:p:h:PHd:w:o:";
-
-
-    /**
-       Print a short help message.
-
-       @param stream the stream to print the message to
-    */
-    void print_help (ostream &stream)
-    {
-      stream << "Usage: shield [OPTION]... ." << endl;
-      stream << "Convert MySQLP sql code read from stdin inte Oracle equivalents written to stdout." << endl;
-    }
-
-    /**
-       Parse command line arguments
-    */
-    void parse_args (int argc, char **argv)
-    {
-      string username = "", password = "", host = "localhost";
-
-      /*    
-	    Main parse loop
-      */
-      while( 1 )
-	{
-	  int opt_index = 0;
-
-#ifdef HAVE_GETOPT_LONG
-	  static struct option
-	    long_options[] =
-	    {
-	      {   
-		"help", no_argument, 0, 'H'
-	      }
-	      ,
-	      {   
-		"package", no_argument, 0, 'P'
-	      }
-	      ,
-	      {   
-		"username", required_argument, 0, 'u'
-	      }
-	      ,
-	      {   
-		"password", required_argument, 0, 'p'
-	      }
-	      ,
-	      {   
-		"host", required_argument, 0, 'h'
-	      }
-	      ,
-	      {   
-		"warning", required_argument, 0, 'w'
-	      }
-	      ,
-	      {   
-		"debug", required_argument, 0, 'd'
-	      }
-	      ,
-	      {
-		0, 0, 0, 0
-	      }
-	    }
-	  ;
-
-
-	  int opt = getopt_long (argc,
-				 argv,
-				 GETOPT_ARG,
-				 long_options,
-				 &opt_index);
-#else
-	  int opt = getopt (argc,
-			    argv,
-			    GETOPT_ARG);
-				
-
-#endif //#ifdef HAVE_GETOPT_LONG
-
-	  if (opt == -1)
-	    break;
-
-	  switch (opt)
-	    {   
-	      
-	    case 0:
-	      break;
-
-	    case 'H':
-	      print_help (cout);
-	      exit(0);
-	    
-	    case 'P':
-	      shield::transform::print_package ();
-	      break;
-
-	    case 'u':
-	      username = optarg;
-	      break;
-
-	    case 'p':
-	      password = optarg;
-	      break;
-
-	    case 'h':
-	      host = optarg;
-	      break;
-
-	    case 'w':
-	      if (contains (optarg, "transform", "all"))
-		{
-		  shield::transform::warning.enable ();
-		}
-
-	      if (contains (optarg, "catalyst", "all"))
-		{
-		  shield::catalyst::warning.enable ();
-		}
-
-	      if (contains (optarg, "introspection", "all"))
-		{
-		  shield::introspection::warning.enable ();
-		}
-
-	      if (contains (optarg, "database", "all"))
-		{
-		  shield::database::warning.enable ();
-		}
-	      break;
-
-	    case 'd':
-	      if (contains (optarg, "transform", "all"))
-		{
-		  shield::transform::debug.enable ();
-		}
-
-	      if (contains (optarg, "catalyst", "all"))
-		{
-		  shield::catalyst::debug.enable ();
-		}
-
-	      if (contains (optarg, "introspection", "all"))
-		{
-		  shield::introspection::debug.enable ();
-		}
-
-	      if (contains (optarg, "database", "all"))
-		{
-		  shield::database::debug.enable ();
-		}
-	      break;
-
-	    case '?':
-	      exit (1);
-
-	    }
-	}
-      
-      for (int i =optind; i<argc; i++)
-	{
-	  command.push_back (string(argv[i]));
-	}
-
-      shield::database::init (username, password, host);
-
-    }
-
-  /**
-     Check that environment looks ok. 
-  */
-  void startup_test ()
-  {
-    if (!getenv ("ORACLE_HOME"))
-      {
-	cerr << "ORACLE_HOME environment variable is not set. Define it and restart shield." << endl;
-	exit (1);
-      }
-  }
-
-  void translate (const string &in) throw ()
-  {
-    try
-      {
-	if (in != "")
-	  {
-	    using namespace shield;
-
-	    string out;
-	    string::const_iterator it;
-	    int sep_count=0;
-	    ostringstream output_stream;
-	    
-	    pair<bool, string> cache_res = cache::get (in);
-
-	    if (cache_res.first)
-	      {
-		out =cache_res.second;
-	      }
-	    else
-	      {
-		using namespace shield::transform;
-		
-		shield::catalyst::validation v;
-		shield::catalyst::validation v2;
-		shield::catalyst::internal i;
-		
-		lex_set_string (in);
-		yyparse ();
-
-		root = root->transform (v);
-		root = root->transform (i);	      
-		root = root->transform (v2);
-
-		output_stream << *root;
-
-		printable_delete ();
-
-		out =  output_stream.str ();
-		
-		cache::set (in, out);
-		
-	      }
-	    
- 	    for (it=out.begin (); it != out.end (); ++it)
-	      {
-		if (*it == shield::transform::sep)
-		  {
-		    if (!sep_count)
-		      {
-			sep_count++;
-		      }
-		  }
-		else
-		  {
-		    sep_count = 0;
-		  }
-	      }
-
-	    cout << out;
-
-	    for (int i=sep_count; i<2; i++)
-	      {
-		cout << shield::transform::sep;
-	      }
-
-	  }
-      }
-    catch (const shield::exception::traceback &e)
-      {
-	error << e.what ();
-	cout << shield::transform::sep;
-	cout << shield::transform::sep;
-      }
-    catch (const std::exception &e)
-      {
-	error << string("Non-shield exception thrown: ")+e.what ();
-	cout << shield::transform::sep;
-	cout << shield::transform::sep;
-      }
-    catch (...)
-      {
-	error << "Unknown error";
-	cout << shield::transform::sep;
-	cout << shield::transform::sep;
-      }
-    
-    cout.flush ();
-  }
     
 
 }
@@ -340,14 +56,18 @@ main (int argc, char **argv)
 {
   int count = 0;
   string str="";
-  
-  startup_test ();
+
+  int remaining;
 
   setlocale (LC_ALL, "");
   
-  parse_args (argc, argv);
+  shield::error.enable ();
+  remaining = shield::parse_args (argc, argv);
 
-  error.enable ();
+  for (int i = remaining; i<argc; i++)
+    {
+      command.push_back (string(argv[i]));
+    }
 
   if (command.size ())
     {
@@ -355,7 +75,7 @@ main (int argc, char **argv)
       
       for (it=command.begin (); it != command.end (); ++it)
 	{
-	  translate (*it);
+	  cout << shield::transform::translate (*it);
 	}
     }
   else
@@ -372,7 +92,7 @@ main (int argc, char **argv)
 	    }
 	  else
 	    {
-	      translate (str);
+	      cout << shield::transform::translate (str);
 	      str="";
 	      
 	      if (c==EOF)
