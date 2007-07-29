@@ -25,6 +25,9 @@ namespace shield
     transform::printable *replace_identifier::
     catalyze (transform::printable *node)
     {
+      string val;
+      transform::printable *parent;
+
       transform::text *t = dynamic_cast<transform::text *> (node);
       if (!t)
 	{
@@ -37,13 +40,23 @@ namespace shield
 	  return node;
 	}
 
-      string st = t->str ();
+      parent = t->get_parent ();
 
-      if (__mapping.find (st) == __mapping.end ())
+      /*
+	This is not an alias, it is a part of an identifier
+      */
+      if (dynamic_cast<transform::identity *> (parent))
+	{
+	  return t;
+	}
+
+      val = t->str ();
+
+      if (__mapping.find (val) == __mapping.end ())
 	{
 	  return node;
 	}
-      return __mapping[st];
+      return __mapping[val];
     }
   }
 }
