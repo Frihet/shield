@@ -53,7 +53,7 @@ namespace shield
 		  map<string, printable *> &mapping)
     {
       catalyst::replace_identifier cat (mapping);
-
+      
       printable *t = having->transform (cat);
       stream << *t;
     }

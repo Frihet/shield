@@ -2821,27 +2821,17 @@ predicate:
           { 
 	    $$ = new text( "(0 < 0)");
 	  }
-        | bit_expr IN_SYM '(' expr ')'
+        | bit_expr not IN_SYM '(' ')'
           { 
-	    paran *p = new paran ($4);
-	    $$ = new chain ($1, new text ("in"), p);
+	    $$ = new text( "(0 = 0)");
 	  }
-	| bit_expr IN_SYM '(' expr ',' expr_list ')'
+	| bit_expr IN_SYM '(' expr_list ')'
 	  {
-	    paran *p = new paran ($4, $6);
-	    p->set_separator (",");
-	    $$ = new chain ($1, new text ("in"), p);
+	    $$ = new set_test ($1, false, $4);
 	  }
-        | bit_expr not IN_SYM '(' expr ')'
-          { 
-	    paran *p = new paran ($5);
-	    $$ = new chain ($1, new text ("not in"), p);
-	  }
-	| bit_expr not IN_SYM '(' expr ',' expr_list ')'
+	| bit_expr not IN_SYM '(' expr_list ')'
 	  {
-	    paran *p = new paran ($5, $7);
-	    p->set_separator (",");
-	    $$ = new chain ($1, new text ("not in"), p);
+	    $$ = new set_test ($1, true, $5);
 	  }
 	| bit_expr BETWEEN_SYM bit_expr AND_SYM predicate
 	  { 
@@ -2850,14 +2840,21 @@ predicate:
 				   $5);
 	  }
 	| bit_expr not BETWEEN_SYM bit_expr AND_SYM predicate
-          { throw exception::unsupported (__FILE__, __LINE__); }
+          { 
+	    $$ = new chain ($1,
+			    new text ("not"), 
+			    new text ("between"),
+			    $3,
+			    new text ("and"),
+			    $5);
+	  }
 	| bit_expr SOUNDS_SYM LIKE bit_expr
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| bit_expr LIKE simple_expr opt_escape
           {
 	    if ($4)
 	      throw exception::unsupported (__FILE__, __LINE__); 
-
+	    
 	    $$ = new chain ($1, new text ("like"), $3);
 	  }
 	| bit_expr not LIKE simple_expr opt_escape
@@ -3297,7 +3294,8 @@ simple_expr:
 		printable *p = new paran (date,
 					  new text (op),
 					  interval );
-		$$ = new chain (new text ("shield.date_char"), p);
+		p->set_context (DATA_TYPE_DATETIME);
+		$$ = p;
 	      }
 	    else
 	      {

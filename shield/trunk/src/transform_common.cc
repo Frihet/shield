@@ -171,8 +171,11 @@ namespace shield
 		  catalyst::internal intern;
 		  catalyst::validation validate2;
 		  root = root->transform (validate1);
+		  debug << root->get_tree ();
 		  root = root->transform (intern);	      
+		  debug << root->get_tree ();
 		  root = root->transform (validate2);
+		  debug << root->get_tree ();
 		  
 		  output_stream << *root;
 		}

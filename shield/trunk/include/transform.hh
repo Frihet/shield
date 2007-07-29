@@ -187,7 +187,9 @@ namespace shield
 		  CHILD_INITIAL_DATA,
 		  CHILD_LIKE_CLAUSE,
 		  CHILD_PARAM,
-		  CHILD_DEFAULT
+		  CHILD_DEFAULT,
+		  CHILD_IDENTITY,
+		  CHILD_SET
 		  );
     
     /**
@@ -624,8 +626,9 @@ namespace shield
 
     /**
        This class represents a sequence of child nodes with no known
-       internal relation except for their internal order. The class
-       mostly implements the vector interface.
+       internal relation except for their internal order. The class is
+       mostly a wrapper around the std::vector class to make it behave
+       like an AST node.
     */
     class chain 
       : public printable
@@ -1857,6 +1860,27 @@ namespace shield
     private:
       bool __nullable;
             
+    }
+    ;
+
+    class set_test
+      : public printable
+    {
+    public:
+      set_test (printable *id, bool not_in, chain *set)
+	: __not_in (not_in)
+      {
+	_set_child (CHILD_IDENTITY, id);
+	_set_child (CHILD_SET, set);
+      }
+
+      virtual data_type get_context ();
+      virtual void _print (ostream &stream);
+      virtual printable *internal_transform (void);
+
+    private:
+      bool __not_in;
+
     }
     ;
 
