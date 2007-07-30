@@ -38,6 +38,9 @@ $shield_current_resource=0;
 global $shield_query;
 $shield_query=array();
 
+global $shield_stmt;
+$shield_stmt=array(0=>0);
+
 global $shield_password;
 global $shield_username;
 global $shield_server;
@@ -203,8 +206,11 @@ function shield_connect ($server, $username, $password)
   $shield_server = $server;
   
   $shield_resource[] = false;
-  $shield_current_resource = count ($shield_resource);
-  return $shield_current_resource;
+  end ($shield_resource);
+  $shield_current_resource = key ($shield_resource);
+
+  return $shield_current_resource+1;
+  
 }
 
 /**
@@ -288,9 +294,10 @@ mysql_query workalike.
 */
 function shield_query ($q, $resource=null)
 {
-  //  shield_debug ("shield_query (<pre>$q</pre>, $resource);<br>\n");
+  shield_debug ("shield_query (<pre>$q</pre>, $resource);<br>\n");
 
   global $shield_query;
+  global $shield_stmt;
   
   $q2 = shield_translate_query ($q);
   $r = shield_get_resource ($resource);
@@ -317,7 +324,7 @@ function shield_query ($q, $resource=null)
 	  return false;
 	}
 
-      //  shield_debug ("<pre>{$next_query}</pre><br>\n");
+      shield_debug ("<pre>{$next_query}</pre><br>\n");
 
       $exec_res = ociexecute ($stmt->oci_stmt);
 
@@ -348,7 +355,10 @@ function shield_query ($q, $resource=null)
       
     }
   
-  return $res;
+  $shield_stmt[] = $res;
+  end ($shield_stmt);
+  $return = key ($shield_stmt);
+  return $return;
 }
 
 /**
@@ -389,12 +399,26 @@ function shield_get_server_info ($resource = null)
 /**
 mysql_fetch_row workalike. 
 */
-function shield_fetch_row (&$stmt_arr)
+function shield_fetch_row ($stmt_idx)
 {
-  $el = end ($stmt_arr);
-  $res = array();
+  global $shield_stmt;
+  $stmt_arr = &$shield_stmt[$stmt_idx];
+  end ($stmt_arr);
+  $key = key ($stmt_arr);
   
-  $status = ocifetchinto ($el->oci_stmt, $res, OCI_NUM);
+  if (isset ($stmt_arr[$key]->prefetch))
+    {
+      $p = $shield_stmt[$stmt_idx][$key]->prefetch_pos++;
+      if ($p < count ($shield_stmt[$stmt_idx][$key]->prefetch) )
+	{
+	  return $shield_stmt[$stmt_idx][$key]->prefetch[$p];
+	}
+      else return false;
+    }
+  
+  $res = array();
+
+  $status = ocifetchinto ($stmt_arr[$key]->oci_stmt, $res, OCI_NUM);
   
   if ($status)
     {
@@ -418,14 +442,14 @@ function shield_fetch_row (&$stmt_arr)
 	  $res2[$key] = $val;
 	}
       
-      //shield_debug ("shield_fetch_row (<stmt>) = <pre>" . var_describe ($res2) . "</pre><br>\n");
+      shield_debug ("shield_fetch_row (<stmt>) = <pre>" . var_describe ($res2) . "</pre><br>\n");
       
       return $res2;
       
     }
   else
     {
-      $e = ocierror ($el->oci_stmt);
+      $e = ocierror ($stmt_arr[$key]->oci_stmt);
       if ($e)
 	{
 	  echo "<div style='text-align:left;'>in:<br>\n";
@@ -445,70 +469,98 @@ function shield_fetch_row (&$stmt_arr)
 /**
 mysql_fetch_assoc workalike. 
 */
-function shield_fetch_assoc (&$stmt_arr)
+function shield_fetch_assoc ($stmt_idx)
 {
+  return shield_fetch_array ($stmt_idx, MYSQL_ASSOC);
+}
+
+function shield_fetch_array ($stmt_idx, $result_type = MYSQL_BOTH)
+{
+  global $shield_stmt;
+  $stmt_arr = $shield_stmt[$stmt_idx];
+
   if ($stmt_arr === true)
     {
+      echo "Shield error: shield_fetch_array called on empty statement";
       echo get_stack_trace ();
 
     }
-
-  $stmt = $stmt_arr[count($stmt_arr)-1];
-
-  // echo "Called shield_fetch_assoc\n";
-  // print_r ($stmt_arr);
   
-  if (!isset($stmt->arg_list))
-    {
-      //      echo "Parse argument list<br>";
-      $q = $stmt->query;
-      
-      $arr = explode ("\n", $q);
-      
-      $arg_list = array();
-      foreach ($arr as $i)
-	{
-	  if ($i == "/*")
-	    continue;
-	  else if ($i == "*/")
-	    {
-	      break;
-	    }
-	  else
-	    {
-	      $arg_list[] = $i;
-	    }
-	}
+  $oci_row = shield_fetch_row($stmt_idx);
+  $oci_row_assoc = array ();
 
-      $stmt->arg_list = $arg_list;
-      $stmt_arr[count($stmt_arr)-1] = $stmt;
-    }
-
-  $oci_row = shield_fetch_row($stmt_arr);
-  
   if (!$oci_row)
     return false;
 
-  $res = array();
-  
-  for ($i=0; $i < count ($stmt->arg_list); $i++)
+  if ($result_type != MYSQL_NUMERIC)
     {
-      if (isset($oci_row[$i]))
-	$res[$stmt->arg_list[$i]] = $oci_row[$i];
-      else
-	$res[$stmt->arg_list[$i]] = null;
+      
+      $stmt = $stmt_arr[count($stmt_arr)-1];
+      
+      // echo "Called shield_fetch_assoc\n";
+      // print_r ($stmt_arr);
+      
+      if (!isset($stmt->arg_list))
+	{
+	  //      echo "Parse argument list<br>";
+	  $q = $stmt->query;
+	  
+	  $arr = explode ("\n", $q);
+      
+	  $arg_list = array();
+	  foreach ($arr as $i)
+	    {
+	      if ($i == "/*")
+		continue;
+	      else if ($i == "*/")
+		{
+		  break;
+		}
+	      else
+		{
+		  $arg_list[] = $i;
+		}
+	    }
 
-      //      shield_debug ("res[".$stmt->arg_list[$i]."] = ".$res[$stmt->arg_list[$i]]."<br>");
+	  $stmt->arg_list = $arg_list;
+	  $stmt_arr[count($stmt_arr)-1] = $stmt;
+	}
+      
+      
+      for ($i=0; $i < count ($stmt->arg_list); $i++)
+	{
+	  if (isset($oci_row[$i]))
+	    {
+	      $oci_row_assoc[$stmt->arg_list[$i]] = $oci_row[$i];
+	    }
+	  else
+	    {
+	      $oci_row_assoc[$stmt->arg_list[$i]] = null;
+	    }
 
+	  //      shield_debug ("res[".$stmt->arg_list[$i]."] = ".$res[$stmt->arg_list[$i]]."<br>");
+	  
+	}
+      
     }
+
+  if ($result_type == MYSQL_ASSOC)
+    {
+      $oci_row = array ();
+    }
+
+  $res = array_merge ($oci_row, $oci_row_assoc);
+
   return $res;
 }
 
 /**
 mysql_free_result workalike. 
 */
-function shield_free_result ($stmt_arr)
+function shield_free_result ($stmt_idx)
 {
+  global $shield_stmt;
+  $stmt_arr = $shield_stmt[$stmt_idx];
   if ($stmt_arr && ($stmt_arr !== true) && (count ($stmt_arr) > 0))
     {
       ocifreecursor ($stmt_arr[count($stmt_arr)-1]->oci_stmt);
@@ -519,14 +571,28 @@ function shield_free_result ($stmt_arr)
 mysql_num_rows workalike. 
 */
 
-function shield_num_rows ($stmt_arr)
+function shield_num_rows ($stmt_idx)
 {
-  /*
-    This is wrong... 
-  */
-  $el = end ($stmt_arr);
+  global $shield_stmt;
+  $stmt_arr = $shield_stmt[$stmt_idx];
+  end ($stmt_arr);
+  $key = key ($stmt_arr);
 
-  return ocirowcount ($el->oci_stmt);  
+  if (isset ($stmt_arr[$key]->prefetch))
+    {
+      return count ($shield_stmt[$stmt_idx][$key]->prefetch);
+    }
+
+  $prefetch = array ();
+  while ($row = shield_fetch_row ($stmt_idx))
+    {
+      $prefetch[] = $row;
+    }
+  
+  $shield_stmt[$stmt_idx][$key]->prefetch_pos = 0;
+  $shield_stmt[$stmt_idx][$key]->prefetch = $prefetch;
+      
+  return count ($prefetch);
 }
 
 /**
