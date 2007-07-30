@@ -718,6 +718,15 @@ end shield;
 /
 
 
+create or replace trigger after_logon
+	after logon 
+	on database
+begin
+	execute immediate 'alter session set nls_sort=''binary_ci''';
+	execute immediate 'alter session set nls_comp=''ansi''';
+end;
+/
+
 /*
 	Create lookup table for name mangling and type lookup on columns
 */
