@@ -53,35 +53,48 @@
    translate. This tree is called the Abstract Syntax Tree or AST. Parsing is performed by two 
    modules. 
 
-   - The first is the lexer, also called the tokenizer. This module divides the input into logical tokens and classifies them. The lexer is written in the flex language, and is defined in transform_lex.y. Flex files consist of a list of regular expressions, and an action associated with each expression. The longest matching regular expression will isrepeatedly chosen and its action is run.
+   - The first is the lexer, also called the tokenizer. This module
+     divides the input into logical tokens and classifies them. The
+     lexer is written in the flex language, and is defined in
+     transform_lex.y. Flex files consist of a list of regular
+     expressions, and an action associated with each expression. The
+     longest matching regular expression is always chosen.
 
-   - The second is the actual parser. This module actually constructs the AST from the tokens. The lexer is written as a bison grammar and is defined in transform_yacc.y. A bison grammar consists of a series of rules. Each rule tells how the compiler how to transform a set of zero or more nodes into a single node. When parsing a file, these rules are repeatedly applied on the input until only a singe node remains.
+   - The second is the actual parser. This module actually constructs
+     the AST from the tokens. The lexer is written as a bison grammar
+     and is defined in transform_yacc.y. Each token returned by the
+     lexer is regarded as an input node to Bison. A bison grammar
+     consists of a series of rules. Each rule tells how the compiler
+     how to transform a set of zero or more nodes into a single new
+     node. When parsing a file, these rules are repeatedly applied on
+     the input until only a singe node remains, at which point the AST
+     has been constructed and parsing is done.
 
    For more information about flex and bison, see the respective
    manuals.
 
    @subsection transformation Transformation
 
-   This consists of various transformations of the AST. It is
+   This phase consists of various transformations of the AST. It is
    implemented using the transform method and functors deriving from
    the catalyst base class. The catalyst base class defines a functor
-   that takes a AST node as argument and returns a node to replace it
-   with. 
+   that takes an AST node as argument and returns a node to replace it
+   with.
    
    When the transform function is called for a specific node, its
    children have always all been transformed.
 
    @subsection output Output
 
-   The AST is written into a output stream. Each node has a _print
-   method that prints that specific node and all its children. The
-   _print method is overloaded by most nodes to perform node type
-   specific formating. 
+   In this phase, the AST is written to an output stream. Each node
+   has a _print method that should print that specific node and all
+   its children in the correct order. The _print method is overloaded
+   by most nodes to perform node type specific formating.
 
    Some nodes, like the cast node, which is used to convert an
    expression to a specific type, do all their actual work at print
    time.
-
+      
    @subsection memory-management Memory managment
 
    The non-parser part of shield is written using a simple modern C++
@@ -95,11 +108,17 @@
    Once an AST tree has been written, every element of the vector is
    deleted. This has a few drawbacks:
 
-   - Multiple inheritance is not allowed. This can probably be worked around by overloading the new operator.
+   - Multiple inheritance is not allowed. This can probably be worked
+     around by overloading the new operator.
 
-   - Multithreading in the parser is not allowed without some clever coding. In order to have multithreading, one would need to use Thread Local Storage for the allocation vector.
+   - Multithreading in the parser is not allowed without some clever
+     coding. In order to have multithreading, one would need to use
+     Thread Local Storage for the allocation vector.
 
-   - All AST node elements _must_ be dnamically allocated, since there is no way for the printable constructor to know if it should be dynamically allocated or not. This can probably be worked around by overloading the new operator.
+   - All AST node elements _must_ be dnamically allocated, since there
+     is no way for the printable constructor to know if it should be
+     dynamically allocated or not. This can probably be worked around
+     by overloading the new operator.
 
    The benefit of this memory model is that memory leaks in the parser
    become extremely rare. The above limitations are not a serious
