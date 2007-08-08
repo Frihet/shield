@@ -1884,6 +1884,21 @@ namespace shield
     }
     ;
 
+    class delete_
+      : public query
+    {
+    public:
+      delete_ (identity *from, printable *where);
+
+      virtual printable *internal_transform (void);
+      
+    protected:
+      virtual void _print (ostream &stream);
+      virtual void _make_condensed_table_list (void);
+
+    }
+    ;
+
     /**
        Error callback for yyparse and yylex. Prints the specified error message.
     */

@@ -4458,9 +4458,13 @@ delete:
 	DELETE_SYM
 	opt_delete_options single_multi 
 	{ 
-	  text *del = new text ("delete", EXACT, true);
-	  text *end = new text ("\n\n", EXACT, true);
-	  $$ = new fake_query (new chain(del, $2, $3, end));
+	  $$ = $3;
+
+	  if ($2)
+	    {
+	      throw exception::unsupported (__FILE__, __LINE__); 
+	    }
+
 	}
 	;
 
@@ -4469,9 +4473,17 @@ single_multi:
 	where_clause opt_order_clause
 	delete_limit_clause 
 	{
-	  text *from = new text ("from");
-	  text *where = $3 ? new text ("where") : 0;
-	  $$ = new chain(from, $2, where, $3, $4, $5);
+	  if ($4)
+	    {
+	      throw exception::unsupported (__FILE__, __LINE__); 
+	    }
+
+	  if ($5)
+	    {
+	      throw exception::unsupported (__FILE__, __LINE__); 
+	    }
+
+	  $$ = new delete_ ($2, $3);
 	}
 	| table_wild_list
 	  { throw exception::unsupported (__FILE__, __LINE__); }
