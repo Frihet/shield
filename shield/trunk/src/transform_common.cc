@@ -211,22 +211,30 @@ namespace shield
 	}
       catch (const shield::exception::traceback &e)
 	{
+	  error << "In query:";
+	  error << in;
 	  error << e.what ();
 	  return string ()+shield::transform::sep+shield::transform::sep;
 	}
       catch(const bad_alloc& x)
 	{
 	  printable_delete ();
+	  error << "In query:";
+	  error << in;
 	  error << (string ("Out of memory: ") + x.what()) << "on query:" <<  in;
 	  return string ()+shield::transform::sep+shield::transform::sep;
 	}
       catch (const std::exception &e)
 	{
+	  error << "In query:";
+	  error << in;
 	  error << string("Non-shield exception thrown: ")+e.what ();
 	  return string ()+shield::transform::sep+shield::transform::sep;
 	}
       catch (...)
 	{
+	  error << "In query:";
+	  error << in;
 	  error << "Unknown error was thrown.";
 	  return string ()+shield::transform::sep+shield::transform::sep;
 	}
