@@ -317,7 +317,7 @@ namespace
       {
 	string query_out = shield::transform::translate (query);
 	debug << (string ("translate_query returned '") + query_out + "'");
-	debug << (string ("Write response to fd '") + stringify (socket) + "'");
+	//	debug << (string ("Write response to fd '") + stringify (socket) + "'");
 	write (socket, query_out.c_str (), query_out.size ());
 	fsync(socket);
       }
@@ -503,7 +503,7 @@ namespace
   {
     error.enable ();
     error.set_pid (true);
-    debug.enable ();
+    //    debug.enable ();
     debug.set_pid (true);
     
 
@@ -579,7 +579,7 @@ int main (int argc, char **argv, char **envp)
 	    }
 	  else
             {
-	      debug << (string ("Connected with new child on fd ") + stringify (client_socket));
+	      //	      debug << (string ("Connected with new child on fd ") + stringify (client_socket));
 	      
 	      handle_connection (ctx, client_socket);
 	      retry_close (client_socket);
