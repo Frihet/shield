@@ -150,7 +150,15 @@ namespace shield
 
 	    }
 	  
-	  stream <<" from (\n";
+	  stream << " from (\n";
+      /*
+	We use the magic rownum field to simulate the limit clause.
+
+	Since rownum is only increased on actually used rows, we need
+	to assign rownum to a temporary field and perform the real
+	limit in the outer select.
+      */
+	  stream << "select /*+ first_rows(" << get_limit_clause ()->get_upper_limit () << ") */ shield_limit.*, rownum shield_rownum from (\n";
 	}
       
       stream << "select";
@@ -159,28 +167,6 @@ namespace shield
 	stream << *get_option_clause ();
 
       stream << *get_item_list ();
-
-      /*
-	We use the magic rownum field to simulate the limit clause.
-
-	Since rownum is only increased on actually used rows, we need
-	to assign rownum to a temporary field and perform the real
-	limit in the outer select.
-      */
-      if (get_limit_clause ())
-	{
-
-	  if (get_group_clause ())
-	    {
-	      stream << "," << *(new printable_alias (new text ("shield_arb_agg_num (rownum)", EXACT),
-						      new text ("shield_rownum", EXACT)));
-	    }
-	  else
-	    {
-	      stream << "," << *(new printable_alias (new text ("rownum", EXACT),
-						      new text ("shield_rownum", EXACT)));
-	    }
-	}
 
       stream << "\nfrom ";
 
@@ -215,8 +201,11 @@ namespace shield
 	}
 
       if (get_limit_clause () )
-	stream << ") where" << *get_limit_clause ();
+	{
+	  stream << ")\nshield_limit where rownum <= " <<get_limit_clause ()->get_upper_limit () << ")\n";
+	  stream << " where shield_rownum > " << get_limit_clause ()->get_lower_limit ();
 
+	}
 
       if (!is_sub)
 	{

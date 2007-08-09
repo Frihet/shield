@@ -807,12 +807,17 @@ namespace shield
       {
       }
 
-    protected:
-
-      virtual void _print (ostream &stream)
+      unsigned long long get_upper_limit ()
       {
-	stream << " shield_rownum >" << __from << " and shield_rownum <= " << __to;
-      }  
+	return __to;
+      }
+
+      unsigned long long get_lower_limit ()
+      {
+	return __from;
+      }
+
+    protected:
 
     private:
       unsigned long long __from;
