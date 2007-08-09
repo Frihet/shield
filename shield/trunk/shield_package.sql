@@ -605,9 +605,12 @@ is
 	function to_date_ (date_in varchar2, format varchar2) 
 		return date deterministic
 	is 
-		date_in2 varchar2(128);
+		i number (10,0);
+		date_in2 varchar2 (64);
+		c varchar2 (1);
+		fields number (10,0);
 	begin
-		if date_in = '0000-00-00' or date_in = '0' or date_in like '00_00_00' or date_in = '00000000' or date_in = chr (1) or date_in like '0000_00_00_00_00_0_' or  date_in = '00000000000000' then
+		if date_in = '0000-00-00' or date_in like '00_00_00' or date_in = '00000000' or date_in = chr (1) or date_in like '0000_00_00_00_00_0_' or  date_in = '00000000000000' or length (date_in) < 3 then
 			return to_date ('0001-01-01 01:01:01','yyyy-mm-dd hh24:mi:ss');
 		end if;
 
@@ -615,22 +618,33 @@ is
 			return to_date (date_in,'yyyymmdd');
 		end if;	
 
-		if length(date_in) = 10 then
-			date_in2 := substr (date_in, 1, 4) || '-' || substr (date_in, 6, 2) || '-' || substr (date_in, 9, 2);
-			return to_date (date_in2,'yyyy-mm-dd');
+		if length(date_in) < 11 then
+			return to_date (date_in,'yyyy-mm-dd');
 		end if;	
 
 		if length(date_in) = 14 then
 			return to_date (date_in,'yyyymmddhh24miss');
 		end if;	
  
-		if length(date_in) = 19 then
-			date_in2 := substr (date_in, 1, 4) || '-' || substr (date_in, 6, 2) || '-' || substr (date_in, 9, 2);
-			date_in2 := date_in2 || ' ' || substr (date_in, 12, 2) || ':' || substr (date_in, 15, 2) || ':' || substr (date_in, 18, 2);
-			return to_date (date_in2,'yyyy-mm-dd hh24:mi:ss');
-		end if;	
+		i:=1;
+		date_in2 := '';
+		fields := 1;
+		while i < length(date_in) loop
+			c := substr (date_in, i, 1);
+			if c < '0' or c > '9' then
+				c := ' ';
+				fields := fields + 1;
+			end if; 
+			date_in2 := date_in2 || c;
 
-		return to_date ('0001-01-01 01:01:01','yyyy-mm-dd hh24:mi:ss');
+			i := i+1;
+		end loop;
+			
+		if fields < 3 then
+			return to_date ('0001-01-01 01:01:01','yyyy-mm-dd hh24:mi:ss');
+		end if;
+
+		return to_date (date_in2,'yyyy-mm-dd hh24:mi:ss');
 	end;
 
 
