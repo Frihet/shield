@@ -25,7 +25,6 @@ namespace shield
     printable *default_value::
     internal_transform (void)
     {
-      bool handled = false;
       string inner;
 
       printable *def = _get_child (CHILD_INNER);

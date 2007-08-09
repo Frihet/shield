@@ -3213,7 +3213,34 @@ simple_expr:
 	  { throw exception::unsupported (__FILE__, __LINE__); }
 	| IDENT_sys '(' udf_expr_list ')'
           { 
+
+	    /*
+	       Static variable for storing function translations. The
+	       three values of the triplet are the translated function
+	       name, the return type and a flag that is set to true if
+	       the function aggregates
+	    */
+	    static map<string,triplet<string,data_type,bool> > func_translate;
+	    
+	    map<string,triplet<string,data_type,bool> >::iterator it_func;
+
 	    string func_name = to_lower( $1->str ());
+	    vector<printable *>::const_iterator it;
+	    
+	    chain *param;
+
+	    /*
+	      Dual parameter lists for concat_ws
+	    */
+	    chain *param1;
+	    chain *param2;
+
+	    printable *midpoint;
+	    
+	    string op;
+	    printable *date;
+	    printable *interval;
+
 	    
 	    if (func_name == "concat")
 	      {
@@ -3229,14 +3256,14 @@ simple_expr:
 		  }
 		else
 		  {
-		    vector<printable *>::const_iterator it;
 		    it=$3 -> begin (); 
 		    printable *res = *it;
 		    it++;
 		    while (it != $3 -> end ())
 		      {
-			chain *param = new chain (res, *it);
+			param = new chain (res, *it);
 			param->set_separator (",");
+
 			res = new function (new text ("shield.concat_"), DATA_TYPE_CHAR, param, false);
 			++it;
 		      }
@@ -3255,7 +3282,6 @@ simple_expr:
 		  }
 		else
 		  {
-		    vector<printable *>::const_iterator it;
 		    it=$3 -> begin (); 
 
 		    printable *sep = *it;
@@ -3266,9 +3292,6 @@ simple_expr:
 		    
 		    while (it < $3 -> end ())
 		      {
-			chain *param1;
-			chain *param2;
-			printable *midpoint;
 
 			param1= new chain (res, sep);
 			param1->set_separator (",");
@@ -3288,23 +3311,25 @@ simple_expr:
 	      }
 	    else if (contains (func_name.c_str (), "date_add", "date_sub"))
 	      {
-		string op = (func_name == "date_add")?"+":"-";
-		printable *date = (*$3)[0];
-		printable *interval = (*$3)[1];
-		printable *p = new paran (new cast (date, DATA_TYPE_DATE | DATA_TYPE_DATETIME),
-					  new text (op),
-					  interval );
-		p->set_context (DATA_TYPE_DATETIME);
-		$$ = p;
+		op = (func_name == "date_add")?"+":"-";
+		date = (*$3)[0];
+		interval = (*$3)[1];
+		$$ = new paran (new cast (date, DATA_TYPE_DATE | DATA_TYPE_DATETIME),
+				new text (op),
+				interval );
+		$$->set_context (DATA_TYPE_DATETIME);
 	      }
 	    else
 	      {
 
-		static map<string,triplet<string,data_type,bool> > func_translate;
-
 		if (func_translate.size () == 0)
 		  {
+		    /*
+		      Fill in translation table
+		    */
+		    
 		    using namespace util;
+
 		    /*
 		      DATA_TYPE_UNDEFINED return type means same
 		      return type as input type of first argument.
@@ -3324,20 +3349,16 @@ simple_expr:
 		    func_translate["lpad"] = make_triplet ("shield.lpad_", DATA_TYPE_CHAR,false);
 		    func_translate["now"] = make_triplet ("current_date", DATA_TYPE_DATETIME,false);
 		    func_translate["unix_timestamp"] = make_triplet ("shield.unix_timestamp", DATA_TYPE_NUMBER,false);
-
-		    /*
-		      Functions implemented by the shield package
-		    */
 		    func_translate["date"] = make_triplet ("shield.date_", DATA_TYPE_DATE,false);
 		    func_translate["curdate"] = make_triplet ("shield.curdate", DATA_TYPE_DATE,false);
 		    func_translate["current_date"] = make_triplet ("shield.curdate", DATA_TYPE_DATE,false);
 		  }
 
-		map<string,triplet<string,data_type,bool> >::iterator i = func_translate.find (func_name);
+		it_func = func_translate.find (func_name);
 
-		if (i != func_translate.end ())
+		if (it_func != func_translate.end ())
 		  {
-		    $$ = new function (new text (i->second.first), i->second.second, $3, i->second.third); 
+		    $$ = new function (new text (it_func->second.first), it_func->second.second, $3, it_func->second.third); 
 		  }
 		else
 		  {

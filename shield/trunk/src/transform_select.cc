@@ -89,26 +89,24 @@ namespace shield
     }
 
     void select::
-    _print (ostream &stream)
+    __print_comment (ostream &stream)
     {
-  
       chain::const_iterator it;
-
       bool is_sub= is_subselect ();
+      printable *pr;
+      printable_alias *item;
 
-      if (!get_item_list ())
-	{
-	  throw exception::syntax ("No item list for select");
-	}
+      printable *sub_item;
+      identity *sub_item_identity;
 
       if (!is_sub)
 	{
 	  stream << "/*\n";
 	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
 	    {
-	      printable *pr = *it;
+	      pr = *it;
+	      item = dynamic_cast<printable_alias *> (pr);
 	      
-	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
 	      if (!item)
 		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
 
@@ -118,8 +116,8 @@ namespace shield
 		}
 	      else
 		{
-		  printable *sub_item = item->get_item ();
-		  identity *sub_item_identity = dynamic_cast<identity *> (sub_item);
+		  sub_item = item->get_item ();
+		  sub_item_identity = dynamic_cast<identity *> (sub_item);
 		  if (sub_item_identity)
 		    {
 		      sub_item = sub_item_identity->get_field ();
@@ -131,15 +129,45 @@ namespace shield
 	  stream << "*/\n";
 	}
 
+    }
+
+    void select::
+    _print (ostream &stream)
+    {
+      chain::const_iterator it;
+      bool is_sub= is_subselect ();
+      printable *pr;
+      printable_alias *item;
+
+      if (!get_item_list ())
+	{
+	  throw exception::syntax ("No item list for select");
+	}
+
+      __print_comment (stream);
+
       if (get_limit_clause ())
 	{
+
+	  /*
+	    Ouch, we're facing a limit clause. These are insanely complex to implement in Oracle, because of how row numbers work w.r.t. ordering, filetering, etc.
+
+	    Basically, according to ask tom and other Oracle experts, this is the proper way to do a 'limit' in Oracle:
+
+	    select alias1, alias2, alias3... from (
+	    select foo.*, rownum r from (
+	    select ...
+	    ) where rownum < MAX)
+	    where r > MIN
+	  */
+
 	  stream << "select";
-	  
+
 	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
 	    {
-	      printable *pr = *it;
-	      
-	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
+	      pr = *it;	      
+	      item = dynamic_cast<printable_alias *> (pr);
+
 	      if (!item)
 		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
 	      
@@ -151,13 +179,17 @@ namespace shield
 	    }
 	  
 	  stream << " from (\n";
-      /*
-	We use the magic rownum field to simulate the limit clause.
+	  /*
+	    We use the magic rownum field to simulate the limit clause.
+	    
+	    Since rownum is only increased on actually used rows, we need
+	    to assign rownum to a temporary field and perform the real
+	    limit in the outer select.
 
-	Since rownum is only increased on actually used rows, we need
-	to assign rownum to a temporary field and perform the real
-	limit in the outer select.
-      */
+	    The weird first_rows comment is an Oracle hint that is
+	    supposed to make thid type of query much faster. (Never
+	    verified it)
+	  */
 	  stream << "select /*+ first_rows(" << get_limit_clause ()->get_upper_limit () << ") */ shield_limit.*, rownum shield_rownum from (\n";
 	}
       
@@ -216,32 +248,37 @@ namespace shield
     void select::
     _make_condensed_table_list ()
     {
+      catalyst::find_table cat (this);      
+
       if (_condensed_table_list.size ())
 	return;
 
-      catalyst::find_table cat (this);      
       get_table_list ()->transform (cat);
       _condensed_table_list = cat.get_table_list ();
-    }
-
-    
+    }    
 
     text *select::
     unalias_table (text *alias)
     {
+      map<string, printable *>::const_iterator it;
+
+      printable *res;   
+      text *txt;
+      identity *id;
+
       if (!__table_alias_init)
 	{
 	  __table_alias_init = true;
 	  get_table_alias (get_table_list (), __table_alias);
 	}
 
-      map<string, printable *>::const_iterator it = __table_alias.find (alias->str ());
+      it = __table_alias.find (alias->str ());
+      
       if (it != __table_alias.end ())
 	{
-	  printable *res = it->second;
-	  
-	  text *txt = dynamic_cast<text *> (res);
-	  identity *id = dynamic_cast<identity *> (res);
+	  res = it->second;
+	  txt = dynamic_cast<text *> (res);
+	  id = dynamic_cast<identity *> (res);
 	  
 	  if (id)
 	    {
@@ -262,12 +299,13 @@ namespace shield
 
       catalyst::create_identity id_catalyst (this);
       catalyst::set_selectable sel_catalyst (true);
+      printable *res;
 
       __pre_calculate ();
       
       __resolve_item_list ();
       
-      printable *res= this->transform (id_catalyst);
+      res= this->transform (id_catalyst);
       
       if (get_group_clause ())
 	{
@@ -275,7 +313,7 @@ namespace shield
 	  
 	  set_item_list ( dynamic_cast<chain *> (get_item_list ()->transform (agg_catalyst)));
 	  if (get_order_clause ())
-	    set_order_clause ( get_order_clause ()->transform (agg_catalyst));
+	    set_order_clause (get_order_clause ()->transform (agg_catalyst));
 	}
 
       set_item_list ( dynamic_cast<chain *> (get_item_list ()->transform (sel_catalyst)));
@@ -283,12 +321,46 @@ namespace shield
       return res;
     }
 
+    void select::
+    __resolve_all_table_fields (chain *item_list)
+    {
+      text *txt;
+      identity *id;
+      vector<printable *>::const_iterator it;
+
+      _make_condensed_table_list ();
+
+      for (it = _condensed_table_list.begin (); it != _condensed_table_list.end (); ++it)
+	{
+	  txt = dynamic_cast<text *> (*it);
+	  id = dynamic_cast<identity *> (*it);
+
+	  if (txt)
+	    {
+	      id = new identity (0, txt, 0);
+	    }
+	  
+	  if (!id << !id->get_table ())
+	    {
+	      throw exception::invalid_state (string ("Table not of type identity or text:") + _condensed_table_list[0]->get_node_name ());
+	    }
+	  
+	  select_item_wild *wi2 = new select_item_wild (0, new text (id->get_table ()));
+	  __resolve_item_wildcard (wi2, item_list);
+	}
+      
+      if (_condensed_table_list.size () == 0)
+	{
+	  throw exception::invalid_state (string ("Used table-less wildcard in select query with") + util::stringify (_condensed_table_list.size ()) + " items, got zero fields");
+	}
+    }
 
 
     void select::
     __resolve_item_wildcard (select_item_wild * wi, chain *item_list)
     {
       text *table = 0;
+      introspection::table::column_const_iterator meta_it;
       
       if (wi->get_namespace ())
 	{
@@ -301,43 +373,15 @@ namespace shield
 	}
       else
 	{
-	  vector<printable *>::const_iterator it;
-	  _make_condensed_table_list ();
-
-	  for (it = _condensed_table_list.begin (); it != _condensed_table_list.end (); ++it)
-	    {
-	      text *txt = dynamic_cast<text *> (*it);
-	      identity *id = dynamic_cast<identity *> (*it);
-
-	      if (txt)
-		{
-		  id = new identity (0, txt, 0);
-		}
-
-	      if (!id << !id->get_table ())
-		{
-		  throw exception::invalid_state (string ("Table not of type identity or text:") + _condensed_table_list[0]->get_node_name ());
-		}
-
-	      select_item_wild *wi2 = new select_item_wild (0, new text (id->get_table ()));
-	      __resolve_item_wildcard (wi2, item_list);
-	    }
-
-	  if (_condensed_table_list.size () == 0)
-	    {
-	      throw exception::invalid_state (string ("Used table-less wildcard in select query with") + util::stringify (_condensed_table_list.size ()) + " items, got zero fields");
-	    }
-	  
+	  __resolve_all_table_fields (item_list);
 	  return;
-
 	}
       
-      introspection::table &t = introspection::get_table (unalias_table (table)->unmangled_str ());
-      introspection::table::column_const_iterator it;
+      introspection::table &meta_table = introspection::get_table (unalias_table (table)->unmangled_str ());
       
-      for (it=t.column_begin (); it != t.column_end (); it++)
+      for (meta_it=meta_table.column_begin (); meta_it != meta_table.column_end (); meta_it++)
 	{
-	  string name = it->get_name ();
+	  string name = meta_it->get_name ();
 	  text *table_copy = 0;
 
 	  if (table)
@@ -360,6 +404,12 @@ namespace shield
       chain *item_list;
       chain::const_iterator it;
       
+      printable *pr;
+      printable_alias *item;
+	  
+      cast *cast_item;
+      select_item_wild * wi;
+
       item_list = new chain ();
       item_list->set_separator (",");
       item_list->set_line_break (2);
@@ -367,16 +417,16 @@ namespace shield
       for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
 	{
 	  
-	  printable *pr = *it;
-	  printable_alias *item = dynamic_cast<printable_alias *> (pr);
+	  pr = *it;
+	  item = dynamic_cast<printable_alias *> (pr);
 	  
 	  if (!item)
 	    {
 	      throw exception::invalid_state ("select item was not of expected type printable_alias");
 	    }
 	  
-	  cast *cast_item = dynamic_cast<cast *>(item->get_item ());
-	  select_item_wild * wi = dynamic_cast<select_item_wild *> (item->get_item ());
+	  cast_item = dynamic_cast<cast *>(item->get_item ());
+	  wi = dynamic_cast<select_item_wild *> (item->get_item ());
 	  
 	  if (cast_item)
 	    {
@@ -401,6 +451,12 @@ namespace shield
 
       chain::const_iterator it;
 
+      printable *pr;
+      chain *ch;
+      identity *id;
+
+      printable_alias *item;
+
       /*
 	There are various ways in which Oracle is stricter than MySQL when
 	it comes to group by/having clauses that we need to work
@@ -413,9 +469,8 @@ namespace shield
 
 	  for (it=get_group_clause ()->begin (); it != get_group_clause ()->end (); ++it)
 	    {
-	      printable *pr = *it;
-
-	      chain *ch = dynamic_cast<chain *> (pr);
+	      pr = *it;
+	      ch = dynamic_cast<chain *> (pr);
 	  
 	      if (!ch)
 		throw shield::exception::invalid_type ("Select query group by-item", "chain");
@@ -423,7 +478,7 @@ namespace shield
 	      if (!ch->size ())
 		throw shield::exception::not_found ("Select query group by-item");
 	      
-	      identity *id = dynamic_cast<identity *> ((*ch)[0]);
+	      id = dynamic_cast<identity *> ((*ch)[0]);
 	      
 	      if (id)
 		{
@@ -433,8 +488,8 @@ namespace shield
 
 	  for (it=get_item_list ()->begin (); it != get_item_list ()->end (); ++it)
 	    {
-	      printable *pr = *it;
-	      printable_alias *item = dynamic_cast<printable_alias *> (pr);
+	      pr = *it;
+	      item = dynamic_cast<printable_alias *> (pr);
 	      
 	      if (item->get_alias ())
 		{

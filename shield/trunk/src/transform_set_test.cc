@@ -75,7 +75,8 @@ namespace shield
 	}
 
       _set_child (CHILD_SET, out);
-      return this;
+
+      return res;
     }
 
   }

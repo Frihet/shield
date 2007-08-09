@@ -140,6 +140,8 @@ namespace shield
     __calculate_context ()
     {
       query *q = get_query ();
+      text *table;
+      text *unaliased_table;
       
       //      debug << (string ("Query is of type ") + q->get_node_name ());
 
@@ -147,7 +149,7 @@ namespace shield
 	{
 	  throw exception::invalid_state ("No parent query in identity node " + get_path ());
 	}
-      text *table = get_table ();
+      table = get_table ();
 
       if (!table)
 	{
@@ -157,9 +159,9 @@ namespace shield
       if (!table)
 	throw exception::invalid_state ("Could not introspect table in identity::get_context ()");
 
-      text *real_table = q->unalias_table (table);
+      unaliased_table = q->unalias_table (table);
 
-      introspection::table &itbl = introspection::get_table (real_table->unmangled_str ());
+      introspection::table &itbl = introspection::get_table (unaliased_table->unmangled_str ());
 
       const introspection::column &ic = itbl.get_column (get_field ()->unmangled_str ());
       const introspection::column_type &tp = ic.get_type ();

@@ -966,6 +966,8 @@ namespace shield
       bool __resolve_item_regular (printable *item, text *alias, chain *item_list);
       void __resolve_item_wildcard (select_item_wild * wi, chain *item_list);
       printable *__aggregate (text *field, text *alias, text *table_alias);
+      void __print_comment (ostream &stream);
+      void __resolve_all_table_fields (chain *xitem_list);
 
     private:
 

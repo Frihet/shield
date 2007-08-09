@@ -44,7 +44,6 @@ namespace shield
       
       printable *parent;
       function *func;
-      text *txt;
       text *table_name;
       vector<identity *>::const_iterator it;
 
