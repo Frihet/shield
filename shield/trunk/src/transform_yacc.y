@@ -3291,7 +3291,7 @@ simple_expr:
 		string op = (func_name == "date_add")?"+":"-";
 		printable *date = (*$3)[0];
 		printable *interval = (*$3)[1];
-		printable *p = new paran (date,
+		printable *p = new paran (new cast (date, DATA_TYPE_DATE | DATA_TYPE_DATETIME),
 					  new text (op),
 					  interval );
 		p->set_context (DATA_TYPE_DATETIME);
