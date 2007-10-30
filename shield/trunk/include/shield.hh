@@ -283,8 +283,9 @@
      a noticablly higher cache hit rate, probably around 95
      %. Currently, the cache hit rate under Joomla is ~80 %.
 
-   - Locate which queries take a lot of time for Oracle to perform and
-     optimize the Shield code generation.
+   - Replace the use of dynamically generated queries with stored
+     procedures to avoid rerunning compliation/optimization on every
+     query.
 
   Both of these optimizations require significant amounts of work and
   could potentiall significantly complicate the code base. Profiling
@@ -293,7 +294,9 @@
   on Joomla code, 25 % either in the shield database abstraction or
   waiting for shield, and 50 % waiting on Oracle. The fact that Oracle
   takes roughly double the time shield takes implies that the possible
-  savings from optimizing shield are small.
+  savings from optimizing shield itself is small. This in turn implies
+  that the second optimization, using stored procedures, might bring
+  forth significant performance savings.
 
 */
 
