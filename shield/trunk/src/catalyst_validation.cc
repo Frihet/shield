@@ -24,6 +24,10 @@ namespace shield
     transform::printable *validation::
     catalyze (transform::printable *p)
       {
+	string msg;
+	transform::printable *pi;
+	transform::printable *i;
+
 	/*
 	  Check that we have a valid node
 	*/
@@ -39,29 +43,26 @@ namespace shield
 	  */
 	  if (!p->get_parent ())
 	    throw exception::not_found ("Parent item in validation pass");
-
-	  /*
-	    Check for short infinite loops. We should really check for
-	    arbitrarily long loops as well, but in practice they don't
-	    happen.
-	  */
-	  if (!p->get_parent ())
-	    throw exception::not_found ("Parent item in validation pass");
-	  
-	  if (p == p->get_parent ())
-	    throw exception::invalid_state ("Item is it's own parent in validation pass");
 	  
 	}
 	
+
+	/*
+	  Check for short loops. We should really check for longer
+	  loops as well, but in practice they don't seem to occur, and
+	  it's a bit of work.
+	*/
+	if (p == p->get_parent ())
+	  throw exception::invalid_state ("Item is it's own parent in validation pass");
 
 	/**
 	   Check that the environment is healthy
 	*/
 	if (!p->get_query ())
 	  {
-	    string msg = "";
-	    transform::printable *pi=p;
-	    transform::printable *i=p;
+	    pi=p;
+	    i=p;
+	    
 	    while (i)
 	      {
 		msg += typeid(*i).name ();
@@ -69,6 +70,7 @@ namespace shield
 		pi = i;
 		i=i->get_parent ();		
 	      }
+
 	    debug << msg;
 	    
 	    //error << (string ("query-less tree found:\n") + pi->get_tree ());

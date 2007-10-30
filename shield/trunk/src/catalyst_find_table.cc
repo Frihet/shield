@@ -30,6 +30,7 @@ namespace shield
     catalyze (transform::printable *p)
     {
       transform::printable_alias *a = dynamic_cast<transform::printable_alias *> (p);
+      transform::printable *print;
 
       if (a)
 	{
@@ -40,10 +41,8 @@ namespace shield
 	    }
 	  else
 	    {
-	      transform::printable *print = a->get_item ();
-	      transform::text *txt = dynamic_cast<transform::text *> (print);
-	      transform::identity *id = dynamic_cast<transform::identity *> (print);
-	      if (txt || id)
+	      print = a->get_item ();
+	      if (transform::as_text (print))
 		{
 		  if (print->get_query () == __query)
 		    {

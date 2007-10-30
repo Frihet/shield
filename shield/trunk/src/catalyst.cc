@@ -47,7 +47,6 @@ namespace shield
 	}
       catch (shield::exception::exception &e)
 	{
-	  //	  warning << (string ("Error in catalyst of type " + util::cxx_demangle(typeid(*this).name ())+"node: ") + node->get_path ());
 	  throw;
 	}
 

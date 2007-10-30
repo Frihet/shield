@@ -119,8 +119,8 @@ namespace shield
 	text *table = __query->unalias_table (table_alias);
 
 	introspection::table &t = introspection::get_table (table->unmangled_str ());
-      field_name = field->unmangled_str ();
-            const introspection::column &c = t.get_column (field_name);
+	field_name = field->unmangled_str ();
+	const introspection::column &c = t.get_column (field_name);
       	introspection::column_type y = c.get_type ();
 
 	if (y.is_char () )
