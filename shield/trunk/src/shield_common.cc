@@ -37,10 +37,9 @@ namespace shield
   namespace
   {
 
-    const char *GETOPT_ARG = "c:u:p:h:PHd:w:o:";
-
-
-
+    const char *GETOPT_ARG = "c:u:p:h:PHd:w:o:s:";
+    
+    string socket_name = "/tmp/shield.socket";
 
     /**
        Check that environment looks ok. 
@@ -114,6 +113,10 @@ namespace shield
 	      ,
 	      {   
 		"debug", required_argument, 0, 'd'
+	      }
+	      ,
+	      {   
+		"socket-file", required_argument, 0, 's'
 	      }
 	      ,
 	      {
@@ -209,6 +212,12 @@ namespace shield
 		}
 	      break;
 
+	    case 's':
+	      {
+		socket_name = optarg;
+		break;
+	      }
+
 	    case '?':
 	      exit (1);
 
@@ -220,6 +229,12 @@ namespace shield
 
       return optind;
 
+    }
+
+  std::string 
+  get_socket_name ()
+    {
+      return socket_name;
     }
 
 }

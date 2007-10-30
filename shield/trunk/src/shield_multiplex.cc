@@ -368,14 +368,13 @@ namespace
     int s, len, doexit = 0;
 
     struct sockaddr_un local;
-    char *sock_name = "/tmp/shield.socket";
-
+    const char *sock_name = shield::get_socket_name().c_str();
    
     local.sun_family = AF_UNIX;
     strcpy (local.sun_path, sock_name);
     len = sizeof (local);
 
-    debug << "Connect to socket";
+    debug << "Connect to socket:" << sock_name;
 
     s = socket (AF_UNIX, SOCK_STREAM, 0);
     if (s == -1)
@@ -506,7 +505,6 @@ namespace
     //    debug.enable ();
     debug.set_pid (true);
     
-
     listen_socket = get_socket ();
     daemonize ();
   }
@@ -530,8 +528,8 @@ int main (int argc, char **argv, char **envp)
 
   setlocale (LC_ALL, "");
   
-  init ();  
   shield::parse_args (argc, argv);
+  init ();  
 
   //create_child (argv, envp, ctx);
   

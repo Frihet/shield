@@ -365,6 +365,8 @@ namespace shield
 
   extern logger::logger error;
 
+  std::string get_socket_name();
+
   int parse_args (int argc, char **argv);
 
 }
