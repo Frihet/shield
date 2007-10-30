@@ -29,7 +29,7 @@ The main shield parser is roughly 20000 lines long, which is a pretty heavy burd
 
 CXXFLAGS=-g
 
-Other than these issues, compiling fish should be a simple case of
+Other than these issues, compiling shield should be a simple case of
 
 ./configure && make && make install
 
