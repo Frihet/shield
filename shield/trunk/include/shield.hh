@@ -212,11 +212,16 @@
 
    @subsection limit Handling limit clauses
 
-   Shield implements the limit clause using a subselect, e.g. 'select
-   * from (select ...) where rownum < ...'. In oracle, subselects can
-   not be mixed with field wildcards, e.g 'select *'. There are also
-   many limitations on how wildcards can be used with group by
-   clauses, as well as differences in how fields are named. In the
+   Shield implements the limit clause using a double subselect,
+   e.g. 'select ..., rownum r from (select ... (select ...) where
+   rownum < ... ) where r > ...'. In oracle, subselects can not be
+   mixed with field wildcards, e.g 'select *'. According to web
+   sources like 'Ask Tom', this is the canonical way to implement
+   limits in Oracle, and it is also reported that this is actually in
+   good taste. 
+
+   Oracle has many limitations on how wildcards can be used with group
+   by clauses, as well as differences in how fields are named. In the
    end, this all means that Shield expands any and all wildcards in
    the field selection list of select statements.
 
@@ -230,8 +235,8 @@
    all tables, indices, fields, etc. When an index named would have
    broken the 30 character limit, the name is shortened. Care is taken
    to use a prefix of both the table and original index name in the
-   derived name, so as to minimize the collision risk, but this is far
-   from fool proof.
+   derived name, so as to minimize the collision risk, but this is not
+   fool proof. 
 
    @subsection casting Handling the need for casting
 
@@ -239,19 +244,19 @@
    way around. Also, strings and numbers can be compared to each other
    without manual conversion. This is not possible with Oracle dates,
    you always need to use casting functions. For this reason, Shield
-   keeps track of the type of each exdpression and performs casting as
+   keeps track of the type of each expression and performs casting as
    needed.
    
    It should be noted that it is not possible to directly compare to
    clobs in Oracle. They need to be converted to chars, which have a
-   maximum length of 32000 characters. IF you need to compare fields
+   maximum length of 32000 characters. If you need to compare fields
    with a maximum langth of more than 32000 characters, you are in
    trouble.
 
    @section aliases Handling naming and aliases
 
-   MySQL and ORacle differ in how column names are returned in select
-   queries. To get something aproximating MySQL style field names from
+   MySQL and Oracle differ in how column names are returned in select
+   queries. To get something approximating MySQL style field names from
    Oracle, Shield returns all column names, one per line, in a comment
    before every select query.
 
@@ -275,20 +280,19 @@
    - Rewrite the query cache to strip away the content of literals in
      the cache to make all queries with the same structure but
      different data use the same query cache item. This should enable
-     a noticablly higher cache hit rate. Currently, the cache hit rate
-     under Joomla is ~80 %.
+     a noticablly higher cache hit rate, probably around 95
+     %. Currently, the cache hit rate under Joomla is ~80 %.
 
-   - Integrate the multiplexer into shield and make the multiplexer
-     able to read/write multiple queries at once, in order to better
-     handle concurrent queries.
+   - Locate which queries take a lot of time for Oracle to perform and
+     optimize the Shield code generation.
 
   Both of these optimizations require significant amounts of work and
-  would significantly complicate the code base. Profiling done using
-  Joomla show that on a basline Joomla installation with only the
-  sample data installed, PHP spends 25 % of the time working on Joomla
-  code, 25 % either in the shield database abstraction or waiting for
-  shield, and 50 % waiting on Oracle. The fact that Oracle takes
-  roughly double the time shield takes implies that the possible
+  could potentiall significantly complicate the code base. Profiling
+  done using Joomla show that on a basline Joomla installation with
+  only the sample data installed, PHP spends 25 % of the time working
+  on Joomla code, 25 % either in the shield database abstraction or
+  waiting for shield, and 50 % waiting on Oracle. The fact that Oracle
+  takes roughly double the time shield takes implies that the possible
   savings from optimizing shield are small.
 
 */
@@ -346,7 +350,8 @@ namespace shield
 	       );
 
   /**
-     All data types that can be sorted. Everything except clob, basically.
+     All data types that can be sorted. Everything except clob,
+     basically.
   */
   const int DATA_TYPE_SORTABLE = DATA_TYPE_UNDEFINED | DATA_TYPE_NUMBER | DATA_TYPE_FLOAT | DATA_TYPE_CHAR | DATA_TYPE_VARCHAR | DATA_TYPE_DATE | DATA_TYPE_DATETIME;
 
