@@ -309,6 +309,7 @@ create or replace function shield_arb_agg_num (input number)
 	using shield_agg_arb_num_t;
 /
 
+
 create or replace package shield
 is
 	last_insert_id integer;

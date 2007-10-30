@@ -175,13 +175,7 @@ namespace shield
 
 	  for (int j=0; j<value->size (); j++)
 	    {
-	      text *column_name = dynamic_cast<text *> ((*field_list)[j]);
-	      identity *column_name_id = dynamic_cast<identity *> ((*field_list)[j]);
-
-	      if (column_name_id)
-		{
-		  column_name = column_name_id->get_field ();
-		}
+	      text *column_name = as_text ((*field_list)[j]);
 
 	      if (!column_name)
 		{

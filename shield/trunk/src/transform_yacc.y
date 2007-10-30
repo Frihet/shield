@@ -3309,6 +3309,61 @@ simple_expr:
 		    $$ -> set_context (DATA_TYPE_CHAR);
 		  }
 	      }
+	    /*
+	      This is the start of an implementation of
+	      group_concat. Implementing the rest in the
+	      shield_package.sql file is non-trivial, but not
+	      impossible either.
+	    */
+	    /*	    else if (func_name == "group_concat")
+	      {
+
+
+		if (!$3 || !$3->size ())
+		  {
+		    $$ = new text ("shield_arb_agg_chr (chr (1))");
+		  }
+		else
+		  {
+		    separator *sep;
+		    chain *outer_param = new chain ();
+		    chain::const_iterator end;
+		    
+
+		    it=$3 -> begin (); 
+		    printable *inner = *it;
+		    
+		    it++;
+
+		    end = $3->end ();
+		    
+		    sep = dynamic_cast<separator *> ( *(end-1));
+		    if (sep)
+		      {
+			end--;
+		      }
+		    else
+		      {
+			sep = new separator (new text (",", LITERAL));
+		      }
+		    
+		    while (it != end)
+		      {
+			param = new chain (inner, *it);
+			param->set_separator (",");
+			
+			inner = new function (new text ("shield.concat_"), DATA_TYPE_CHAR, param, false);
+			++it;
+		      }
+		    
+		    outer_param->push (inner);
+		    outer_param->push (sep);
+		    outer_param->set_separator (",");
+		    		    
+		    $$ = new function (new text ("shield_group_concat"), DATA_TYPE_CHAR, outer_param, true);
+		    
+		  }
+		  }*/
 	    else if (contains (func_name.c_str (), "date_add", "date_sub"))
 	      {
 		op = (func_name == "date_add")?"+":"-";
@@ -3341,7 +3396,6 @@ simple_expr:
 		    func_translate["char_length"] = make_triplet ("shield.char_length_", DATA_TYPE_NUMBER,false);
 		    func_translate["length"] = make_triplet ("shield.length_", DATA_TYPE_NUMBER,false);
 		    func_translate["date_format"] = make_triplet ("shield.date_format", DATA_TYPE_CHAR,false);
-		    func_translate["count"] = make_triplet ("count", DATA_TYPE_NUMBER,true);
 		    func_translate["min"] = make_triplet ("min", DATA_TYPE_UNDEFINED,true);
 		    func_translate["max"] = make_triplet ("max", DATA_TYPE_UNDEFINED,true);
 		    func_translate["lower"] = make_triplet ("lower", DATA_TYPE_CHAR,false);
@@ -3352,6 +3406,11 @@ simple_expr:
 		    func_translate["date"] = make_triplet ("shield.date_", DATA_TYPE_DATE,false);
 		    func_translate["curdate"] = make_triplet ("shield.curdate", DATA_TYPE_DATE,false);
 		    func_translate["current_date"] = make_triplet ("shield.curdate", DATA_TYPE_DATE,false);
+
+		    /*
+		      Grouping functions
+		    */
+		    func_translate["count"] = make_triplet ("count", DATA_TYPE_NUMBER,true);
 		  }
 
 		it_func = func_translate.find (func_name);
@@ -3468,6 +3527,11 @@ udf_expr_list:
 	{
 	  $$ = new chain (new text ("*"));
 	}
+	  /*	| udf_expr_list2 SEPARATOR_SYM text_string 
+	{ 
+	  $$ = $1;
+	  $$->push (new separator ($3));
+	  }*/
 	;
 
 udf_expr_list2:
@@ -3496,7 +3560,7 @@ udf_expr:
 	      $$ = $1;
 	  }
 	| interval_expr select_alias
-          {
+	{
 	    if ($2)
 	      $$ = new chain ($1, $2);
 	    else

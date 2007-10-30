@@ -21,81 +21,87 @@ namespace shield
   namespace transform
   {
 
-      field_spec::
-      field_spec (text *name, type *type, chain *attribute_in)
-	: __nullable (true)
-      {
-	chain *attribute_out = new chain ();
-	chain::const_iterator it;
+    field_spec::
+    field_spec (text *name, type *type, chain *attribute_in)
+      : __nullable (true)
+    {
+      chain *attribute_out = new chain ();
+      chain::const_iterator it;
 
-	_set_child (CHILD_NAME, name);
-	_set_child (CHILD_TYPE, type);
+      printable *node;
+      nullable *node_nullable;
+      default_value *node_default;
 
-	if (attribute_in)
-	  {
-	for (it = attribute_in->begin (); it != attribute_in->end (); ++it)
-	  {
-	    printable *node = *it;
-	    nullable *node_nullable = dynamic_cast<nullable *> (node);
-	    default_value *node_default = dynamic_cast<default_value *> (node);
+      _set_child (CHILD_NAME, name);
+      _set_child (CHILD_TYPE, type);
 
-	    if (node_nullable)
-	      {
-		__nullable = node_nullable->is_nullable ();
-	      }
-	    else if (node_default)
-	      {
-		_set_child (CHILD_DEFAULT, node_default);
-	      }
-	    else
-	      {
-		attribute_out->push (node);
-	      }
-	    
-	  }
-	  }
-	_set_child (CHILD_ATTRIBUTE, attribute_out);
+      if (attribute_in)
+	{
+	  for (it = attribute_in->begin (); it != attribute_in->end (); ++it)
+	    {
+	      node = *it;
+	      node_nullable = dynamic_cast<nullable *> (node);
+	      node_default = dynamic_cast<default_value *> (node);
 
-	if (!__nullable && !get_default ())
-	  {
-	    printable *inner;
-	    switch (get_type ()->get_type ())
-	      {
-	      case DATA_TYPE_NUMBER:
-	      case DATA_TYPE_DATE:
-	      case DATA_TYPE_DATETIME:
-		inner = new text ("'0'", LITERAL);
-		break;
+	      if (node_nullable)
+		{
+		  __nullable = node_nullable->is_nullable ();
+		}
+	      else if (node_default)
+		{
+		  _set_child (CHILD_DEFAULT, node_default);
+		}
+	      else
+		{
+		  attribute_out->push (node);
+		}	    
+	    }
+	}
+      _set_child (CHILD_ATTRIBUTE, attribute_out);
 
-	      case DATA_TYPE_FLOAT:
-		inner = new text ("'0.0'", LITERAL);
-		break;
+      if (!__nullable && !get_default ())
+	{
+	  printable *inner;
+	  switch (get_type ()->get_type ())
+	    {
+	    case DATA_TYPE_NUMBER:
+	    case DATA_TYPE_DATE:
+	    case DATA_TYPE_DATETIME:
+	      inner = new text ("'0'", LITERAL);
+	      break;
 
-	      case DATA_TYPE_CHAR:
-	      case DATA_TYPE_VARCHAR:
-	      case DATA_TYPE_CLOB:
-		inner = new text ("''", LITERAL);
-		break;
-	      }
+	    case DATA_TYPE_FLOAT:
+	      inner = new text ("'0.0'", LITERAL);
+	      break;
 
-	    set_default (new default_value (inner));
-	  }
+	    case DATA_TYPE_CHAR:
+	    case DATA_TYPE_VARCHAR:
+	    case DATA_TYPE_CLOB:
+	      inner = new text ("''", LITERAL);
+	      break;
+	    }
+
+	  set_default (new default_value (inner));
+	}
 	
 
-      }
+    }
 
     void field_spec::
     _print (ostream &stream)
     {
       stream << "\t" << *get_name () << *get_type ();
       if (get_default ())
-	stream << *get_default ();
+	{
+	  stream << *get_default ();
+	}
 
       stream << (__nullable ? " null" : " not null");
       if (get_attribute ())
-	stream << *get_attribute ();
+	{
+	  stream << *get_attribute ();
+	}
     }
-
     
   }
 

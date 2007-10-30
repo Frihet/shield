@@ -40,13 +40,17 @@ namespace shield
     _print (ostream &stream)
     {
       if (!get_name () || (!get_field_list () && !get_like_clause ()))
-	throw exception::invalid_state ("Required child nodes unset in create table node");
-  
+	{
+	  throw exception::invalid_state ("Required child nodes unset in create table node");
+	}
+
       if (__check)
 	{
 	  introspection::table &t = introspection::get_table (get_name ()->unmangled_str ());
 	  if (t.exists ())
-	    return;
+	    {
+	      return;
+	    }
 	}
 
       stream << "create table" << *get_name () << endl;
@@ -78,28 +82,36 @@ namespace shield
       using util::oracle_escape;
 
       chain *field_list = get_field_list ();
+      chain::const_iterator it;
+
+      printable *node;
+      field_spec *spec;
+
+      string query;
+
       if (field_list)
 	{
-	  chain::const_iterator it;
 	  for (it=field_list->begin (); it!=field_list->end (); ++it)
 	    {
-	      printable *node = *it;
-	      field_spec *spec = dynamic_cast<field_spec *> (node);
+	      node = *it;
+	      spec = dynamic_cast<field_spec *> (node);
 	      
 	      if (!spec)
-		throw exception::invalid_state ("Field spec for create table contains non-field_spec type node " + node->get_node_name ());
+		{
+		  throw exception::invalid_state ("Field spec for create table contains non-field_spec type node " + node->get_node_name ());
+		}
 	      
-	      string str = "insert into shield_table_column (table_name, column_name, column_type, mangled_table_name, mangled_column_name) values (";
+	      query = "insert into shield_table_column (table_name, column_name, column_type, mangled_table_name, mangled_column_name) values (";
 	      
-	      str += oracle_escape (get_name ()->unmangled_str ()).first+", "
+	      query += oracle_escape (get_name ()->unmangled_str ()).first+", "
 		+ oracle_escape (spec->get_name ()->unmangled_str ()).first + ", " 
 		+ oracle_escape (ENUM_TO_STRING (data_type, spec->get_type ()->get_type ())).first + ", "
 		+ oracle_escape (get_name ()->str ()).first + "," 
 		+ oracle_escape (spec->get_name ()->str ()).first 
 		+ ")\n\n";
 	      
-	      str += sep;
-	      _add_query (new fake_query (new text (str, EXACT, false)));
+	      query += sep;
+	      _add_query (new fake_query (new text (query, EXACT, false)));
 	      
 	    }
 	}
@@ -107,6 +119,7 @@ namespace shield
 	{
 	  throw exception::unsupported ("Create table ... like-queries are not supported");
 	}
+      
     }
 
   }

@@ -277,15 +277,9 @@ namespace shield
       if (it != __table_alias.end ())
 	{
 	  res = it->second;
-	  txt = dynamic_cast<text *> (res);
-	  id = dynamic_cast<identity *> (res);
-	  
-	  if (id)
-	    {
-	      txt = id->get_table ();
-	    }
+	  txt = as_text (res, 1);
 
-	  if (!id)
+	  if (!txt)
 	    throw shield::exception::invalid_type ("Unaliased table name", "text");
 	  
 	  return new text (txt);

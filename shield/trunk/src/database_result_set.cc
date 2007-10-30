@@ -62,10 +62,12 @@ namespace shield
     int result_set::
     __get_col_index (string col)
     {
+	    map<string,int>::const_iterator p;
       
       __metadata_init ();
       
-      map<string,int>::const_iterator p = __col_lookup.find (to_lower (col));
+      p = __col_lookup.find (to_lower (col));
+
       if (p == __col_lookup.end ())
 	{
 	  throw not_found (col);

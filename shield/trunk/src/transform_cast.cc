@@ -36,16 +36,18 @@ namespace shield
     get_context (void)
     {
       printable *inner = get_item ();
+      int desired;
+      data_type real;
 
       if (!inner)
 	throw shield::exception::syntax ("Cast of null node");
 
-      data_type real = inner->get_context ();
+      real = inner->get_context ();
       
       /*
 	Desired is a bitmask of all types that are ok. 
       */
-      int desired = __contexts;
+      desired = __contexts;
 
       /*
 	First check if the actual type is one of the allowed types. If so, do no casting.
@@ -76,20 +78,23 @@ namespace shield
       throw shield::exception::syntax ("Unknown desired context " + desired);
     }
     
+
     void cast::
     _print (ostream &stream)
     {
       printable *inner = get_item ();
+      data_type real;
+      int desired;
 
       if (!inner)
 	throw shield::exception::syntax ("Cast of null node");
 
-      data_type real = inner->get_context ();
+      real = inner->get_context ();
       
       /*
 	Desired is a bitmask of all types that are ok. 
       */
-      int desired = __contexts;
+      desired = __contexts;
       
       //      debug << ("Cast from " + ENUM_TO_STRING (data_type, real) + " to whatever");
       

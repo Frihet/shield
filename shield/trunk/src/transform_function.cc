@@ -24,13 +24,18 @@ namespace shield
     function (printable *name, data_type type, printable *param, bool aggregate)
       : __type (type), __aggregate (aggregate)
       {
+
 	if (!name)
 	  {
 	    throw exception::invalid_param (get_node_name () +" constructor called with null name");
 	  }
+
 	_set_child (CHILD_NAME, name);
+
 	if (param)
-	  _set_child (CHILD_PARAM, param);
+	  {
+	    _set_child (CHILD_PARAM, param);
+	  }
       }
 
     bool function::

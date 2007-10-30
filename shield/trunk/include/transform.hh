@@ -1906,6 +1906,24 @@ namespace shield
     }
     ;
 
+    class separator
+      : public printable
+    {
+    public:
+      separator (printable *p)
+      {
+	_set_child (CHILD_INNER, p);
+      }
+
+    protected:
+      virtual void _print (ostream &stream)
+      {
+	stream << *_get_child (CHILD_INNER);
+      }
+
+    }
+      ;
+
     /**
        Error callback for yyparse and yylex. Prints the specified error message.
     */
@@ -1939,6 +1957,22 @@ namespace shield
     int lex_do (void);
 
     string translate (const string &in) throw ();
+
+    /**
+       If the specified node is a text node, return it as such. If the
+       specified node is an identity, return its field
+       component. Otherwise return null.
+    */
+    text *as_text(printable *p, int part=2);
+
+    /**
+       If the specified node is a identity node, return it as such. If
+       the specified node is a text node, return a newly allocated
+       identity node and reparent the text node the the new identity
+       node. Otherwise return null.
+    */
+
+    identity *as_identity(printable *p);
 
   }
 

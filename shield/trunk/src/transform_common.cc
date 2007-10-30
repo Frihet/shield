@@ -81,6 +81,8 @@ namespace shield
 	}
       ;
       
+      string lower;
+
       if (reserved.size () == 0)
 	{
 	  for (int i = 0; i<(sizeof (reserved_arr)/sizeof (reserved_arr[0])); i++ )
@@ -89,7 +91,7 @@ namespace shield
 	    }
 	}
       
-      string lower = to_lower (in);
+      lower = to_lower (in);
       
       return reserved.find (lower) != reserved.end ();
     }
@@ -99,13 +101,13 @@ namespace shield
 
       string item_type = to_lower (item_type_external);
       string plural = item_type + "s";
+      string upcase_name = to_upper (item_name);
 
       if (item_type == "index")
 	{
 	  plural = "indexes";
 	}
   
-      string upcase_name = to_upper (item_name);
       stream << "declare" << endl;
       stream << "\t"+item_type+"_count integer;" << endl;
       stream << "\tcursor_handle integer;" << endl;
@@ -134,7 +136,11 @@ namespace shield
     {
       try
 	{
-	  if (in == "")
+	  string out ("");
+	  string::const_iterator it;
+	  int sep_count=0;
+
+	  if (in.empty ())
 	    {
 	      return shield::transform::sep+shield::transform::sep;
 	    }
@@ -142,9 +148,6 @@ namespace shield
 
 	  using namespace shield;
 
-	  string out="";
-	  string::const_iterator it;
-	  int sep_count=0;
 	  ostringstream output_stream;
 	    
 	  pair<bool, string> cache_res = cache::get (in);
@@ -240,6 +243,32 @@ namespace shield
 	}
       
     }
+
+    text *as_text(printable *p, int part)
+    {
+      transform::text *txt = dynamic_cast<text *> (p);
+      transform::identity *id = dynamic_cast<identity *> (p);
+      if (txt)
+	{
+	  return txt;
+	}
+      if (id)
+	{
+	  switch (part)
+	    {
+	    case 0:
+	      return id->get_namespace ();
+	    case 1:
+	      return id->get_table ();
+	    case 2:
+	      return id->get_field ();
+	    default:
+	      throw exception::invalid_state ("Tried to acces invalid identity element");
+	    }
+	}
+      return 0;
+    }
+
     
   }
 

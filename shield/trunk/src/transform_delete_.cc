@@ -73,10 +73,14 @@ namespace shield
     void delete_::
     _make_condensed_table_list (void)
     {
-      if (_condensed_table_list.size ())
-	return;
+      identity *from;      
 
-      identity *from = _get_child<identity> (CHILD_TABLE_LIST);
+      if (_condensed_table_list.size ())
+	{
+	  return;
+	}
+
+      from = _get_child<identity> (CHILD_TABLE_LIST);
       
       if (!from)
 	{

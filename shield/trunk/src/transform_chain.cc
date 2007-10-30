@@ -80,10 +80,13 @@ namespace shield
     printable *chain::
     transform (catalyst::catalyst &catalyst)
     {
+      printable *p;
+      printable *p2;
+
       for (int i=0; i<__chain.size (); i++)
 	{
-	  printable *p = __chain[i];
-	  printable *p2 = p->transform (catalyst);
+	  p = __chain[i];
+	  p2 = p->transform (catalyst);
 	  if (p2 != p)
 	    {
 	      __chain[i] = p2;
@@ -129,9 +132,10 @@ namespace shield
     string chain::
     get_tree (int level)
     {
-      string res(level*2, ' ');
-      res += get_node_name () + "\n";
       const_iterator it;
+      string res(level*2, ' ');
+
+      res += get_node_name () + "\n";
 
       for (it=__chain.begin (); it!=__chain.end (); ++it)
 	{

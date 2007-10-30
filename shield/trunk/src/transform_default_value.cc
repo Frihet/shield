@@ -30,6 +30,9 @@ namespace shield
       printable *def = _get_child (CHILD_INNER);
       text *txt;
 
+      field_spec *field=0;
+      printable *ancestor = get_parent ();
+
       txt = dynamic_cast<text *> (def);
 
       if (txt)
@@ -52,8 +55,6 @@ namespace shield
 	  return this;
 	}
 
-      field_spec *field=0;
-      printable *ancestor = get_parent ();
       while (true)
 	{
 	  if (!ancestor)
@@ -73,7 +74,9 @@ namespace shield
 	of those arbitrary limitations that Oracle loves so much.
       */
       if (!field)
-	throw exception::invalid_state ("Could not locate field_spec for default value");
+	{
+	  throw exception::invalid_state ("Could not locate field_spec for default value");
+	}
 
       if (field->get_type ()->get_type () == DATA_TYPE_DATETIME)
 	{
