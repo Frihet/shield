@@ -738,7 +738,7 @@ end shield;
 
 create or replace trigger after_logon
 	after logon 
-	on database
+	on schema
 begin
 	execute immediate 'alter session set nls_sort=''binary_ci''';
 	execute immediate 'alter session set nls_comp=''ansi''';
@@ -749,7 +749,6 @@ end;
 	Create lookup table for name mangling and type lookup on columns
 */
 
-/*
 drop table shield_table_column;
 
 create table shield_table_column
@@ -798,5 +797,3 @@ drop index shield_table_column_idx4;
 create index shield_table_column_idx4
 on shield_table_column (mangled_table_name, mangled_column_name);
 
-
-*/

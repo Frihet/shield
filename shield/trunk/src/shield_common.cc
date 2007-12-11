@@ -37,7 +37,7 @@ namespace shield
   namespace
   {
 
-    const char *GETOPT_ARG = "c:u:p:h:PHd:w:o:s:";
+    const char *GETOPT_ARG = "c:u:p:Phd:w:s:";
     
     string socket_name = "/tmp/shield.socket";
 
@@ -74,6 +74,26 @@ namespace shield
     {
       string username = "", password = "", host = "localhost";
 
+      char *env;
+
+      env = getenv("SHIELD_USERNAME");
+      if( env )
+	{
+	  username = env;
+	}
+
+      env = getenv("SHIELD_PASSWORD");
+      if( env )
+	{
+	  password = env;
+	}
+
+      env = getenv("SHIELD_CONNECTION");
+      if( env )
+	{
+	  host = env;
+	}
+
       startup_test ();
 
       /*    
@@ -88,7 +108,7 @@ namespace shield
 	    long_options[] =
 	    {
 	      {   
-		"help", no_argument, 0, 'H'
+		"help", no_argument, 0, 'h'
 	      }
 	      ,
 	      {   
@@ -104,7 +124,7 @@ namespace shield
 	      }
 	      ,
 	      {   
-		"host", required_argument, 0, 'h'
+		"connection", required_argument, 0, 'c'
 	      }
 	      ,
 	      {   
@@ -148,7 +168,7 @@ namespace shield
 	    case 0:
 	      break;
 
-	    case 'H':
+	    case 'h':
 	      print_help (argv[0],cout);
 	      exit(0);
 	    

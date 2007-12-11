@@ -48,7 +48,7 @@ namespace shield
 	    }
 	}
 
-      stream << "drop table" << *name << endl << endl << sep;
+      stream << "drop table" << *name << " cascade constraints" << endl << endl << sep;
       stream << "delete from shield_table_column where lower (table_name) = lower (" << util::oracle_escape (name->str ()).first << ")" << endl << endl << sep;
 
       introspection::clear_table (name->unmangled_str ());
