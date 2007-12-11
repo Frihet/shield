@@ -366,11 +366,25 @@ namespace shield
   */
   const int DATA_TYPE_SELECTABLE = DATA_TYPE_CLOB | DATA_TYPE_UNDEFINED | DATA_TYPE_NUMBER | DATA_TYPE_FLOAT | DATA_TYPE_CHAR | DATA_TYPE_VARCHAR;
 
+  /**
+     Global logger for errors
+  */
   extern logger::logger error;
 
+  /**
+     Returns the shield_multiplex socket filename
+  */
   std::string get_socket_name();
 
+  /**
+     Parse the specified argument vector
+  */
   int parse_args (int argc, char **argv);
+
+  /**
+     Return true if shield_multiplex should daemonize
+  */
+  int get_daemonize();
 
 }
 

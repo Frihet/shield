@@ -37,10 +37,12 @@ namespace shield
   namespace
   {
 
-    const char *GETOPT_ARG = "c:u:p:Phd:w:s:";
+    const char *GETOPT_ARG = "c:u:p:Phd:w:s:f";
     
     string socket_name = "/tmp/shield.socket";
 
+    int daemonize = 1;
+    
     /**
        Check that environment looks ok. 
     */
@@ -137,6 +139,10 @@ namespace shield
 	      ,
 	      {   
 		"socket-file", required_argument, 0, 's'
+	      }
+	      ,
+	      {   
+		"foreground", required_argument, 0, 'f'
 	      }
 	      ,
 	      {
@@ -238,6 +244,12 @@ namespace shield
 		break;
 	      }
 
+	    case 'f':
+	      {
+		daemonize = 0;
+		break;
+	      }
+
 	    case '?':
 	      exit (1);
 
@@ -255,6 +267,11 @@ namespace shield
   get_socket_name ()
     {
       return socket_name;
+    }
+
+  int get_daemonize ()
+    {
+      return daemonize;
     }
 
 }

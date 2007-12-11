@@ -444,26 +444,39 @@ namespace
     /*
       Fork, and let parent exit. 
     */
-    switch (retry_fork ())
+    if (get_daemonize())
       {
-      case (pid_t)-1:
-	debug << "Could not put program in background. Quitting";
-	perror ("fork");
-	exit (1);
-
-      case 0:
-	{
-	  debug << "Created child process";
-	  break;
-	}
-
-      default:
-	{	
-	  debug << "Parent exiting after daemonization";
-	  exit (0);
-	}
+	switch (retry_fork ())
+	  {
+	  case (pid_t)-1:
+	    debug << "Could not put program in background. Quitting";
+	    perror ("fork");
+	    exit (1);
+	    
+	  case 0:
+	    {
+	      debug << "Created child process";
+	      break;
+	    }
+	    
+	  default:
+	    {	
+	      debug << "Parent exiting after daemonization";
+	      exit (0);
+	    }
+	  }
       }
 
+    /* Change the file mode mask */
+    umask(0);
+
+    /* Change the current working directory.  This prevents the current
+       directory from being locked; hence not being able to remove it. */
+    if ((chdir("/")) < 0) {
+	error << "Could not change working directory. Exiting.";
+	exit (1);
+    }
+    
     /*
       Put ourself in our own processing group. Means we won't get any
       signal meant for our grandparent by accident.
