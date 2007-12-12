@@ -37,22 +37,15 @@ namespace shield
   namespace
   {
 
-    const char *GETOPT_ARG = "c:u:p:Phd:w:s:f";
+    const char *GETOPT_ARG = "c:u:p:Phd:w:s:";
     
     string socket_name = "/tmp/shield.socket";
-
-    int daemonize = 1;
     
     /**
        Check that environment looks ok. 
     */
     void startup_test ()
     {
-      if (!getenv ("ORACLE_HOME"))
-	{
-	  cerr << "ORACLE_HOME environment variable is not set. Define it and restart shield." << endl;
-	  exit (1);
-	}
     }
     
     
@@ -141,10 +134,6 @@ namespace shield
 		"socket-file", required_argument, 0, 's'
 	      }
 	      ,
-	      {   
-		"foreground", required_argument, 0, 'f'
-	      }
-	      ,
 	      {
 		0, 0, 0, 0
 	      }
@@ -190,7 +179,7 @@ namespace shield
 	      password = optarg;
 	      break;
 
-	    case 'h':
+	    case 'c':
 	      host = optarg;
 	      break;
 
@@ -244,12 +233,6 @@ namespace shield
 		break;
 	      }
 
-	    case 'f':
-	      {
-		daemonize = 0;
-		break;
-	      }
-
 	    case '?':
 	      exit (1);
 
@@ -267,11 +250,6 @@ namespace shield
   get_socket_name ()
     {
       return socket_name;
-    }
-
-  int get_daemonize ()
-    {
-      return daemonize;
     }
 
 }

@@ -381,11 +381,6 @@ namespace shield
   */
   int parse_args (int argc, char **argv);
 
-  /**
-     Return true if shield_multiplex should daemonize
-  */
-  int get_daemonize();
-
 }
 
 #endif //#ifndef SHIELD_HH

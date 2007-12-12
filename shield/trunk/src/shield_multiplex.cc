@@ -441,32 +441,31 @@ namespace
   void daemonize ()
   {
 
+    pid_t pid;
     /*
       Fork, and let parent exit. 
     */
-    if (get_daemonize())
+    switch (pid=retry_fork ())
       {
-	switch (retry_fork ())
-	  {
-	  case (pid_t)-1:
-	    debug << "Could not put program in background. Quitting";
-	    perror ("fork");
-	    exit (1);
-	    
-	  case 0:
-	    {
-	      debug << "Created child process";
-	      break;
-	    }
-	    
-	  default:
-	    {	
-	      debug << "Parent exiting after daemonization";
-	      exit (0);
-	    }
-	  }
+      case (pid_t)-1:
+	debug << "Could not put program in background. Quitting";
+	perror ("fork");
+	exit (1);
+	
+      case 0:
+	{
+	  debug << "Created child process";
+	  break;
+	}
+	
+      default:
+	{	
+	  debug << "Parent exiting after daemonization";
+	  cout << pid << endl; 
+	  exit (0);
+	}
       }
-
+      
     /* Change the file mode mask */
     umask(0);
 

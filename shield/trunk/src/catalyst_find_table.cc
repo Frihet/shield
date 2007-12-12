@@ -42,7 +42,7 @@ namespace shield
 	  else
 	    {
 	      print = a->get_item ();
-	      if (transform::as_text (print))
+	      if (transform::as_text (print, 1))
 		{
 		  if (print->get_query () == __query)
 		    {

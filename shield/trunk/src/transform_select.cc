@@ -345,7 +345,7 @@ namespace shield
       
       if (_condensed_table_list.size () == 0)
 	{
-	  throw exception::invalid_state (string ("Used table-less wildcard in select query with") + util::stringify (_condensed_table_list.size ()) + " items, got zero fields");
+	  throw exception::invalid_state (string ("Used table-less wildcard in select query with ") + util::stringify (_condensed_table_list.size ()) + " items, got zero fields");
 	}
     }
 

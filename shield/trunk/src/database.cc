@@ -60,6 +60,8 @@ namespace shield
 	  }
 	catch (std::exception &e)
 	  {
+		  warning << "Oracle exception:";
+		  warning << e.what();
 	  }
 
 	if (!conn)
