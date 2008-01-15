@@ -135,6 +135,12 @@ SConscript('src/SConscript', build_dir='build', duplicate=0)
 # Build the actual programs
 SConscript('bin/SConscript')
 
+env.Default('bin')
+
+
+
 env = Environment(TARFLAGS = '-c -z')
 env.Tar('shield.tar.gz', glob.glob('src/*.c') + glob.glob('src/*.cc')  + glob.glob('src/*.y')+ glob.glob('include/*.h') + glob.glob('include/*.hh') + glob.glob('joomla/*.php') + [ 'shield_package.sql','sysv/shield','bin/SConscript', 'SConstruct', 'build/SConscript'])
 
+env.Install('/usr/local/bin',['bin/shield','bin/shield_multiplex'])
+Alias('install', '/usr/local/bin')
