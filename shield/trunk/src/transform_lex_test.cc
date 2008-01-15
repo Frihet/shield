@@ -88,7 +88,7 @@ main (void)
   
   shield::transform::lex_set_string (input);
   
-  for( int i=0; i < sizeof(result)/sizeof(int);i++ )
+  for( unsigned int i=0; i < sizeof(result)/sizeof(int);i++ )
     {
       int d = shield::transform::lex_do();
       if (d != result[i] )

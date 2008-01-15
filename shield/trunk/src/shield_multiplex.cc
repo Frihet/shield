@@ -249,7 +249,7 @@ namespace
 	/*
 	  And we're done. Lets execute this thing.
 	*/
-	argv[0] = "shield";
+	argv[0] = const_cast<char *> ("shield");
 	//	debug << "Calling execve in child - this is goodbye.";
 	execve("./bin/shield", argv, envp);
 	error << (string("Function call 'execve' failed: ") + strerror (errno));

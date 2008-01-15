@@ -264,7 +264,6 @@ namespace shield
 
       printable *res;   
       text *txt;
-      identity *id;
 
       if (!__table_alias_init)
 	{

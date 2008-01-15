@@ -1404,7 +1404,7 @@ namespace shield
 	    printable *f=0, 
 	    printable *g=0, 
 	    printable *h=0)
-	: __type (type), chain (a, b, c, d, e, f, g, h)
+	: chain (a, b, c, d, e, f, g, h), __type (type)
       {
       }
       

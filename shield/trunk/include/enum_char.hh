@@ -61,7 +61,7 @@ as published by the Free Software Foundation; version 3.
    used directly, but it is used internally by the magic
    ENUM_TO_STRING and STRING_TO_ENUM macros.
 */
-#define ENUM_STRING(name, ...) enum name {__VA_ARGS__}; static inline char *name ## _str_get () { return #__VA_ARGS__; }
+#define ENUM_STRING(name, ...) enum name {__VA_ARGS__}; static inline const char *name ## _str_get () { return #__VA_ARGS__; }
 
 /**
    Get a string representation of the specified enum value

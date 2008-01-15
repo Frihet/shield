@@ -349,7 +349,7 @@ namespace shield
 	       DATA_TYPE_CHAR=16,
 	       DATA_TYPE_VARCHAR=32,
 	       DATA_TYPE_DATE=64,
-	       DATA_TYPE_DATETIME=128,
+	       DATA_TYPE_DATETIME=128
 	       );
 
   /**

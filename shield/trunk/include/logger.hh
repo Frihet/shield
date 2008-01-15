@@ -124,20 +124,20 @@ namespace logger
   private:
 
     /**
-       This flag is true if this logger is enabled
+       The name to use first in all messages
     */
-    bool __enabled;
-    
+    string __name;
+
     /**
        This is the underlying stream that one logs to
     */
     ostream &__stream;
 
     /**
-       The name to use first in all messages
+       This flag is true if this logger is enabled
     */
-    string __name;
-
+    bool __enabled;
+    
     /**
        Set to true if the timestamp should be shown
      */

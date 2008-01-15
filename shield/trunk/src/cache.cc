@@ -37,11 +37,11 @@ namespace shield
 
       map<const string, pair<long long, string> > shield_cache;
       long long shield_cache_id = 0;
-      long long int shield_cache_hit = 0;
+      long long shield_cache_hit = 0;
       long long shield_cache_miss = 0;
       
       const int SHIELD_CACHE_MAX_AGE = 192;
-      const int SHIELD_CACHE_OVERFLOW = 256;
+      const unsigned int SHIELD_CACHE_OVERFLOW = 256;
       
     }    
     

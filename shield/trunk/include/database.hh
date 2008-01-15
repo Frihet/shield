@@ -23,7 +23,24 @@
 
 #include <string>
 #include <map>
+
+/*
+  Include occi.h with warnings disabled
+*/
+#if defined __GNUC__
+#pragma GCC system_header
+#elif defined __SUNPRO_CC
+#pragma disable_warn
+#elif defined _MSC_VER
+#pragma warning(push, 1)
+#endif 
 #include <occi.h>
+#if defined __SUNPRO_CC
+#pragma enable_warn
+#elif defined _MSC_VER
+#pragma warning(pop)
+#endif 
+
 
 #include "exception.hh"
 #include "logger.hh"
