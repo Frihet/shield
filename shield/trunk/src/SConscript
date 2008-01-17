@@ -37,7 +37,7 @@ database = env.Object(Split("""
 
 transform = env.Object(Split("""
 	transform_common.cc				
-	transform_yacc.cc 
+	transform_yacc_wrapper.cc 
 	transform_lex_wrapper.cc		
 	transform_printable.cc 
 	transform_select.cc		

@@ -24,24 +24,7 @@
 #include <string>
 #include <map>
 
-/*
-  Include occi.h with warnings disabled
-*/
-#if defined __GNUC__
-#pragma GCC system_header
-#elif defined __SUNPRO_CC
-#pragma disable_warn
-#elif defined _MSC_VER
-#pragma warning(push, 1)
-#endif 
-#include <occi.h>
-#if defined __SUNPRO_CC
-#pragma enable_warn
-#elif defined _MSC_VER
-#pragma warning(pop)
-#endif 
-
-
+#include "occi_wrapper.hh"
 #include "exception.hh"
 #include "logger.hh"
 
@@ -129,10 +112,39 @@ namespace shield
 
     private:
       
+      /**
+	 Oracle connections
+      */
+      oracle::occi::Connection *__conn;
+      /**
+	 Oracle statement
+      */
+      oracle::occi::Statement *__stmt;
+      /**
+	 This flag is set to true once the column names have been loaded into __col_lookup
+      */
       bool __is_metadata_init;
-      bool __is_executed;
-      bool __is_closed;
 
+      /**
+	 The original text query
+      */
+      string __query;
+
+      /**
+	 Set to true once the query has been executed.
+      */
+      bool __is_executed;
+      /**
+	 Oracle result set. This is what we're really wrapping.
+      */
+      oracle::occi::ResultSet *__rs;
+
+      /**
+	 Set to true once the result set has been closed. Used to make
+	 sure we don't accidentally close the set multiple times.
+      */
+      bool __is_closed;
+      
       /**
 	 The column id lookup table for this resultset. It is used
 	 when accessing a column by name. Note that column indices in
@@ -141,14 +153,13 @@ namespace shield
 	 map. Classical C vs. Pascal issue. Cost me two hours of
 	 debuging. :-(
       */
+      
       map<string,int> __col_lookup;
+
+      /**
+	 List of parameters to this statement
+      */
       vector<parameter> __param;
-      
-      string __query;
-      
-      oracle::occi::Statement *__stmt;
-      oracle::occi::ResultSet *__rs;
-      oracle::occi::Connection *__conn;
       
     }
     ;

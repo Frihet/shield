@@ -45,7 +45,7 @@ namespace shield
 
     create_index::
     create_index ()
-      : __table_query (0), __type (PRIMARY_KEY)
+      : __type (PRIMARY_KEY), __table_query (0)
     {
     }
     

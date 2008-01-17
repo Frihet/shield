@@ -83,7 +83,7 @@ namespace shield
       printable *p;
       printable *p2;
 
-      for (int i=0; i<__chain.size (); i++)
+      for (size_t i=0; i<__chain.size (); i++)
 	{
 	  p = __chain[i];
 	  p2 = p->transform (catalyst);

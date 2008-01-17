@@ -67,7 +67,7 @@ namespace shield
 	}
       ;
 
-      for (int i=0; i<(sizeof(order)/sizeof(data_type)); i++)
+      for (size_t i=0; i<(sizeof(order)/sizeof(data_type)); i++)
 	{
 	  if (desired & order[i])
 	    {

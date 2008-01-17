@@ -157,7 +157,7 @@ namespace util
 		break;
 	      
 	      case 'e':
-		out += '\e';
+		out += '\x1b';
 		break;
 	      
 	      case 'a':

@@ -22,12 +22,21 @@
 
 %{
 
+#if defined __GNUC__
+#pragma GCC system_header
+#elif defined __SUNPRO_CC
+#pragma disable_warn
+#elif defined _MSC_VER
+#pragma warning(push, 1)
+#endif 
+
 #include <vector>
 #include <string>
 
 #include "include/transform.hh"
 #include "include/exception.hh"
 #include "include/util.hh"
+
 
   /**
      This is the text contents of the last element parsed by the lexer. We need to be _very_ careful when we use this, since the parser sometimes needs to perform lookahead, in which case yytext points to the contents of the element _after_ the current one. For this reason, yytext should only ever be used on tokens which 
@@ -675,7 +684,7 @@ namespace shield
         delete_option opt_temporary all_or_any opt_distinct
         opt_ignore_leaves fulltext_options spatial_type union_option
         start_transaction_opts opt_chain opt_release
-        union_opt select_derived_init option_type2
+        union_opt option_type2
 %type <printable_val>
 	raid_types merge_insert_types
 %type <printable_val>
@@ -731,7 +740,7 @@ namespace shield
 	field_opt_list opt_binary table_lock_list table_lock
 	ref_list opt_on_delete opt_on_delete_list opt_on_delete_item use
 	opt_delete_options opt_delete_option varchar nchar nvarchar
-	opt_outer table_name opt_option opt_place column_list column_list_id
+	opt_outer opt_option opt_place column_list column_list_id
 	opt_column_list grant_privileges grant_ident grant_list grant_option
 	object_privilege object_privilege_list user_list rename_list
 	clear_privileges flush_options flush_option
@@ -758,7 +767,7 @@ namespace shield
 %type <text_val> ident IDENT_sys keyword keyword_sp keyword_reserved ident_any select_alias 
 %type <text_val> opt_table_alias TEXT_STRING_sys 
 
-%type<identity_val> table_ident field_ident insert2 insert_table
+%type<identity_val> table_ident field_ident insert2 insert_table table_name
 
 %type <select_item_val> select_item2 select_item table_wild
 
@@ -1875,8 +1884,8 @@ field_opt_list:
 	| field_option;
 
 field_option:
-	SIGNED_SYM	
-	| UNSIGNED	
+	SIGNED_SYM      { throw exception::unsupported (__FILE__, __LINE__); };
+	| UNSIGNED	{ throw exception::unsupported (__FILE__, __LINE__); };
 	| ZEROFILL	{ throw exception::unsupported (__FILE__, __LINE__); };
 
 opt_len:
@@ -4296,7 +4305,10 @@ table_list:
 	;
 
 table_name:
-	table_ident
+	table_ident 
+	  {
+	    $$=$1;
+	  }
 	;
 
 if_exists:
@@ -4351,6 +4363,9 @@ insert2:
 
 insert_table:
 	table_name
+	  {
+	    $$=$1;
+	  }
 	;
 
 insert_field_spec:
@@ -5206,7 +5221,13 @@ NUM_literal:
 
 insert_ident:
 	simple_ident_nospvar 
+	  {
+	    $$=$1;
+	  }
 	| table_wild
+	  {
+	    $$=$1;
+	  }
 	;
 
 table_wild:
@@ -5311,7 +5332,7 @@ label_ident:
 
 ident_or_text:
         ident { $$ = $1; }                   
-	| TEXT_STRING_sys	
+	| TEXT_STRING_sys { $$ = $1; }	
 	| LEX_HOSTNAME		{ throw exception::unsupported (__FILE__, __LINE__); };
 
 user:

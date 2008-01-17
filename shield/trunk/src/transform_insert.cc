@@ -173,7 +173,7 @@ namespace shield
 	      throw exception::invalid_state (string ("Field list has ") + stringify (field_list->size ()) + " items, but value list has " + stringify (value->size ()));
 	    }
 
-	  for (int j=0; j<value->size (); j++)
+	  for (size_t j=0; j<value->size (); j++)
 	    {
 	      text *column_name = as_text ((*field_list)[j]);
 

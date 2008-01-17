@@ -79,6 +79,10 @@ namespace shield
 	    case DATA_TYPE_CLOB:
 	      inner = new text ("''", LITERAL);
 	      break;
+	    default:
+	      warning << "Unhandled type in transform_field_spec";
+	      inner = 0;
+	      break;
 	    }
 
 	  set_default (new default_value (inner));

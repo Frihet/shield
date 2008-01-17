@@ -85,7 +85,7 @@ namespace shield
 
       if (reserved.size () == 0)
 	{
-	  for (int i = 0; i<(sizeof (reserved_arr)/sizeof (reserved_arr[0])); i++ )
+	  for (size_t i = 0; i<(sizeof (reserved_arr)/sizeof (reserved_arr[0])); i++ )
 	    {
 	      reserved.insert (reserved_arr[i]);
 	    }

@@ -121,7 +121,7 @@ if conf.CheckFunc('getopt_long'):
 # traces on errors.
 
 if conf.CheckGxx():
-	conf.env['CXXFLAGS']+=' -pipe -Woverloaded-virtual -Wnon-virtual-dtor -Wformat -Wimplicit-int -Wimplicit-function-declaration -Wmissing-braces -Wunused -Wreturn-type -Wwrite-strings'
+	conf.env['CXXFLAGS']+=' -pipe -Woverloaded-virtual -Wnon-virtual-dtor -Wformat -Wimplicit-int -Wimplicit-function-declaration -Wmissing-braces -Wunused -Wreturn-type -Wwrite-strings -Wall'
 	conf.env['LINKFLAGS']+=' -rdynamic'
 
 

@@ -137,7 +137,7 @@ namespace shield
 	  
 	  if (!ctx_map.size ())
 	    {
-	      for (int i=0; i<(sizeof(mapping)/sizeof(mapping[0])); i++)
+	      for (size_t i=0; i<(sizeof(mapping)/sizeof(mapping[0])); i++)
 		{
 		  ctx_map[pair_ctx (mapping[i][0], mapping[i][1])] = mapping[i][2];
 		  ctx_map[pair_ctx (mapping[i][1], mapping[i][0])] = mapping[i][2];

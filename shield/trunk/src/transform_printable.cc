@@ -45,7 +45,10 @@ namespace shield
 
     printable::
     printable()
-      :  __push_front (false), __context (DATA_TYPE_UNDEFINED), __skip_space (false), __parent (0)
+      :  __push_front (false), 
+	 __skip_space (false),
+	 __context (DATA_TYPE_UNDEFINED),
+	 __parent (0)
     {
       all_printable.push_back (this);
     }
@@ -181,7 +184,7 @@ namespace shield
     get_node_name ()
     {
       string full = util::cxx_demangle (typeid(*this).name ());
-      int pos = full.rfind("::");
+      size_t pos = full.rfind("::");
       if (pos != full.npos)
 	{
 	  full = full.substr (pos+2);

@@ -63,7 +63,7 @@ namespace shield
 	Limit is one less than actual oracle limit because we might
 	need to add a trailing slash...
       */
-      const int ORACLE_MAX_CHARS = 29;
+      const unsigned int ORACLE_MAX_CHARS = 29u;
       
       /**
 	 Remove quoting from quoted identifier
@@ -100,7 +100,7 @@ namespace shield
       /**
 	 The maximum length of the snapshot of the preview in get_node_name
       */
-      const int MAX_PREVIEW_LEN = 20;
+      const unsigned int MAX_PREVIEW_LEN = 20u;
 
     }
 
@@ -180,7 +180,7 @@ namespace shield
       string suffix = "...";
       res += ": ";
       
-      for (int i=0; i<MAX_PREVIEW_LEN; i++)
+      for (size_t i=0; i<MAX_PREVIEW_LEN; i++)
 	{
 	  if (i == content.size ())
 	    {

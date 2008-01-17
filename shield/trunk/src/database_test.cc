@@ -13,7 +13,6 @@
 
 #include <string>
 #include <iostream>
-#include <occi.h>
 
 #include "include/database.hh"
 #include "include/exception.hh"

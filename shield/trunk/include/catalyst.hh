@@ -227,8 +227,8 @@ namespace shield
       transform::printable *__aggregate (transform::text *field, transform::text *table_alias);
 
     private:
-      vector<transform::identity *>__group_field;
       transform::query *__query;
+      vector<transform::identity *>__group_field;
 
     }
     ;

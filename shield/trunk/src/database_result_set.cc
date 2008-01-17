@@ -52,7 +52,7 @@ namespace shield
       
       cmd = __rs->getColumnListMetaData();
       
-      for (int i=0; i<cmd.size (); i++)
+      for (size_t i=0; i<cmd.size (); i++)
 	{
 	  string name = cmd[i].getString(MetaData::ATTR_NAME);      
 	  __col_lookup[to_lower (name)] = i;
@@ -105,6 +105,7 @@ namespace shield
 
       if (__is_closed)
 	{
+	  warning << "Tried to close result set multiple times";
 	  return;
 	}
 
@@ -133,14 +134,14 @@ namespace shield
     {
       string q2;
       bool quoted = false;
-      int param_pos = 0;
+      size_t param_pos = 0;
 
       if (__is_executed)
 	return;
 
       __is_executed = true;
       
-      for (int i = 0; i <__query.length (); i++)
+      for (size_t i = 0; i <__query.length (); i++)
 	{
 	  if (quoted)
 	    {

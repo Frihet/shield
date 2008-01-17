@@ -54,6 +54,23 @@ as published by the Free Software Foundation; version 3.
 
 #include <string>
 
+
+/*
+  Disable warnings for this file. This feature really needs variadic
+  macros to work, which aren't part of C++. 
+  
+  Unfortunate...
+*/
+#if defined __GNUC__
+#pragma GCC system_header
+#elif defined __SUNPRO_CC
+#pragma disable_warn
+#elif defined _MSC_VER
+#pragma warning(push, 1)
+#endif 
+
+
+
 /**
    Magical enum definition function. This function will define an enum
    named by the first argument. It will also create a string named
@@ -132,4 +149,11 @@ namespace enum_char
   ;
 
 }
+
+#if defined __SUNPRO_CC
+#pragma enable_warn
+#elif defined _MSC_VER
+#pragma warning(pop)
+#endif 
+
 #endif //#ifndef ENUM_CHAR_HH
