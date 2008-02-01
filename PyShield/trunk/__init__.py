@@ -1,11 +1,12 @@
-import DCOracle2, popen2
+import DCOracle2, popen2, os, tempfile, errno, socket
 
 apilevel = '2.0'
 threadsafety = 1
 paramstyle = 'named'
 
-
 class Connection(DCOracle2.connection):
+    shield_sock_dir = "/var/lib/shield"
+    
     def __init__(self, dsn=None, user=None, password=None, database=None):
         dsnUser = dsnPassword = dsnDatabase = None
         if dsn:
@@ -17,11 +18,12 @@ class Connection(DCOracle2.connection):
         user = user or dsnUser
         password = password or dsnPassword
         database = database or dsnDatabase
-            
+
         DCOracle2.connection.__init__(self, DCOracle2.dco2.connect(user, password, database))
-        self.__dict__['shield_out'], self.__dict__['shield_in'] = popen2.popen2(
-            'shield --user %(user)s --password %(password)s --host %(database)s 2> /dev/null' % {
-            'user': user, 'password': password, 'database': database})
+	socket_name = "%s/%s-%s.sock" % (self.shield_sock_dir, database, user)
+        sock =  socket.socket(socket.AF_UNIX)
+        sock.connect(socket_name)
+        self.__dict__['shield_conn'] = sock.makefile()
         
     def cursor(self):
         if self._db is None:
@@ -30,12 +32,12 @@ class Connection(DCOracle2.connection):
         return Cursor(c, self)
 
     def shield(self, query):
-        self.shield_in.write(query)
-        self.shield_in.write('\0')
-        self.shield_in.flush()
+        self.shield_conn.write(query)
+        self.shield_conn.write('\0')
+        self.shield_conn.flush()
         res = ['']
         while True:
-            char = self.shield_out.read(1)
+            char = self.shield_conn.read(1)
             if char == '\0':
                 if res[-1] == '': break
                 res.append('')
