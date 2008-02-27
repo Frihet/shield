@@ -1,0 +1,75 @@
+#! /bin/bash
+#
+# shield      This shell script takes care of starting and stopping
+#             shield.
+#
+# chkconfig: 3 99 99
+# description: Shield is a Oracle/MySQL translator
+# processname: shield
+# config: /etc/shield.conf
+
+# Export settings from config file
+export LD_LIBRARY_PATH=/usr/lib/oracle/10.2.0.3/client/lib
+. /etc/shield.conf
+export SHIELD_USERNAME
+export SHIELD_PASSWORD
+export SHIELD_CONNECTION
+
+# Local configuration options go here
+prog=shield
+pidfile=/var/run/shield.pid
+logfile=/var/log/shield
+socketfile=/tmp/shield.socket
+socketowner=apache
+socketmode=600
+shield_multiplex=/usr/local/bin/shield_multiplex
+
+start() {
+        echo -n $"Starting $prog: "
+	umask 177
+	$shield_multiplex -s $socketfile >$pidfile 2>$logfile
+        RETVAL=$?
+	if test $RETVAL = 0; then
+		echo ok
+	else
+		echo failed
+	fi
+	
+	chmod ${socketmode}  ${socketfile}
+	chown ${socketowner} ${socketfile}
+        return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+
+	kill $(cat $pidfile)
+        RETVAL=$?
+
+	if test $RETVAL = 0; then
+		echo ok
+		rm -f ${pidfile} ${socketfile}
+	else
+		echo failed
+	fi;
+}
+
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	stop
+	start
+	;;
+  *)
+	echo $"Usage: $prog {start|stop|restart}"
+	exit 1
+esac
+
+exit $RETVAL

@@ -1,0 +1,56 @@
+
+DEPENDENCIES
+
+Shield needs GNU make or a workalike.
+
+Shield uses the Oracle OCCI library to connect to the oracle
+server. To obtain the headers and libraries needed to use OCCI,
+download the oracle instant client software. This software can be
+obtained free of charge at oracle.com.
+
+
+COMPILING SHIELD
+
+At the writing of this document, OCCI was still only distributed in
+binary form, compiled against an older version of the c++ standard
+library. Unfortunatly, all pieces of a program need to be compiled
+against the same library version. Because the standard library version
+is directly dependant on the compiler version, Shield must be compiled
+using an older compiler. Under RHEL4, such a compiler can be installed
+by executing the following command as root:
+
+yum install compat-gcc-32-c++
+
+In order to use this compiler, run the following command before configuring Shield:
+
+export CXX=g++32
+
+The main Shield parser is roughly 20000 lines long, which is a pretty
+heavy burden for a C++ compiler. If you are scarce on ram, you may
+need to disable any optimization flags enabled by default. This can be
+done by running the following command before configuring Shield:
+
+export CXXFLAGS=-g
+
+Shield needs the Oracle libraries in order to build. Different Oracle
+versions install these in different locations, which makes it hard for
+Shield to locate them. To build Shield, you will most likely need to
+specify the location of these libraries. This is done in two steps:
+
+First, locate the directory containing the occi.h file. This can
+usually be done using the command 'locate occi.h'. After than, run a
+command looking something like this:
+
+export CPPFLAGS=-I/usr/include/oracle/10.2.0.3/client/ 
+
+Secondly, locate the occi.so file. This can usually be done using the
+command 'locate occi.so'. After that, run a command looking something
+like this:
+
+export LDFLAGS=-L/usr/lib/oracle/10.2.0.3/client/lib
+
+After than, your environment should be sufficiently set up to compile
+Shield. This is done using:
+
+scons && scons install
+

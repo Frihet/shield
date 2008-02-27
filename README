@@ -1,0 +1,7 @@
+RUNNING SHIELD
+
+Make sure the ORACLE_HOME environment variable is set before running
+fish. It can usually be set with something like:
+
+export ORACLE_HOME=/usr/lib/oracle/xe/app/oracle/product/10.2.0/server
+
