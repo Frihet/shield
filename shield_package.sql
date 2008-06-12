@@ -368,11 +368,17 @@ is
 	function curdate 
 		return date;
 
+	function to_date_ (date_in date, format varchar2) 
+		return date deterministic;
+
 	function to_date_ (date_in varchar2, format varchar2) 
 		return date deterministic;
 
 	function to_date_ (date_in number, format varchar2) 
 		return date deterministic;
+
+	function equal_null_safe (a varchar2, b varchar2) 
+		return number deterministic;
 
 	/**
 		In MySQL, there are 'zero dates' of '0000-00-00 00:00:00'. Oracle does not have a zear zero, so Shield uses the date '0001-01-01 01:01:01' as a substitute.
@@ -603,6 +609,14 @@ is
 
 	end;
 
+	function to_date_ (date_in date, format varchar2) 
+		return date deterministic
+	is 
+	begin
+		return date_in;
+	end;
+
+	
 	function to_date_ (date_in varchar2, format varchar2) 
 		return date deterministic
 	is 
@@ -611,6 +625,9 @@ is
 		c varchar2 (1);
 		fields number (10,0);
 	begin
+		if date_in is null then
+			return null;
+		end if;
 		if date_in = '0000-00-00' or date_in like '00_00_00' or date_in = '00000000' or date_in = chr (1) or date_in like '0000_00_00_00_00_0_' or  date_in = '00000000000000' or length (date_in) < 3 then
 			return to_date ('0001-01-01 01:01:01','yyyy-mm-dd hh24:mi:ss');
 		end if;
@@ -667,6 +684,22 @@ is
 		end if;
 		
 		return to_date (date_in2, format);
+	end;
+
+	function equal_null_safe (a varchar2, b varchar2)
+		return number deterministic
+	is 
+	begin
+		if a is null then
+                     if b is null then
+                         return 1;
+                     end if;
+		     return 0;
+		end if;
+		if a = b then
+			return 1;
+		end if;
+		return 0;
 	end;
 
 	function handle_zero_date (date_in varchar2) 
@@ -734,6 +767,7 @@ is
 
 end shield;
 /
+
 
 
 create or replace trigger after_logon
