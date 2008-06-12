@@ -51,6 +51,12 @@ namespace shield
       table_map.erase (table_name);
     }
     
+    void clear_tables ()
+    {
+      debug << "Clear introspection data for all tables";
+      table_map.clear ();      
+    }
+    
   }
 
 }

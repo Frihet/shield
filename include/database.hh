@@ -171,6 +171,12 @@ namespace shield
        function must not be called exactly once.
     */
     void init (string username, string password, string host) throw (exception::database);
+
+    /**
+       Reset the Oracle database connection, so that on the next
+       connection attempt, a new connection will be attempted.
+    */
+    void reset (void);
     
     /**
        Execute the specified query

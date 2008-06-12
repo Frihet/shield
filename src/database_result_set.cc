@@ -82,14 +82,7 @@ namespace shield
     {
       int idx = __get_col_index (col);
 
-      try
-	{
-	  return __rs->getString (idx+1);
-	}
-      catch (std::exception &e)
-	{
-	  exit(0);
-	}
+      return __rs->getString (idx+1);
     }
 
     bool result_set::
@@ -111,7 +104,7 @@ namespace shield
 
       __is_closed = true;
 
-      if (__stmt)
+      if (__stmt && __rs)
 	{
 	  if (__is_executed)
 	    {

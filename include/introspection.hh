@@ -214,6 +214,7 @@ namespace shield
        specified table has been changed.
     */
     void clear_table (string table_name);
+    void clear_tables (void);
   
   }
 

@@ -19,6 +19,8 @@
 #include "include/cache.hh"
 #include "include/exception.hh"
 #include "include/catalyst.hh"
+#include "include/introspection.hh"
+#include "include/database.hh"
 
 namespace shield
 {
@@ -217,6 +219,8 @@ namespace shield
 	  error << "In query:";
 	  error << in;
 	  error << e.what ();
+	  introspection::clear_tables ();
+	  database::reset();
 	  return string ()+shield::transform::sep+shield::transform::sep;
 	}
       catch(const bad_alloc& x)
@@ -225,6 +229,8 @@ namespace shield
 	  error << "In query:";
 	  error << in;
 	  error << (string ("Out of memory: ") + x.what()) << "on query:" <<  in;
+	  introspection::clear_tables ();
+	  database::reset();
 	  return string ()+shield::transform::sep+shield::transform::sep;
 	}
       catch (const std::exception &e)
@@ -232,6 +238,8 @@ namespace shield
 	  error << "In query:";
 	  error << in;
 	  error << string("Non-shield exception thrown: ")+e.what ();
+	  introspection::clear_tables ();
+	  database::reset();
 	  return string ()+shield::transform::sep+shield::transform::sep;
 	}
       catch (...)
@@ -239,6 +247,8 @@ namespace shield
 	  error << "In query:";
 	  error << in;
 	  error << "Unknown error was thrown.";
+	  introspection::clear_tables ();
+	  database::reset();
 	  return string ()+shield::transform::sep+shield::transform::sep;
 	}
       
