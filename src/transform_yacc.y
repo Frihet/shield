@@ -772,18 +772,18 @@ namespace shield
 %type <select_item_val> select_item2 select_item table_wild
 
 %type <select_val> select_part2 select_init2 select_from select_into opt_select_from 
-%type <select_val> select_derived2 select_paren
+%type <select_val> select_derived2 select_paren create_select
 
 %type <key_type_val> key_type constraint_key_type opt_key_or_index
 
-%type <chain_val> insert_values values_list udf_expr_list udf_expr_list2 udf_expr_list3 
+%type <chain_val> values_list udf_expr_list udf_expr_list2 udf_expr_list3 
 %type <chain_val> ident_eq_list ident_eq_value opt_attribute opt_attribute_list update_list
 %type <chain_val> expr_list expr_list2 key_list opt_values values select_options 
 %type <chain_val> select_option_list opt_len order_list group_clause group_list
 %type <chain_val> select_item_list derived_table_list join_table_list opt_insert_update 
 %type <chain_val> field_list table_list fields 
 
-%type <insert_val> insert insert_field_spec
+%type <insert_val> insert insert_field_spec insert_values
 
 %type <create_table_val> create2a create2 
 
@@ -1467,12 +1467,14 @@ create3:
 
 create_select:
           SELECT_SYM
-          { throw exception::unsupported (__FILE__, __LINE__); }
           select_options select_item_list
-	  { throw exception::unsupported (__FILE__, __LINE__); }
 	  opt_select_from
-	  { throw exception::unsupported (__FILE__, __LINE__); }
-        ;
+	  { 
+	    $$ = $4;
+	    $$->set_option_clause ($2);
+	    $$->set_item_list ($3);
+	  }
+	  ;
 
 opt_as:
 	/* empty */ {}
@@ -2812,7 +2814,13 @@ bool_pri:
 	    $$ = new null_test ($1, false);
 	  }
 	| bool_pri EQUAL_SYM predicate
-	  { throw exception::unsupported (__FILE__, __LINE__); }
+	  { 
+	    chain *param = new chain (new cast ($1, DATA_TYPE_VARCHAR), new cast ($3, DATA_TYPE_VARCHAR) );
+	    param->set_separator (",");
+	    text *one = new text("1");
+	    one->set_context(DATA_TYPE_NUMBER);
+	    $$ = new comparison(new text("="), new function(new text ("shield.equal_null_safe"), DATA_TYPE_NUMBER, param, false), one);	
+	  }
 	| bool_pri comp_op predicate %prec EQ
           {
 	    $$ = new comparison ($2, $1, $3);
@@ -3248,6 +3256,7 @@ simple_expr:
 	    
 	    string op;
 	    printable *date;
+	    printable *date2;
 	    printable *interval;
 
 	    
@@ -3373,6 +3382,15 @@ simple_expr:
 		    
 		  }
 		  }*/
+	    else if (contains (func_name.c_str (), "datediff"))
+	      {
+		date  = (*$3)[0];
+		date2 = (*$3)[1];
+		$$ = new paran (new cast (date, DATA_TYPE_DATE | DATA_TYPE_DATETIME),
+				new text ("-"),
+				new cast (date2, DATA_TYPE_DATE | DATA_TYPE_DATETIME) );
+		$$->set_context (DATA_TYPE_DATETIME);
+	      }
 	    else if (contains (func_name.c_str (), "date_add", "date_sub"))
 	      {
 		op = (func_name == "date_add")?"+":"-";
@@ -3415,6 +3433,8 @@ simple_expr:
 		    func_translate["date"] = make_triplet ("shield.date_", DATA_TYPE_DATE,false);
 		    func_translate["curdate"] = make_triplet ("shield.curdate", DATA_TYPE_DATE,false);
 		    func_translate["current_date"] = make_triplet ("shield.curdate", DATA_TYPE_DATE,false);
+		    func_translate["coalesce"] = make_triplet ("coalesce", DATA_TYPE_UNDEFINED,false);
+		    func_translate["last_insert_id"] = make_triplet ("shield.get_last_insert_id", DATA_TYPE_NUMBER,false);
 
 		    /*
 		      Grouping functions
@@ -4371,19 +4391,16 @@ insert_table:
 insert_field_spec:
 	insert_values 
 	{
-	  $$ = new insert ();
-	  $$ -> set_value_list ($1);	  
+	  $$ = $1;
 	}
 	| '(' ')' insert_values 
 	{
-	  $$ = new insert ();
-	  $$ -> set_value_list ($3);	  
+	  $$ = $3;
 	}
 	| '(' fields ')' insert_values 
 	{
-	  $$ = new insert ();
+	  $$ = $4;
 	  $$ -> set_field_list ($2);
-	  $$ -> set_value_list ($4);
 	}
 	| SET
 	ident_eq_list
@@ -4408,14 +4425,16 @@ fields:
 insert_values:
 	VALUES	values_list  
 	{ 
-	  $$ = $2;
+	  $$ = new insert;
+	  $$->set_value_list ($2);
 	}
 	| VALUE_SYM values_list  
 	{ 
-	  $$ = $2;
+	  $$ = new insert;
+	  $$->set_value_list ($2);
 	}
-	|     create_select     { throw exception::unsupported (__FILE__, __LINE__); } union_clause {}
-	| '(' create_select ')' { throw exception::unsupported (__FILE__, __LINE__); } union_opt {}
+	|     create_select union_clause     { $$ = new insert(); $$->set_select ($1); } 
+	| '(' create_select ')' union_opt    { $$ = new insert(); $$->set_select ($2); } 
         ;
 
 values_list:

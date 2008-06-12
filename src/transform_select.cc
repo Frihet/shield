@@ -234,7 +234,7 @@ namespace shield
 
       if (get_limit_clause () )
 	{
-	  stream << ")\nshield_limit where rownum <= " <<get_limit_clause ()->get_upper_limit () << ")\n";
+	  stream << ")\nshield_limit where rownum <= " << (get_limit_clause ()->get_lower_limit ()+get_limit_clause ()->get_upper_limit ()) << ")\n";
 	  stream << " where shield_rownum > " << get_limit_clause ()->get_lower_limit ();
 
 	}

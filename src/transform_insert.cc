@@ -62,6 +62,12 @@ namespace shield
       _set_child (CHILD_INSERT_UPDATE, l);
     }
 
+    void insert::
+    set_select (select *s)
+    {
+      _set_child (CHILD_INSERT_SELECT, s);
+    }
+
     /**
        Convert an foo=bar, baz=qux style list to a standard sql (foo, baz)
        and (bar, qux) pair of lists.
@@ -113,10 +119,16 @@ namespace shield
       return _get_child<identity> (CHILD_NAME);
     }
 
+    select *insert::
+    get_select ()
+    {
+      return _get_child<select> (CHILD_INSERT_SELECT);
+    }
+
     void insert::
     _print (ostream &stream)
     {
-      if (!get_name () || !get_value_list ())
+      if (!get_name () || (!get_value_list () && !get_select ()))
 	{
 	  throw exception::invalid_state (get_node_name () + ": name or value list not set when calling _print ()");
 	}
@@ -151,52 +163,76 @@ namespace shield
 
       chain::const_iterator i;  
 
-
-      for (i=get_value_list ()->begin (); i<get_value_list ()->end (); i++)
+      if (get_select ()) 
 	{
-
 	  stream << "insert into" << *get_name () << endl;
 	  get_field_list ()->set_skip_space (true);
 	  stream << "(" << *get_field_list () << ")" << endl;
+	  stream << *get_select ();
+	}
+      else
+	{
 	  
-	  (*i)->set_skip_space (true);
-
-	  introspection::table &itable = introspection::get_table (get_name ()->unmangled_str ());
-	  
-	  stream << "values \n(";
-
-	  chain *field_list = dynamic_cast<chain *> (get_field_list ());
-	  chain *value = dynamic_cast<chain *> (*i);
-
-	  if (field_list->size () != value->size ())
+	  for (i=get_value_list ()->begin (); i<get_value_list ()->end (); i++)
 	    {
-	      throw exception::invalid_state (string ("Field list has ") + stringify (field_list->size ()) + " items, but value list has " + stringify (value->size ()));
-	    }
-
-	  for (size_t j=0; j<value->size (); j++)
-	    {
-	      text *column_name = as_text ((*field_list)[j]);
-
-	      if (!column_name)
+	      
+	      stream << "insert into" << *get_name () << endl;
+	      get_field_list ()->set_skip_space (true);
+	      stream << "(" << *get_field_list () << ")" << endl;
+	      
+	      (*i)->set_skip_space (true);
+	      
+	      introspection::table &itable = introspection::get_table (get_name ()->unmangled_str ());
+	      
+	      stream << "values \n(";
+	      
+	      chain *field_list = dynamic_cast<chain *> (get_field_list ());
+	      chain *value = dynamic_cast<chain *> (*i);
+	      
+	      if (field_list->size () != value->size ())
+		{
+		  throw exception::invalid_state (string ("Field list has ") + stringify (field_list->size ()) + " items, but value list has " + stringify (value->size ()));
+		}
+	      
+	      for (size_t j=0; j<value->size (); j++)
+		{
+		  text *column_name = as_text ((*field_list)[j]);
+		  
+		  if (!column_name)
 		{
 		  throw exception::invalid_state ("Item in field list was not of type text or identity");
 		}
-	      
-	      const introspection::column icolumn = itable.get_column (column_name->unmangled_str ());
-	      
-	      if (j)
-		stream << ",\n";
+		  
+		  const introspection::column icolumn = itable.get_column (column_name->unmangled_str ());
+		  
+		  if (j)
+		    stream << ",\n";
+		  
+		  stream << "\t";
+		  
+		  text *t;
+		  t = dynamic_cast<text *> ((*value)[j]);
 
-	      stream << "\t";
-
-	      cast *c =new cast ((*value)[j], icolumn.get_type ().get_type ());
-	      c->set_parent (this);
-	      c->set_skip_space (true);
-	      stream << *c;
+		  if ((icolumn.get_type ().get_type () == DATA_TYPE_CLOB) && 
+		      t &&
+		      t->get_type () == LITERAL &&
+		      t->str().size() && 
+		      (t->str()[0]==':' || t->str ()[0] == '%'))
+		    {
+		      stream << *((*value)[j]);
+		    }
+		  else
+		    {
+		      cast *c =new cast ((*value)[j], icolumn.get_type ().get_type ());
+		      c->set_parent (this);
+		      c->set_skip_space (true);
+		      stream << *c;
+		    }
+		}
+	      
+	      stream << ")"; 
+	      stream << endl << endl << sep;
 	    }
-
-	  stream << ")"; 
-	  stream << endl << endl << sep;
 	}
 
     }

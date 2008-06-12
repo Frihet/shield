@@ -575,6 +575,7 @@ zerofill return ZEROFILL;
 \/\*([^\*]|\**[^\/\*])*\**\/ return NOTHING; /*  This catcher C-style comments, but it's really ugly. There must be some better way, right? */
 
 :[a-zA-Z0-9_]+ return TEXT_STRING;
+%[a-zA-Z] return TEXT_STRING;
 
 . return 0;
 

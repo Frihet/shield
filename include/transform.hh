@@ -189,7 +189,8 @@ namespace shield
 		  CHILD_PARAM,
 		  CHILD_DEFAULT,
 		  CHILD_IDENTITY,
-		  CHILD_SET
+		  CHILD_SET,
+		  CHILD_INSERT_SELECT
 		  );
     
     /**
@@ -1274,10 +1275,12 @@ namespace shield
       void set_insert_update (printable *l);
       void set_name (identity *l);
       void set_eq_list (chain *l);
+      void set_select (select *s);
       chain *get_field_list (void);
       chain *get_value_list (void);
       printable *get_insert_update (void);
       identity *get_name (void);
+      select *get_select (void);
       
     protected:
       virtual void _print (ostream &stream);
@@ -1285,6 +1288,7 @@ namespace shield
       
     private:
       bool __ignore;
+      select *__select;
     }
     ;
 
@@ -1809,7 +1813,7 @@ namespace shield
 	  {
 	    if (__selectable)
 	      {
-		stream << (" shield.is_null (" + _get_child (CHILD_INNER)->str () + ")");
+		stream << (" shield.is_null (" + _get_child (CHILD_INNER)->str () + ") = 1");
 	      }
 	    else
 	      {
@@ -1820,7 +1824,7 @@ namespace shield
 	  {
 	    if (__selectable)
 	      {
-		stream << (" shield.is_not_null (" + _get_child (CHILD_INNER)->str () + ")");
+		stream << (" shield.is_not_null (" + _get_child (CHILD_INNER)->str () + ") = 1");
 	      }
 	    else
 	      {

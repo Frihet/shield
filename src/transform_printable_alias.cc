@@ -66,7 +66,14 @@ namespace shield
       text *alias = get_alias ();
       if( alias && alias->length () )
 	{
-	  return alias->str () + (__alias_implicit ? "_" + util::stringify (this): "");
+	  string woot = alias->str ();
+
+	  if (woot.length() > 10) 
+	    {
+	      woot = woot.substr(0,10);
+	    }
+
+	  return woot + (__alias_implicit ? "_" + util::stringify (this): "");
 	}
       else 
 	{

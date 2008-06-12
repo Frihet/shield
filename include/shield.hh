@@ -364,7 +364,7 @@ namespace shield
      as numbers, but mysql returns them aas strings. We need to make
      an implicit conversion.
   */
-  const int DATA_TYPE_SELECTABLE = DATA_TYPE_CLOB | DATA_TYPE_UNDEFINED | DATA_TYPE_NUMBER | DATA_TYPE_FLOAT | DATA_TYPE_CHAR | DATA_TYPE_VARCHAR;
+  extern int DATA_TYPE_SELECTABLE;
 
   /**
      Global logger for errors

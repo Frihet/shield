@@ -180,6 +180,7 @@ namespace shield
 	    }
 	  else if (desired & DATA_TYPE_DATE)
 	    {
+	      cerr << "My heart desires dates" << endl;
 
 	      if (real & (DATA_TYPE_NUMBER | DATA_TYPE_FLOAT))
 		{

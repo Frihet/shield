@@ -188,7 +188,6 @@ namespace
     
     //    debug << (string ("pipe 2 has fds ") + stringify (ctx.shield_recive_pipe[0]) + " and " + stringify (ctx.shield_recive_pipe[1] ));
 
-    
     pid = retry_fork ();
     switch (pid)
       {
@@ -421,6 +420,7 @@ namespace
 
     if (doexit)
       {
+	cerr << "Exiting in get_socket()\n";
 	exit (1);
       }
 

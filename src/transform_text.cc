@@ -129,6 +129,10 @@ namespace shield
 	case EXACT:    
 	  {
 	    __str = __val;
+	    if (to_lower(__str) == "null") 
+	      {
+		__str = string("to_char (") + __str + ")";
+	      }
 	    break;
 	  }
 	  
@@ -155,9 +159,9 @@ namespace shield
 	  */
 	case LITERAL:
 	  {
-	    if (__val.size () && __val[0] == ':')
+	    if (__val.size () && (__val[0] == ':' || __val[0] == '%'))
 	      {
-		__str = __val;
+		__str = __val;//string("to_char (") + __val + ")";
 	      }
 	    else
 	      {
@@ -211,6 +215,9 @@ namespace shield
     {
       switch (get_type ())
 	{
+	case EXACT:
+	  return string("const_") +__val;
+
 	case IDENTIFIER:
 	  return __val;
 	  
@@ -218,6 +225,10 @@ namespace shield
 	  return __val.substr (1, __val.size ()-2);
 	  
 	case LITERAL:
+	  if (__val.size () && (__val[0] == ':' || __val[0] == '%')) {
+	    return __val.substr(1);
+	  } 
+
 	  return mysql_unescape (__val);
 	  
 	default:
@@ -228,6 +239,10 @@ namespace shield
     data_type text::
     get_context (void)
     {
+      if (get_type () == EXACT && to_lower(__str) == "null" )
+	{
+	  return DATA_TYPE_CHAR;
+	}
       if (get_type () != LITERAL)
 	{
 	  return printable::get_context ();
@@ -235,6 +250,10 @@ namespace shield
 
       switch (__val[0])
 	{
+	  //	case ':':
+	  //	case '%':
+	  //	  return DATA_TYPE_CHAR;
+
 	case '0':
 	case '1':
 	case '2':
@@ -263,7 +282,6 @@ namespace shield
 	  return printable::get_context ();
 
 	}
-
       
     }
     

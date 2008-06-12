@@ -33,11 +33,12 @@ namespace shield
 {
 
   logger::logger error ("shield: error");
+  int DATA_TYPE_SELECTABLE = DATA_TYPE_CLOB | DATA_TYPE_UNDEFINED | DATA_TYPE_NUMBER | DATA_TYPE_FLOAT | DATA_TYPE_CHAR | DATA_TYPE_VARCHAR;
   
   namespace
   {
 
-    const char *GETOPT_ARG = "c:u:p:Phd:w:s:";
+    const char *GETOPT_ARG = "c:u:p:Phd:w:s:D";
     
     string socket_name = "/tmp/shield.socket";
     
@@ -127,6 +128,10 @@ namespace shield
 	      }
 	      ,
 	      {   
+		"native-dates", required_argument, 0, 'D'
+	      }
+	      ,
+	      {   
 		"debug", required_argument, 0, 'd'
 	      }
 	      ,
@@ -161,6 +166,10 @@ namespace shield
 	    {   
 	      
 	    case 0:
+	      break;
+
+	    case 'D':
+	      DATA_TYPE_SELECTABLE |= DATA_TYPE_DATE | DATA_TYPE_DATETIME;
 	      break;
 
 	    case 'h':
