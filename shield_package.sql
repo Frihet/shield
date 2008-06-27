@@ -318,6 +318,9 @@ is
 		This function returns the last auto_increment id.
 	*/
 
+	function like_(val clob, filter varchar2)
+		return number;
+
 	function get_last_insert_id 
 		return number;
 
@@ -345,6 +348,12 @@ is
 	*/
 	function concat_ (str1 varchar2, str2 varchar2)
 		return varchar2 deterministic;
+
+	/**
+		This is a workalike to the mysql concat function
+	*/
+	function concat_ (str1 clob, str2 clob)
+		return clob deterministic;
 
 	/**
 		This is a workalike to the mysql lpad function
@@ -415,6 +424,28 @@ end shield;
 
 create or replace package body shield
 is
+
+	function like_(val clob, filter varchar2)
+		return number
+	is
+		pos integer;
+		len integer;
+		sub varchar2(3900);
+	begin
+		len := dbms_lob.getlength(val);
+		pos := 1;
+		
+		while pos < len loop
+			sub := dbms_lob.substr(val, 3500, pos);
+			pos := pos + 3000;
+			if sub like filter then
+				return 1;
+			end if;
+		end loop;
+	
+		return 0;
+	end;
+
 
         function get_last_insert_id
 		return number
@@ -488,6 +519,31 @@ is
                 end if;
 
                 if str2 = chr (1) then
+			return str1;	
+		end if;
+
+                return str1 || str2;
+
+	end;
+
+
+	function concat_ (str1 clob, str2 clob)
+		return clob deterministic
+	is
+	begin
+                if str1 is null then
+                        return null;
+                end if;
+
+                if str2 is null then
+                        return null;
+                end if;
+
+                if dbms_lob.substr(str1,1,1) = chr (1) then
+			return str2;	
+                end if;
+
+                if dbms_lob.substr(str2,1,1) = chr (1) then
 			return str1;	
 		end if;
 
@@ -768,6 +824,7 @@ is
 end shield;
 /
 
+show errors;
 
 
 create or replace trigger after_logon

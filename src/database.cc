@@ -102,8 +102,14 @@ namespace shield
       try 
 	{
 	  is_connect = false;
-	  env->terminateConnection (conn);
-	  Environment::terminateEnvironment (env);
+	  if (env) 
+	    {
+	      if (conn) 
+		{
+		  env->terminateConnection (conn);
+		}
+	      Environment::terminateEnvironment (env);
+	    }
 	  env = 0;
 	  conn = 0;
 	}

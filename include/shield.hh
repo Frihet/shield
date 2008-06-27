@@ -359,10 +359,9 @@ namespace shield
   const int DATA_TYPE_SORTABLE = DATA_TYPE_UNDEFINED | DATA_TYPE_NUMBER | DATA_TYPE_FLOAT | DATA_TYPE_CHAR | DATA_TYPE_VARCHAR | DATA_TYPE_DATE | DATA_TYPE_DATETIME;
 
   /**
-     All data types that can be used as select fields. This does not
-     include the date and datetime types, becvause oracle returns them
-     as numbers, but mysql returns them aas strings. We need to make
-     an implicit conversion.
+     All data types that can be used as select fields. This may or may
+     not include date types, depending on how shield is run, since
+     different mysql apis return dates differently.
   */
   extern int DATA_TYPE_SELECTABLE;
 

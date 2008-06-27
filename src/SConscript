@@ -62,6 +62,7 @@ transform = env.Object(Split("""
 	transform_printable_alias.cc
 	transform_field_spec.cc
 	transform_set_test.cc
+	transform_like.cc
 	transform_delete_.cc"""))
 
 catalyst = env.Object(Split("""

@@ -190,7 +190,9 @@ namespace shield
 		  CHILD_DEFAULT,
 		  CHILD_IDENTITY,
 		  CHILD_SET,
-		  CHILD_INSERT_SELECT
+		  CHILD_INSERT_SELECT,
+		  CHILD_FILTER,
+		  CHILD_VALUE
 		  );
     
     /**
@@ -1321,7 +1323,11 @@ namespace shield
     {
 
     public:
-
+      /**
+	 Constructor for a function call node. If the type filed is
+	 set to DATA_TYPE_UNDEFINED, the output type of this function
+	 will be the same as the output type of the first parameter.
+      */
       function (printable *name, data_type type, printable *param, bool aggregate);
 
       printable *get_name (void)
@@ -1649,6 +1655,41 @@ namespace shield
 
     private:
       int __contexts;
+
+    }
+    ;
+
+    /**
+       A node representing a like operation. This needs to be handled
+       specially in the case of like:ing to a clob.
+    */
+    class like
+      : public printable
+    {
+    public:
+      /**
+	 Create a new type cast node.
+	 
+	 @param p the expression to cast
+	 @param contexts an or:ed set of data_type values
+      */
+      like (printable *filter, printable *value, bool negate=false);
+      
+      printable *get_filter ()
+      {
+	return _get_child (CHILD_FILTER);
+      }
+
+      printable *get_value ()
+      {
+	return _get_child (CHILD_VALUE);
+      }
+
+    protected:
+      virtual void _print (ostream &stream);
+
+    private:
+      bool __negate;
 
     }
     ;

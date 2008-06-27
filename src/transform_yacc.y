@@ -2872,14 +2872,14 @@ predicate:
 	    if ($4)
 	      throw exception::unsupported (__FILE__, __LINE__); 
 	    
-	    $$ = new chain ($1, new text ("like"), $3);
+	    $$ = new like ($1, $3);
 	  }
 	| bit_expr not LIKE simple_expr opt_escape
           {
 	    if ($5)
 	      throw exception::unsupported (__FILE__, __LINE__); 
 
-	    $$ = new chain ($1, new text ("not like"), $4);
+	    $$ = new like ($1, $4, true);
 	  }
 	| bit_expr REGEXP bit_expr	
           { throw exception::unsupported (__FILE__, __LINE__); }
@@ -3425,8 +3425,8 @@ simple_expr:
 		    func_translate["date_format"] = make_triplet ("shield.date_format", DATA_TYPE_CHAR,false);
 		    func_translate["min"] = make_triplet ("min", DATA_TYPE_UNDEFINED,true);
 		    func_translate["max"] = make_triplet ("max", DATA_TYPE_UNDEFINED,true);
-		    func_translate["lower"] = make_triplet ("lower", DATA_TYPE_CHAR,false);
-		    func_translate["upper"] = make_triplet ("upper", DATA_TYPE_CHAR,false);
+		    func_translate["lower"] = make_triplet ("lower", DATA_TYPE_UNDEFINED,false);
+		    func_translate["upper"] = make_triplet ("upper", DATA_TYPE_UNDEFINED,false);
 		    func_translate["lpad"] = make_triplet ("shield.lpad_", DATA_TYPE_CHAR,false);
 		    func_translate["now"] = make_triplet ("current_date", DATA_TYPE_DATETIME,false);
 		    func_translate["unix_timestamp"] = make_triplet ("shield.unix_timestamp", DATA_TYPE_NUMBER,false);
