@@ -972,6 +972,11 @@ namespace shield
       void __print_comment (ostream &stream);
       void __resolve_all_table_fields (chain *xitem_list);
 
+      /**
+	 Remove all duplicate items from select list
+      */
+      void __filter_item_list();
+
     private:
 
       /**
@@ -1359,6 +1364,11 @@ namespace shield
 	 Return true if this function aggregates a field in a group by query
       */
       bool get_aggregate ();
+
+      /**
+	 Calculate return type if undefined
+       */
+      virtual printable *internal_transform (void);
 
     protected:
       virtual void _print (ostream &stream);
@@ -1850,11 +1860,31 @@ namespace shield
 
       virtual void _print (ostream &stream)
       {
+	/*	bool do_compare = true;
+
+	query *q = get_query();
+	select *s = dynamic_cast<select *> (q);
+
+	if (s) 
+	  {
+	    chain *il = s->get_item_list();
+	    printable *p = this->get_parent();
+	    while (p) {
+	      if (p == il) 
+		{
+		  do_compare = false;
+		  break;
+		}
+	      p = p->get_parent ();
+	    }
+	  }
+	*/
+
 	if (__is_null)
 	  {
 	    if (__selectable)
 	      {
-		stream << (" shield.is_null (" + _get_child (CHILD_INNER)->str () + ") = 1");
+		stream << (" shield.is_null (" + _get_child (CHILD_INNER)->str () + ")");
 	      }
 	    else
 	      {
@@ -1865,7 +1895,7 @@ namespace shield
 	  {
 	    if (__selectable)
 	      {
-		stream << (" shield.is_not_null (" + _get_child (CHILD_INNER)->str () + ") = 1");
+		stream << (" shield.is_not_null (" + _get_child (CHILD_INNER)->str () + ")");
 	      }
 	    else
 	      {

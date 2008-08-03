@@ -133,6 +133,7 @@ namespace shield
 	  __calculate_context ();
 	}
 
+      //cerr << "Ok, returning: " << printable::get_context () << endl;      
       return printable::get_context ();
     }
 
@@ -142,6 +143,8 @@ namespace shield
       query *q = get_query ();
       text *table;
       text *unaliased_table;
+
+      //cerr << "Calculate context type for identity item " << get_field() << endl;
       
       //      debug << (string ("Query is of type ") + q->get_node_name ());
 
@@ -165,6 +168,8 @@ namespace shield
 
       const introspection::column &ic = itbl.get_column (get_field ()->unmangled_str ());
       const introspection::column_type &tp = ic.get_type ();
+
+      //cerr << "Result: " << tp.get_type() << endl;      
 
       set_context (tp.get_type ());
       

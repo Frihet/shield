@@ -341,7 +341,13 @@ is
 		This is a workalike to the mysql char_length function
 	*/
 	function char_length_ (str varchar2)
-		return varchar2 deterministic;
+		return number deterministic;
+
+	/**
+		This is a workalike to the mysql char_length function
+	*/
+	function char_length_ (str clob)
+		return number deterministic;
 
 	/**
 		This is a workalike to the mysql concat function
@@ -484,7 +490,7 @@ is
 	end;
 
         function char_length_ (str varchar2)
-                return varchar2 deterministic
+                return number deterministic
         is
         begin
                 if str is null then
@@ -496,6 +502,22 @@ is
                 end if;
 
                 return length (str);
+        end;
+	
+
+        function char_length_ (str clob)
+                return number deterministic
+        is
+        begin
+                if str is null then
+                        return null;
+                end if;
+
+		if dbms_lob.substr(str,1,1) = chr (1) then
+                        return 0;
+                end if;
+
+                return dbms_lob.getlength(str);
         end;
 	
 
@@ -512,9 +534,6 @@ is
                 end if;
 
                 if str1 = chr (1) then
-	                if str2 = chr (1) then
-				return chr (1);
-			end if;
 			return str2;	
                 end if;
 
@@ -539,15 +558,15 @@ is
                         return null;
                 end if;
 
-                if dbms_lob.substr(str1,1,1) = chr (1) then
+		if dbms_lob.substr(str1,1,1) = chr (1) then
 			return str2;	
-                end if;
+		end if;
 
-                if dbms_lob.substr(str2,1,1) = chr (1) then
+		if dbms_lob.substr(str2,1,1) = chr (1) then
 			return str1;	
 		end if;
 
-                return str1 || str2;
+		return str1 || str2;
 
 	end;
 

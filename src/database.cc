@@ -81,8 +81,14 @@ namespace shield
 	
 	last_rs.close ();
 	
-	env->terminateConnection (conn);
-	Environment::terminateEnvironment (env);
+	if (env) 
+	  {
+	    if (conn) 
+	      {
+		env->terminateConnection (conn);
+	      }
+	    Environment::terminateEnvironment (env);
+	  }
       }
 
     }

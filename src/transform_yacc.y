@@ -2980,7 +2980,7 @@ simple_expr:
 	  {
 	    chain *param = new chain ($1, $3);
 	    param->set_separator (",");
-	    $$ = new function (new text ("shield.concat_"), DATA_TYPE_CHAR, param, false);
+	    $$ = new function (new text ("shield.concat_"), DATA_TYPE_UNDEFINED, param, false);
 	  }
 	| '+' simple_expr %prec NEG	
           { 
@@ -3275,14 +3275,14 @@ simple_expr:
 		else
 		  {
 		    it=$3 -> begin (); 
-		    printable *res = *it;
+		    printable *res = new cast (*it, DATA_TYPE_VARCHAR);
 		    it++;
 		    while (it != $3 -> end ())
 		      {
-			param = new chain (res, *it);
+			param = new chain (res, new cast (*it, DATA_TYPE_VARCHAR));
 			param->set_separator (",");
-
-			res = new function (new text ("shield.concat_"), DATA_TYPE_CHAR, param, false);
+			
+			res = new function (new text ("shield.concat_"), DATA_TYPE_VARCHAR, param, false);
 			++it;
 		      }
 		    $$ = res;
@@ -3314,12 +3314,12 @@ simple_expr:
 			param1= new chain (res, sep);
 			param1->set_separator (",");
 
-			midpoint = new function (new text ("shield.concat_"), DATA_TYPE_CHAR, param1, false);
+			midpoint = new function (new text ("shield.concat_"), DATA_TYPE_UNDEFINED, param1, false);
 
 			param2= new chain (midpoint, *it);
 			param2->set_separator (",");
 
-			res = new function (new text ("shield.concat_"), DATA_TYPE_CHAR, param2, false);
+			res = new function (new text ("shield.concat_"), DATA_TYPE_UNDEFINED, param2, false);
 			
 			++it;
 		      }
@@ -4736,7 +4736,34 @@ show_param:
 	  }
 	| opt_full COLUMNS from_or_in table_ident opt_db wild_and_where
 	  {
-	    throw exception::unsupported (__FILE__, __LINE__); 
+	    if ($1)
+	      throw exception::unsupported (__FILE__, __LINE__); 
+
+	    if ($5)
+	      throw exception::unsupported (__FILE__, __LINE__); 
+
+	    if ($6)
+	      throw exception::unsupported (__FILE__, __LINE__); 
+	    
+	    chain *ch;
+	    
+	    ch = new chain (new text ("/*\nField\nType\nNull\nKey\nDefault\nExtra\n*/\nselect column_name,\n"
+				      "\tcase\n" 
+				      "\t\twhen column_type='DATA_TYPE_NUMBER' then 'int(11)'\n"
+				      "\t\twhen column_type='DATA_TYPE_CLOB' then 'text'\n"
+				      "\t\twhen column_type='DATA_TYPE_FLOAT' then 'float'\n"
+				      "\t\twhen column_type='DATA_TYPE_CHAR' then 'char(100)'\n"
+				      "\t\twhen column_type='DATA_TYPE_VARCHAR' then 'varchar(100)'\n"
+				      "\t\twhen column_type='DATA_TYPE_DATE' then 'date'\n"
+				      "\t\twhen column_type='DATA_TYPE_DATETIME' then 'datetime'\n"
+				      "\tend,\n\tnull,\n\tnull,\n\tnull,\n\tnull\n"
+				      "from shield_table_column\n"
+				      "where lower(table_name) = lower(", EXACT, false), new text (oracle_escape ($4->unmangled_str ()).first, EXACT, false), new text(")\n", EXACT, false));
+	    ch->set_skip_space(true);
+	    
+	    $$ = new fake_query(ch);
+	    $$->set_skip_space(true);
+
 	  }
         | NEW_SYM MASTER_SYM FOR_SYM SLAVE WITH MASTER_LOG_FILE_SYM EQ
 	  TEXT_STRING_sys AND_SYM MASTER_LOG_POS_SYM EQ ulonglong_num

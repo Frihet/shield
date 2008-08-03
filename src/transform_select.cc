@@ -88,6 +88,65 @@ namespace shield
 	}
     }
 
+    void select::__filter_item_list()
+    {
+      chain *new_item_list = new chain();
+      new_item_list->set_separator (",");
+      new_item_list->set_line_break (2);
+
+      chain::const_iterator it;
+      set<string> used;
+
+      printable *pr;
+      printable_alias *item;
+
+      printable *sub_item;
+      identity *sub_item_identity;
+
+      for (it=get_item_list ()->begin (); 
+	   it!=get_item_list ()->end (); 
+	   ++it)
+	{
+	      pr = *it;
+	      item = dynamic_cast<printable_alias *> (pr);
+
+	      string name;
+	      
+	      if (!item) 
+		{
+		  throw shield::exception::invalid_type ("Select query item list", "printable_alias");
+		}
+
+	      if (item->get_alias ())
+		{
+		  name = item->get_alias ()->unmangled_str ();
+		}
+	      else
+		{
+		  sub_item = item->get_item ();
+		  sub_item_identity = dynamic_cast<identity *> (sub_item);
+		  if (sub_item_identity)
+		    {
+		      sub_item = sub_item_identity->get_field ();
+		    }
+		  
+		  name = util::identifier_unescape (sub_item->str ());
+		}
+
+	      if (used.find(name) == used.end()) 
+		{
+		  used.insert(name);
+		  new_item_list->push(pr);
+		}
+	      else
+		{
+		  warning << (string ("Skipping reused item ") + name); 
+		}
+	}
+
+      set_item_list (new_item_list);
+    }
+
     void select::
     __print_comment (ostream &stream)
     {
@@ -102,14 +161,13 @@ namespace shield
       if (!is_sub)
 	{
 	  stream << "/*\n";
-	  for (it=get_item_list ()->begin (); it!=get_item_list ()->end (); ++it)
+	  for (it=get_item_list ()->begin (); 
+	       it!=get_item_list ()->end (); 
+	       ++it)
 	    {
 	      pr = *it;
 	      item = dynamic_cast<printable_alias *> (pr);
 	      
-	      if (!item)
-		throw shield::exception::invalid_type ("Select query item list", "printable_alias");
-
 	      if (item->get_alias ())
 		{
 		  stream << item->get_alias ()->unmangled_str () << "\n";
@@ -150,7 +208,7 @@ namespace shield
 	{
 
 	  /*
-	    Ouch, we're facing a limit clause. These are insanely complex to implement in Oracle, because of how row numbers work w.r.t. ordering, filetering, etc.
+	    Ouch, we're facing a limit clause. These are insanely complex to implement in Oracle, because of how row numbers work w.r.t. ordering, filtering, etc.
 
 	    Basically, according to ask tom and other Oracle experts, this is the proper way to do a 'limit' in Oracle:
 
@@ -310,6 +368,8 @@ namespace shield
 	}
 
       set_item_list ( dynamic_cast<chain *> (get_item_list ()->transform (sel_catalyst)));
+
+      __filter_item_list();
 
       return res;
     }

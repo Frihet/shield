@@ -47,6 +47,48 @@ namespace shield
     data_type function::
     get_context ()
     {
+      return __type;
+    }
+
+    namespace 
+    {
+      data_type merge_types(data_type a, data_type b) {
+
+	data_type order[] = 
+	  {
+	    DATA_TYPE_CLOB,
+	    DATA_TYPE_VARCHAR,
+	    DATA_TYPE_CHAR,
+	    DATA_TYPE_NUMBER,
+	    DATA_TYPE_FLOAT,
+	    DATA_TYPE_DATETIME,
+	    DATA_TYPE_DATE
+	  }
+	;
+
+	for (size_t i=0; i<(sizeof(order)/sizeof(data_type)); i++)
+	  {
+	    if ((a==order[i]) || (b==order[i]))
+	      {
+		return order[i];
+	      }
+	  }
+	
+	return DATA_TYPE_UNDEFINED;
+	
+      }
+    }
+
+    printable *function::
+    internal_transform (void)
+    {
+      return this;
+    }
+
+    void function::
+    _print (ostream &stream)
+    {
+
       if (__type == DATA_TYPE_UNDEFINED)
 	{
 	  printable *node = _get_child (CHILD_PARAM);
@@ -54,28 +96,44 @@ namespace shield
 	    {
 	      throw exception::invalid_state ("Function called with undefined return type and no parameter list");
 	    }
-	  while(true)
+	  chain *ch = dynamic_cast<chain *> (node);
+
+	  if (!ch)
 	    {
-	      chain *ch = dynamic_cast<chain *> (node);
-	      if (!ch)
-		break;
-	      if (!ch->size ())
+	      __type = node->get_context ();
+	    }
+	  else if (!ch->size ())
+	    {
+	      throw exception::invalid_state ("Function called with undefined return type and empty parameter list");
+	    }
+	  else 
+	    {
+	      data_type t = (*ch->begin())->get_context ();
+	      
+	      chain::iterator it;
+
+	      for (it=ch->begin ()+1; it!=ch->end (); ++it)
 		{
-		  return __type;
+		  data_type t2 = (*it)->get_context ();
+		  t = merge_types( t, t2);
 		}
-	      node = (*ch)[0];
+	      
+	      __type = t;
+
+	      for (it=ch->begin (); it!=ch->end (); ++it)
+		{
+	      
+		  *it = new cast(*it, __type);
+		  (*it)->set_parent(this);
+		}
+	      
 	    }
 	  
-	  if (node)
-	    return node->get_context ();
 	}
 
-      return __type;
-    }
+      
 
-    void function::
-    _print (ostream &stream)
-    {
+
 
       if (!get_skip_space ())
 	stream << " ";

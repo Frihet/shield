@@ -15,6 +15,7 @@
 #include "include/transform.hh"
 #include "include/exception.hh"
 #include "include/introspection.hh"
+#include "include/util.hh"
 
 namespace shield
 {
@@ -199,7 +200,7 @@ namespace shield
 	    }
 	  else
 	    {
-	      throw shield::exception::syntax ("Unknown desired context " + desired);
+	      throw shield::exception::syntax ("Unknown desired context: " + util::stringify(desired));
 	    }	      
 	}
       
