@@ -1374,6 +1374,10 @@ namespace shield
       virtual void _print (ostream &stream);
 
     private:
+
+      void __decide_context (void);
+
+    private:
       data_type __type;
       bool __aggregate;
     }

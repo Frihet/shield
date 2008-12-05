@@ -13,6 +13,7 @@
 
 #include "include/transform.hh"
 #include "include/exception.hh"
+#include "include/enum_char.hh"
 
 namespace shield
 {
@@ -47,6 +48,7 @@ namespace shield
     data_type function::
     get_context ()
     {
+      __decide_context ();
       return __type;
     }
 
@@ -85,10 +87,9 @@ namespace shield
       return this;
     }
 
-    void function::
-    _print (ostream &stream)
-    {
 
+    void function::
+    __decide_context (void) {
       if (__type == DATA_TYPE_UNDEFINED)
 	{
 	  printable *node = _get_child (CHILD_PARAM);
@@ -117,7 +118,7 @@ namespace shield
 		  data_type t2 = (*it)->get_context ();
 		  t = merge_types( t, t2);
 		}
-	      
+
 	      __type = t;
 
 	      for (it=ch->begin (); it!=ch->end (); ++it)
@@ -132,8 +133,13 @@ namespace shield
 	}
 
       
+    }
 
+    void function::
+    _print (ostream &stream)
+    {
 
+      __decide_context ();
 
       if (!get_skip_space ())
 	stream << " ";
