@@ -559,8 +559,8 @@ year return YEAR_SYM;
 year_month return YEAR_MONTH_SYM;
 zerofill return ZEROFILL;
 
-'([^']|\\.|'')*' return TEXT_STRING;
-\"([^\"]|\\.|"")*\" return TEXT_STRING;
+'([^']|\\.|[^\\']'')*' return TEXT_STRING;
+\"([^\"]|\\.|[^\\"]"")*\" return TEXT_STRING;
 
 `(``|[^`]|\\.)*` return IDENT_QUOTED;
 [a-zA-Z_][a-zA-Z0-9_]* return IDENT;
@@ -572,7 +572,7 @@ zerofill return ZEROFILL;
 [ \t\n\r] return NOTHING;
 \#[^\n]*\n return NOTHING;
 ^--[^\n]*\n return NOTHING;
-\/\*([^\*]|\**[^\/\*])*\**\/ return NOTHING; /*  This catcher C-style comments, but it's really ugly. There must be some better way, right? */
+\/\*([^\*]|\**[^\/\*])*\**\/ return NOTHING; /*  This catches C-style comments, but it's really ugly. There must be some better way, right? */
 
 :[a-zA-Z0-9_]+ return TEXT_STRING;
 %[a-zA-Z] return TEXT_STRING;
