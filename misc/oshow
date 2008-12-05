@@ -1,0 +1,3 @@
+#! /bin/env fish
+
+echo $argv \;\nexit\;\n | sqlplus -S -M "HTML ON TABLE 'BORDER=\"2\"'" system/changeme |links -dump |sed -e 's/^  //'|less -S -s -F
