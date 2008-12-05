@@ -311,6 +311,10 @@ namespace shield
       if (_condensed_table_list.size ())
 	return;
 
+      if (!get_table_list ())
+	{
+	  return;
+	}
       get_table_list ()->transform (cat);
       _condensed_table_list = cat.get_table_list ();
     }    

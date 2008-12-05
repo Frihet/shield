@@ -65,8 +65,10 @@ namespace shield
 	  }
 
 	if (!conn)
-	  throw shield::exception::database ("Could not create database connection. Wrong username/password?");
-	
+	  {
+	    throw shield::exception::database ("Could not create database connection. Wrong username/password?");
+	  }
+
 	warning << "Have new connection";
 
 	atexit (&destroy);

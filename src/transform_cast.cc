@@ -30,6 +30,19 @@ namespace shield
       if (!contexts)
 	throw shield::exception::syntax ("Cast called with no legal type");
 
+      while (1) 
+	{
+	  cast *c = dynamic_cast<cast *> (p);
+	  if (c) 
+	    {
+	      p = c->_get_child (CHILD_ITEM);
+	    }
+	  else
+	    {
+	      break;
+	    }
+	}
+
       _set_child (CHILD_ITEM, p);
     }
 

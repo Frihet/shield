@@ -2978,7 +2978,10 @@ simple_expr:
 	| sum_expr
 	| simple_expr OR_OR_SYM simple_expr
 	  {
-	    chain *param = new chain ($1, $3);
+
+
+	    chain *param = new chain (new cast ($1, DATA_TYPE_VARCHAR | DATA_TYPE_CLOB), 
+				      new cast ($3, DATA_TYPE_VARCHAR | DATA_TYPE_CLOB));
 	    param->set_separator (",");
 	    $$ = new function (new text ("shield.concat_"), DATA_TYPE_UNDEFINED, param, false);
 	  }
@@ -3275,14 +3278,14 @@ simple_expr:
 		else
 		  {
 		    it=$3 -> begin (); 
-		    printable *res = new cast (*it, DATA_TYPE_VARCHAR);
+		    printable *res = new cast (*it, DATA_TYPE_VARCHAR| DATA_TYPE_CLOB);
 		    it++;
 		    while (it != $3 -> end ())
 		      {
-			param = new chain (res, new cast (*it, DATA_TYPE_VARCHAR));
+			param = new chain (res, new cast (*it, DATA_TYPE_VARCHAR | DATA_TYPE_CLOB));
 			param->set_separator (",");
 			
-			res = new function (new text ("shield.concat_"), DATA_TYPE_VARCHAR, param, false);
+			res = new function (new text ("shield.concat_"), DATA_TYPE_UNDEFINED, param, false);
 			++it;
 		      }
 		    $$ = res;
@@ -3311,12 +3314,12 @@ simple_expr:
 		    while (it < $3 -> end ())
 		      {
 
-			param1= new chain (res, sep);
+			param1= new chain (res, new cast (sep, DATA_TYPE_VARCHAR | DATA_TYPE_CLOB));
 			param1->set_separator (",");
 
 			midpoint = new function (new text ("shield.concat_"), DATA_TYPE_UNDEFINED, param1, false);
 
-			param2= new chain (midpoint, *it);
+			param2= new chain (midpoint, new cast (*it, DATA_TYPE_VARCHAR | DATA_TYPE_CLOB));
 			param2->set_separator (",");
 
 			res = new function (new text ("shield.concat_"), DATA_TYPE_UNDEFINED, param2, false);
