@@ -34,7 +34,7 @@ namespace shield
 }
 
 int
-main (void)
+main (int argc, char **argv)
 {
   using namespace std;
 
@@ -86,26 +86,57 @@ main (void)
     }
   ;
   
-  shield::transform::lex_set_string (input);
-  
-  for( unsigned int i=0; i < sizeof(result)/sizeof(int);i++ )
+  if (argc > 1) 
     {
-      int d = shield::transform::lex_do();
-      if (d != result[i] )
+      for (int i=1; i<argc; i++) 
 	{
-	  printf( "Symbol number %d: Got symbol ", i );
-	  printf( (d>=32 && d < 256)?"'%c'":"%d", d );
-	  printf (", expected symbol " );
-	  printf ( (result[i]>=32 && result[i] < 256)?"'%c'":"%d", result[i] );
-	  printf( "\n");
-	  err++;
+	  shield::transform::lex_set_string (argv[1]);
+
+	  printf ("String «%s» has the following tokens:\n", argv[i]);
+
+	  while(1)
+	    {
+	      int d = shield::transform::lex_do();
+	      
+	      printf( "Symbol %d, value «%s»\n", d, shield::transform::yytext );
+	      if (!d)
+		break;
+	    }            
+	  printf ("\n\n");
 	  
-	  if (!d)
-	    break;
-	}            
+	}
+
+    } 
+  else
+    {
+
+      shield::transform::lex_set_string (input);
+      
+      for( unsigned int i=0; i < sizeof(result)/sizeof(int);i++ )
+	{
+	  int d = NOTHING;
+	  while(d==NOTHING)
+	    {
+	      d = shield::transform::lex_do();
+	    }
+	  
+	  if (d != result[i] )
+	    {
+	      printf( "Symbol number %d, '%s': Got symbol ", i, shield::transform::yytext );
+	      printf( (d>=32 && d < 256)?"'%c'":"%d", d );
+	      printf (", expected symbol " );
+	      printf ( (result[i]>=32 && result[i] < 256)?"'%c'":"%d", result[i] );
+	      printf( "\n");
+	      err++;
+	      
+	      if (!d)
+		break;
+	    }            
+	}
+      
+      printf ("Lexed %d tokens with %d errors\n", sizeof(result)/sizeof(int), err);
+      
+      return err;
     }
-  
-  printf ("Lexed %d tokens with %d errors\n", sizeof(result)/sizeof(int), err);
-  
-  return err;
+  return 0;
 }
