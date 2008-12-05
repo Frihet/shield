@@ -60,18 +60,47 @@ namespace shield
       
     }
 
+    string mangle_alias(const string &in)
+    {
+      string out;
+      
+      for (int i=0; i<in.size(); i++) 
+	{
+	  char n = in[i];
+	  if (i==0 && isdigit(n)) 
+	    {
+	      out += "_";
+	    }
+	  if (!isalnum(n))
+	    {
+	      continue;
+	    }
+	  out += n;
+	}
+      
+      if (out == "") 
+	{
+	  out = "xxx";
+	}
+      
+      if (out.length() > 10) 
+	{
+	  out = out.substr(0,10);
+	}
+      
+      return out;
+    }
+
     string printable_alias::
     get_internal_alias ()
     {
       text *alias = get_alias ();
       if( alias && alias->length () )
 	{
-	  string woot = alias->str ();
+	  string woot = alias->str();
 
-	  if (woot.length() > 10) 
-	    {
-	      woot = woot.substr(0,10);
-	    }
+	  if (__alias_implicit)
+	    woot = mangle_alias(woot);
 
 	  return woot + (__alias_implicit ? "_" + util::stringify (this): "");
 	}
