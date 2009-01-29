@@ -254,6 +254,7 @@ namespace shield
 	  //	case '%':
 	  //	  return DATA_TYPE_CHAR;
 
+	case '-':
 	case '0':
 	case '1':
 	case '2':

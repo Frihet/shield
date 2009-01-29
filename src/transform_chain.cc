@@ -148,6 +148,12 @@ namespace shield
     data_type chain::
     get_context (void)
     {
+      data_type assigned_context = printable::get_context();
+      if (assigned_context != DATA_TYPE_UNDEFINED) 
+	{
+	  return assigned_context;
+	}
+
       if (!size ())
 	return DATA_TYPE_UNDEFINED;
 
