@@ -4,11 +4,13 @@
    
    Currently roughly 250 of 1300 language rules are correctly handled,
    enough to handle most select, insert, update, drop table, delete,
-   and create table queries. This seems to be almost everything needed
+   and create table queries. This seems to be everything needed
    to run Joomla.
    
    'replace' and 'update ... on duplicate key' queries are non-trivial
-   to implement, luckily Joomla does not seem to use them.
+   to implement, luckily Joomla does not seem to use them. Or rather,
+   they're tricky to implement without either poor performance or
+   tricky edge cases. Not impossible, though.
    
    @remark package: shield (Originally from the MySQL database server)
    @remark Copyright: MySQL AB, FreeCode AS
@@ -39,7 +41,12 @@
 
 
   /**
-     This is the text contents of the last element parsed by the lexer. We need to be _very_ careful when we use this, since the parser sometimes needs to perform lookahead, in which case yytext points to the contents of the element _after_ the current one. For this reason, yytext should only ever be used on tokens which 
+     This is the text contents of the last element parsed by the
+     lexer. We need to be _very_ careful when we use this, since the
+     parser sometimes needs to perform lookahead, in which case yytext
+     points to the contents of the element _after_ the current
+     one. For this reason, yytext should only ever be used on tokens
+     which come directly from the tokenizer. Wrap all other elements.
   */
 extern char *yytext;
 
@@ -2992,6 +2999,7 @@ simple_expr:
 	| '-' simple_expr %prec NEG
           { 
 	    $$ = new chain (new text ("-"), $2);
+	    $$ -> set_context (DATA_TYPE_NUMBER);
 	  }
 	| '~' simple_expr %prec NEG	{ throw exception::unsupported (__FILE__, __LINE__); }
 	| not2 simple_expr %prec NEG	{ throw exception::unsupported (__FILE__, __LINE__); }
@@ -3260,7 +3268,8 @@ simple_expr:
 	    string op;
 	    printable *date;
 	    printable *date2;
-	    printable *interval;
+	    interval *interval_spec;
+	    printable *steps;
 
 	    
 	    if (func_name == "concat")
@@ -3398,11 +3407,23 @@ simple_expr:
 	      {
 		op = (func_name == "date_add")?"+":"-";
 		date = (*$3)[0];
-		interval = (*$3)[1];
-		$$ = new paran (new cast (date, DATA_TYPE_DATE | DATA_TYPE_DATETIME),
-				new text (op),
-				interval );
-		$$->set_context (DATA_TYPE_DATETIME);
+		steps = (*$3)[1];
+		interval_spec = dynamic_cast<interval *>((*$3)[1]);
+
+		if (interval_spec && (interval_spec->get_type() == INTERVAL_MONTH)) 
+		  {
+		    chain *param = new chain(new cast (date, DATA_TYPE_DATE | DATA_TYPE_DATETIME), interval_spec->get_expr());
+		    param->set_separator (",");
+		    $$ = new function(new text ("add_months"), DATA_TYPE_DATETIME, param, false);
+		  }
+		else 
+		  {
+		    $$ = new paran (new cast (date, DATA_TYPE_DATE | DATA_TYPE_DATETIME),
+				    new text (op),
+				    interval_spec );
+		    $$->set_context (DATA_TYPE_DATETIME);
+		  }
+		
 	      }
 	    else
 	      {

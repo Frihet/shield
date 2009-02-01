@@ -1401,6 +1401,16 @@ namespace shield
 	_set_child (CHILD_EXPR, expr);
       }
       
+      printable *get_expr ()
+      {
+	return _get_child (CHILD_EXPR);
+      }
+      
+      interval_type get_type() 
+      {
+	return __type;
+      }
+
     protected:
       virtual void _print (ostream &stream);
   
